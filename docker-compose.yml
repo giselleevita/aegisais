@@ -1,0 +1,27 @@
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: aegisais
+      POSTGRES_USER: aegisais
+      POSTGRES_PASSWORD: aegisais
+    ports:
+      - "5432:5432"
+    volumes:
+      - aegisais_pg:/var/lib/postgresql/data
+
+  api:
+    build:
+      context: ./backend
+    environment:
+      DATABASE_URL: postgresql+psycopg://aegisais:aegisais@db:5432/aegisais
+      APP_ENV: docker
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/app/data
+    depends_on:
+      - db
+
+volumes:
+  aegisais_pg:
