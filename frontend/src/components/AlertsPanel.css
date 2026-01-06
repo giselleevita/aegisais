@@ -1,0 +1,148 @@
+.alerts-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.panel-header h2 {
+  font-size: 1.5rem;
+  color: #1f2937;
+}
+
+.panel-controls {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.type-filter,
+.severity-filter {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  background: white;
+}
+
+.type-filter:focus,
+.severity-filter:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.loading,
+.empty-state {
+  text-align: center;
+  padding: 3rem;
+  color: #6b7280;
+}
+
+.alerts-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.alert-card {
+  padding: 1rem;
+  border-radius: 8px;
+  border: 2px solid;
+  background: white;
+  transition: all 0.2s;
+}
+
+.alert-card.severity-high {
+  border-color: #dc2626;
+  background: #fef2f2;
+}
+
+.alert-card.severity-medium {
+  border-color: #d97706;
+  background: #fffbeb;
+}
+
+.alert-card.severity-low {
+  border-color: #2563eb;
+  background: #eff6ff;
+}
+
+.alert-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.alert-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.alert-type {
+  font-weight: 700;
+  font-size: 1rem;
+  color: #1f2937;
+}
+
+.alert-summary {
+  font-size: 0.875rem;
+  color: #374151;
+  margin-bottom: 0.75rem;
+  line-height: 1.5;
+}
+
+.alert-details {
+  display: flex;
+  gap: 1.5rem;
+  font-size: 0.875rem;
+  margin-bottom: 0.5rem;
+}
+
+.alert-details .detail-item {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.alert-details .label {
+  font-weight: 500;
+  color: #6b7280;
+}
+
+.alert-evidence {
+  margin-top: 0.75rem;
+  font-size: 0.75rem;
+}
+
+.alert-evidence summary {
+  cursor: pointer;
+  color: #667eea;
+  font-weight: 500;
+  padding: 0.5rem;
+  border-radius: 4px;
+  background: rgba(102, 126, 234, 0.1);
+}
+
+.alert-evidence summary:hover {
+  background: rgba(102, 126, 234, 0.2);
+}
+
+.alert-evidence pre {
+  margin-top: 0.5rem;
+  padding: 0.75rem;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 4px;
+  overflow-x: auto;
+  font-size: 0.75rem;
+  color: #374151;
+}
+
+
