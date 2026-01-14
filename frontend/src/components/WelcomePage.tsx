@@ -1,6 +1,14 @@
+import { useState } from 'react'
+import DemoMode from './DemoMode'
 import './WelcomePage.css'
 
-export default function WelcomePage() {
+interface WelcomePageProps {
+    onStartOnboarding?: () => void
+}
+
+export default function WelcomePage({ onStartOnboarding }: WelcomePageProps) {
+    const [showDemo, setShowDemo] = useState(false)
+
     return (
         <div className="welcome-page">
             <div className="welcome-hero">
@@ -8,6 +16,11 @@ export default function WelcomePage() {
                 <p className="welcome-subtitle">
                     AIS Data Integrity and Anomaly Detection Tool
                 </p>
+                {onStartOnboarding && (
+                    <button onClick={onStartOnboarding} className="welcome-tour-btn">
+                        📖 Take a Tour
+                    </button>
+                )}
             </div>
 
             <div className="welcome-content">
@@ -133,6 +146,22 @@ export default function WelcomePage() {
                         or inconsistent data. It is not a maritime traffic visualization tool, route planner, or general 
                         anomaly detection system.
                     </p>
+                </section>
+
+                <section className="welcome-section">
+                    <div className="demo-section">
+                        <h2>Try It Now</h2>
+                        {!showDemo ? (
+                            <div className="demo-cta">
+                                <p>Ready to see AegisAIS in action? Start with a demo!</p>
+                                <button onClick={() => setShowDemo(true)} className="btn-demo-cta">
+                                    🚀 Start Demo Mode
+                                </button>
+                            </div>
+                        ) : (
+                            <DemoMode onStartDemo={() => setShowDemo(false)} />
+                        )}
+                    </div>
                 </section>
             </div>
         </div>

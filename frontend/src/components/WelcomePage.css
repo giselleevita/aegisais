@@ -21,7 +21,26 @@
 .welcome-subtitle {
     font-size: 1.25rem;
     color: #6b7280;
-    margin: 0;
+    margin: 0 0 1rem 0;
+}
+
+.welcome-tour-btn {
+    margin-top: 1rem;
+    padding: 0.75rem 1.5rem;
+    background: #3b82f6;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.welcome-tour-btn:hover {
+    background: #2563eb;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
 }
 
 .welcome-content {
@@ -228,6 +247,41 @@
 .welcome-note p {
     color: #1e40af;
     font-size: 1rem;
+}
+
+.demo-section {
+    text-align: center;
+}
+
+.demo-cta {
+    padding: 2rem;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 8px;
+    color: white;
+}
+
+.demo-cta p {
+    margin: 0 0 1.5rem 0;
+    font-size: 1.125rem;
+    color: white;
+}
+
+.btn-demo-cta {
+    padding: 1rem 2rem;
+    background: white;
+    color: #667eea;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.btn-demo-cta:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px -2px rgba(0, 0, 0, 0.15);
 }
 
 @media (max-width: 768px) {

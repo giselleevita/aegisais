@@ -1,0 +1,121 @@
+.demo-mode {
+    background: #f9fafb;
+    border: 2px dashed #d1d5db;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-top: 1rem;
+}
+
+.demo-header {
+    margin-bottom: 1.5rem;
+}
+
+.demo-header h3 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1.25rem;
+    color: #1f2937;
+}
+
+.demo-header p {
+    margin: 0;
+    color: #6b7280;
+    font-size: 0.875rem;
+}
+
+.demo-loading,
+.demo-empty {
+    text-align: center;
+    padding: 2rem;
+    color: #6b7280;
+}
+
+.demo-empty code {
+    background: #f3f4f6;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.875rem;
+    color: #374151;
+}
+
+.demo-instructions {
+    color: #4b5563;
+    font-size: 0.875rem;
+    margin-bottom: 1rem;
+}
+
+.demo-file-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.demo-file-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: white;
+    padding: 1rem;
+    border-radius: 6px;
+    border: 1px solid #e5e7eb;
+    transition: all 0.2s;
+}
+
+.demo-file-card:hover {
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    border-color: #d1d5db;
+}
+
+.demo-file-info {
+    flex: 1;
+}
+
+.demo-file-name {
+    font-weight: 600;
+    color: #1f2937;
+    margin-bottom: 0.25rem;
+}
+
+.demo-file-size {
+    font-size: 0.875rem;
+    color: #6b7280;
+}
+
+.btn-demo-start {
+    padding: 0.5rem 1.5rem;
+    background: #3b82f6;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+.btn-demo-start:hover {
+    background: #2563eb;
+}
+
+.demo-tips {
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid #e5e7eb;
+}
+
+.demo-tips h4 {
+    margin: 0 0 0.75rem 0;
+    font-size: 1rem;
+    color: #1f2937;
+}
+
+.demo-tips ul {
+    margin: 0;
+    padding-left: 1.5rem;
+    color: #4b5563;
+    font-size: 0.875rem;
+}
+
+.demo-tips li {
+    margin: 0.5rem 0;
+    line-height: 1.5;
+}
