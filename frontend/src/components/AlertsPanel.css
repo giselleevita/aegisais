@@ -17,6 +17,17 @@
   color: #1f2937;
 }
 
+.panel-subtitle {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin-top: 0.5rem;
+}
+
+.panel-subtitle .label {
+  font-weight: 600;
+  color: #374151;
+}
+
 .panel-controls {
   display: flex;
   flex-direction: column;
@@ -39,6 +50,14 @@
   border-radius: 6px;
   font-size: 0.875rem;
   background: white;
+  color: #1f2937;
+}
+
+.type-filter option,
+.severity-filter option,
+.status-filter option {
+  background: white;
+  color: #1f2937;
 }
 
 .time-filter {
@@ -47,6 +66,7 @@
   border-radius: 6px;
   font-size: 0.875rem;
   background: white;
+  color: #1f2937;
 }
 
 .btn-clear {
@@ -56,6 +76,7 @@
   border-radius: 6px;
   cursor: pointer;
   font-size: 0.875rem;
+  color: #374151;
 }
 
 .btn-clear:hover {
@@ -82,10 +103,15 @@
 }
 
 .type-filter:focus,
-.severity-filter:focus {
+.severity-filter:focus,
+.status-filter:focus,
+.time-filter:focus,
+.status-select:focus,
+.notes-input:focus {
   outline: none;
   border-color: #667eea;
   box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  color: #1f2937;
 }
 
 .loading,
@@ -235,6 +261,7 @@
   border-radius: 6px;
   font-size: 0.875rem;
   background: white;
+  color: #1f2937;
 }
 
 .notes-input {
@@ -244,6 +271,8 @@
   border: 1px solid #d1d5db;
   border-radius: 6px;
   font-size: 0.875rem;
+  background: white;
+  color: #1f2937;
 }
 
 .btn-save {

@@ -12,6 +12,22 @@ body {
   margin: 0;
   padding: 0;
   min-height: 100vh;
+  color: #1f2937;
+}
+
+/* Ensure form controls have visible text */
+select,
+input[type="text"],
+input[type="number"],
+input[type="datetime-local"],
+textarea {
+  color: #1f2937;
+  background: white;
+}
+
+select option {
+  background: white;
+  color: #1f2937;
 }
 
 #root {
