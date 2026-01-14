@@ -19,6 +19,19 @@ export interface Alert {
     severity: number
     summary: string
     evidence: any
+    status?: string
+    notes?: string | null
+}
+
+export interface VesselPosition {
+    id: number
+    mmsi: string
+    timestamp: string
+    lat: number
+    lon: number
+    sog: number | null
+    cog: number | null
+    heading: number | null
 }
 
 export interface ReplayStatus {
@@ -62,6 +75,7 @@ class ApiClient {
     async getAlerts(params: {
         mmsi?: string
         alert_type?: string
+        status?: string
         min_severity?: number
         max_severity?: number
         start_time?: string
@@ -144,6 +158,44 @@ class ApiClient {
 
     async listUploadedFiles(): Promise<{ files: Array<{ filename: string; path: string; size_bytes: number; size_mb: number }> }> {
         return this.request(`/v1/upload/list`)
+    }
+
+    async updateAlertStatus(alertId: number, status: string, notes?: string): Promise<Alert> {
+        return this.request<Alert>(`/v1/alerts/${alertId}/status`, {
+            method: 'PATCH',
+            body: JSON.stringify({ status, notes }),
+        })
+    }
+
+    async getVesselTrack(
+        mmsi: string,
+        startTime?: string,
+        endTime?: string,
+        limit = 1000
+    ): Promise<VesselPosition[]> {
+        const params = new URLSearchParams({ limit: limit.toString() })
+        if (startTime) params.append('start_time', startTime)
+        if (endTime) params.append('end_time', endTime)
+        return this.request<VesselPosition[]>(`/v1/vessels/${mmsi}/track?${params.toString()}`)
+    }
+
+    exportAlerts(format: 'csv' | 'json', params: {
+        mmsi?: string
+        alert_type?: string
+        status?: string
+        min_severity?: number
+        max_severity?: number
+        start_time?: string
+        end_time?: string
+    } = {}): string {
+        const queryParams = new URLSearchParams()
+        Object.entries(params).forEach(([key, value]) => {
+            if (value !== undefined && value !== null) {
+                queryParams.append(key, value.toString())
+            }
+        })
+        const query = queryParams.toString()
+        return `${this.baseUrl}/v1/alerts/export/${format}${query ? `?${query}` : ''}`
     }
 }
 

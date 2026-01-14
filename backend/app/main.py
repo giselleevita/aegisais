@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from .logging_config import configure_logging
 from .db import Base, engine
-from .models import AlertCooldown  # Ensure AlertCooldown table is created
+from .models import AlertCooldown, VesselPosition  # Ensure all tables are created
 from .api.routes_vessels import router as vessels_router
 from .api.routes_alerts import router as alerts_router
 from .api.routes_tracks import router as tracks_router

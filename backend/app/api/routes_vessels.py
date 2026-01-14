@@ -1,8 +1,10 @@
 from fastapi import APIRouter, Depends, Query, HTTPException
 from sqlalchemy.orm import Session
+from datetime import datetime
+from typing import Optional
 from ..db import get_db
-from ..models import VesselLatest
-from ..schemas import VesselLatestOut
+from ..models import VesselLatest, VesselPosition
+from ..schemas import VesselLatestOut, VesselPositionOut
 
 router = APIRouter()
 
@@ -31,3 +33,23 @@ def get_vessel(
     if vessel is None:
         raise HTTPException(status_code=404, detail=f"Vessel with MMSI {mmsi} not found")
     return VesselLatestOut.model_validate(vessel.__dict__)
+
+@router.get("/vessels/{mmsi}/track", response_model=list[VesselPositionOut])
+def get_vessel_track(
+    mmsi: str,
+    start_time: Optional[datetime] = Query(None, description="Start timestamp (ISO format)"),
+    end_time: Optional[datetime] = Query(None, description="End timestamp (ISO format)"),
+    limit: int = Query(1000, ge=1, le=10000, description="Maximum number of positions"),
+    db: Session = Depends(get_db),
+):
+    """Get historical track positions for a vessel."""
+    query = db.query(VesselPosition).filter(VesselPosition.mmsi == mmsi)
+    
+    if start_time:
+        query = query.filter(VesselPosition.timestamp >= start_time)
+    if end_time:
+        query = query.filter(VesselPosition.timestamp <= end_time)
+    
+    positions = query.order_by(VesselPosition.timestamp.asc()).limit(limit).all()
+    
+    return [VesselPositionOut.model_validate(p.__dict__) for p in positions]

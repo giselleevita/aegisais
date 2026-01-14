@@ -1,10 +1,14 @@
 from fastapi import APIRouter, Depends, Query, HTTPException
+from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 from datetime import datetime
 from typing import Optional
+import csv
+import io
+import json
 from ..db import get_db
 from ..models import Alert
-from ..schemas import AlertOut
+from ..schemas import AlertOut, AlertStatusUpdate
 
 router = APIRouter()
 
@@ -14,6 +18,7 @@ def list_alerts(
     alert_type: Optional[str] = Query(None, description="Filter by alert type (e.g., TELEPORT, TURN_RATE)"),
     min_severity: int = Query(0, ge=0, le=100, description="Minimum severity (0-100)"),
     max_severity: int = Query(100, ge=0, le=100, description="Maximum severity (0-100)"),
+    status: Optional[str] = Query(None, description="Filter by status (new, reviewed, resolved, false_positive)"),
     start_time: Optional[datetime] = Query(None, description="Start timestamp (ISO format)"),
     end_time: Optional[datetime] = Query(None, description="End timestamp (ISO format)"),
     limit: int = Query(100, ge=1, le=1000, description="Maximum number of results"),
@@ -21,7 +26,7 @@ def list_alerts(
     db: Session = Depends(get_db),
 ):
     """
-    List alerts with optional filtering by MMSI, type, severity, and time range.
+    List alerts with optional filtering by MMSI, type, severity, status, and time range.
     Results are ordered by timestamp descending (most recent first).
     """
     query = db.query(Alert)
@@ -31,6 +36,8 @@ def list_alerts(
         query = query.filter(Alert.mmsi == mmsi)
     if alert_type:
         query = query.filter(Alert.type == alert_type)
+    if status:
+        query = query.filter(Alert.status == status)
     if min_severity is not None:
         query = query.filter(Alert.severity >= min_severity)
     if max_severity is not None:
@@ -100,4 +107,129 @@ def get_alert_stats(
             "low": low_severity,
         },
     }
+
+@router.patch("/alerts/{alert_id}/status")
+def update_alert_status(
+    alert_id: int,
+    update: AlertStatusUpdate,
+    db: Session = Depends(get_db),
+):
+    """Update alert status and/or notes."""
+    alert = db.query(Alert).filter(Alert.id == alert_id).first()
+    if alert is None:
+        raise HTTPException(status_code=404, detail="Alert not found")
+    
+    valid_statuses = ["new", "reviewed", "resolved", "false_positive"]
+    if update.status not in valid_statuses:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid status. Must be one of: {', '.join(valid_statuses)}"
+        )
+    
+    alert.status = update.status
+    if update.notes is not None:
+        alert.notes = update.notes
+    
+    db.commit()
+    db.refresh(alert)
+    return AlertOut.model_validate(alert.__dict__)
+
+@router.get("/alerts/export/csv")
+def export_alerts_csv(
+    mmsi: Optional[str] = Query(None),
+    alert_type: Optional[str] = Query(None),
+    status: Optional[str] = Query(None),
+    min_severity: int = Query(0),
+    max_severity: int = Query(100),
+    start_time: Optional[datetime] = Query(None),
+    end_time: Optional[datetime] = Query(None),
+    db: Session = Depends(get_db),
+):
+    """Export alerts as CSV."""
+    query = db.query(Alert)
+    
+    if mmsi:
+        query = query.filter(Alert.mmsi == mmsi)
+    if alert_type:
+        query = query.filter(Alert.type == alert_type)
+    if status:
+        query = query.filter(Alert.status == status)
+    if min_severity is not None:
+        query = query.filter(Alert.severity >= min_severity)
+    if max_severity is not None:
+        query = query.filter(Alert.severity <= max_severity)
+    if start_time:
+        query = query.filter(Alert.timestamp >= start_time)
+    if end_time:
+        query = query.filter(Alert.timestamp <= end_time)
+    
+    alerts = query.order_by(Alert.timestamp.desc()).all()
+    
+    output = io.StringIO()
+    writer = csv.writer(output)
+    
+    # Write header
+    writer.writerow([
+        "ID", "Timestamp", "MMSI", "Type", "Severity", "Status", "Summary", "Notes", "Evidence"
+    ])
+    
+    # Write data
+    for alert in alerts:
+        writer.writerow([
+            alert.id,
+            alert.timestamp.isoformat(),
+            alert.mmsi,
+            alert.type,
+            alert.severity,
+            alert.status,
+            alert.summary,
+            alert.notes or "",
+            json.dumps(alert.evidence)
+        ])
+    
+    output.seek(0)
+    return StreamingResponse(
+        iter([output.getvalue()]),
+        media_type="text/csv",
+        headers={"Content-Disposition": "attachment; filename=alerts_export.csv"}
+    )
+
+@router.get("/alerts/export/json")
+def export_alerts_json(
+    mmsi: Optional[str] = Query(None),
+    alert_type: Optional[str] = Query(None),
+    status: Optional[str] = Query(None),
+    min_severity: int = Query(0),
+    max_severity: int = Query(100),
+    start_time: Optional[datetime] = Query(None),
+    end_time: Optional[datetime] = Query(None),
+    db: Session = Depends(get_db),
+):
+    """Export alerts as JSON."""
+    query = db.query(Alert)
+    
+    if mmsi:
+        query = query.filter(Alert.mmsi == mmsi)
+    if alert_type:
+        query = query.filter(Alert.type == alert_type)
+    if status:
+        query = query.filter(Alert.status == status)
+    if min_severity is not None:
+        query = query.filter(Alert.severity >= min_severity)
+    if max_severity is not None:
+        query = query.filter(Alert.severity <= max_severity)
+    if start_time:
+        query = query.filter(Alert.timestamp >= start_time)
+    if end_time:
+        query = query.filter(Alert.timestamp <= end_time)
+    
+    alerts = query.order_by(Alert.timestamp.desc()).all()
+    
+    alerts_data = [AlertOut.model_validate(a.__dict__).model_dump() for a in alerts]
+    
+    return StreamingResponse(
+        iter([json.dumps(alerts_data, indent=2, default=str)]),
+        media_type="application/json",
+        headers={"Content-Disposition": "attachment; filename=alerts_export.json"}
+    )
 
