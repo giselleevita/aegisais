@@ -1,4 +1,6 @@
 from pydantic_settings import BaseSettings
+from pydantic import field_validator
+from typing import Any
 
 class Settings(BaseSettings):
     app_name: str = "AegisAIS"
@@ -40,6 +42,51 @@ class Settings(BaseSettings):
 
     # Deduplication/cooldown
     alert_cooldown_sec: int = 300  # 5 minutes cooldown per (MMSI, rule_type)
+
+    @field_validator("teleport_speed_knots_short", "teleport_speed_knots_medium")
+    @classmethod
+    def validate_positive_speed(cls, v: float) -> float:
+        if v <= 0:
+            raise ValueError("Speed thresholds must be positive")
+        if v > 1000:
+            raise ValueError("Speed thresholds unreasonably high (>1000 knots)")
+        return v
+
+    @field_validator("teleport_dt_short_max_sec", "teleport_dt_medium_max_sec", "teleport_dt_long_max_sec")
+    @classmethod
+    def validate_time_gaps(cls, v: int) -> int:
+        if v <= 0:
+            raise ValueError("Time gaps must be positive")
+        if v > 86400:  # 24 hours
+            raise ValueError("Time gaps unreasonably large (>24 hours)")
+        return v
+
+    @field_validator("max_turn_rate_deg_per_sec", "max_turn_rate_high_speed_deg_per_sec")
+    @classmethod
+    def validate_turn_rates(cls, v: float) -> float:
+        if v <= 0:
+            raise ValueError("Turn rate thresholds must be positive")
+        if v > 360:
+            raise ValueError("Turn rate thresholds unreasonably high (>360 deg/s)")
+        return v
+
+    @field_validator("alert_cooldown_sec")
+    @classmethod
+    def validate_cooldown(cls, v: int) -> int:
+        if v < 0:
+            raise ValueError("Cooldown must be non-negative")
+        if v > 86400:  # 24 hours
+            raise ValueError("Cooldown unreasonably large (>24 hours)")
+        return v
+
+    @field_validator("default_batch_size")
+    @classmethod
+    def validate_batch_size(cls, v: int) -> int:
+        if v <= 0:
+            raise ValueError("Batch size must be positive")
+        if v > 100000:
+            raise ValueError("Batch size unreasonably large (>100000)")
+        return v
 
     class Config:
         env_prefix = ""

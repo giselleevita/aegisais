@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from .logging_config import configure_logging
 from .db import Base, engine
+from .models import AlertCooldown  # Ensure AlertCooldown table is created
 from .api.routes_vessels import router as vessels_router
 from .api.routes_alerts import router as alerts_router
 from .api.routes_tracks import router as tracks_router
@@ -9,7 +10,10 @@ from .api.ws import router as ws_router
 from .api.routes_upload import router as upload_router
 
 configure_logging()
-Base.metadata.create_all(bind=engine)
+# Note: Database migrations are handled by Alembic
+# Run migrations with: alembic upgrade head
+# For development, you can still use create_all, but migrations are preferred
+# Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="AegisAIS")
 

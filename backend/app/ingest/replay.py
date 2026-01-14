@@ -37,13 +37,8 @@ async def start_replay_task(path: str, speedup: float = 100.0, use_streaming: bo
         use_streaming: If True, use streaming for large files (memory-efficient)
         batch_size: Number of points to process before committing to database
     """
-    replay_state.running = True
-    replay_state.stop_requested = False
-    replay_state.processed = 0
-    replay_state.last_timestamp = None
-
+    # Validate file exists BEFORE setting state to running
     try:
-        # Resolve path - try multiple strategies
         path_obj = Path(path)
         resolved_path = None
         
@@ -69,8 +64,24 @@ async def start_replay_task(path: str, speedup: float = 100.0, use_streaming: bo
                         raise FileNotFoundError(f"File not found: {path} (tried: {PROJECT_ROOT / path}, {Path.cwd() / path})")
         
         path = str(resolved_path)
-        
+    except Exception as e:
+        error_msg = f"Fatal error validating file path: {str(e)}"
+        log.error(error_msg, exc_info=True)
+        try:
+            await broadcast({"kind": "error", "message": error_msg})
+        except:
+            pass
+        return
+    
+    # Only set state to running after validation
+    replay_state.running = True
+    replay_state.stop_requested = False
+    replay_state.processed = 0
+    replay_state.last_timestamp = None
+
+    try:
         # Estimate file size to decide on streaming
+        resolved_path = Path(path)
         file_size_mb = resolved_path.stat().st_size / (1024 * 1024)
         log.info("Resolved replay path: %s (%.2f MB)", path, file_size_mb)
         log.info("PROJECT_ROOT: %s, CWD: %s", PROJECT_ROOT, Path.cwd())
@@ -110,14 +121,15 @@ async def _replay_standard(path: str, speedup: float, batch_size: int):
 
     log.info("Starting replay: %d points, speedup=%.1fx, batch_size=%d", len(pts), speedup, batch_size)
     
-    await _process_points(pts, speedup, batch_size)
+    session_id = f"replay_{id(path)}"  # Unique session ID for track store isolation
+    await _process_points(pts, speedup, batch_size, session_id)
 
 async def _replay_streaming(path: str, speedup: float, batch_size: int):
     """Replay using streaming (processes file in chunks, memory-efficient)."""
     log.info("Starting streaming replay: speedup=%.1fx, batch_size=%d", speedup, batch_size)
     
-    all_pts: list = []
     chunk_count = 0
+    session_id = f"replay_{id(path)}"  # Unique session ID for track store isolation
     
     try:
         for chunk in load_csv_points_streaming(path, chunk_size=10000):
@@ -125,112 +137,87 @@ async def _replay_streaming(path: str, speedup: float, batch_size: int):
                 log.info("Replay stopped by user request")
                 break
             
-            all_pts.extend(chunk)
             chunk_count += 1
             
-            # Process accumulated points in batches
-            if len(all_pts) >= batch_size * 10:  # Process when we have enough points
-                await _process_points(all_pts, speedup, batch_size)
-                all_pts = []  # Clear processed points
-                log.info("Processed %d chunks, continuing...", chunk_count)
-        
-        # Process remaining points
-        if all_pts:
-            await _process_points(all_pts, speedup, batch_size)
+            # Process chunk immediately - don't accumulate!
+            await _process_points(chunk, speedup, batch_size, session_id)
+            log.debug("Processed chunk %d (%d points), continuing...", chunk_count, len(chunk))
         
         log.info("Streaming replay complete: processed %d chunks", chunk_count)
     except Exception as e:
         log.error("Error in streaming replay: %s", e, exc_info=True)
         raise
 
-async def _process_points(pts: list, speedup: float, batch_size: int):
-    """Process a list of points with batching and pacing."""
+async def _process_points(pts: list, speedup: float, batch_size: int, session_id: str = "default"):
+    """Process a list of points with batching and pacing.
+    
+    Uses per-point transactions with error isolation to prevent one bad point
+    from rolling back an entire batch.
+    """
     if not pts:
         return
     
-    with SessionLocal() as db:
-        prev_ts: datetime | None = None
-        errors = 0
-        batch: list = []
-        
-        for idx, p in enumerate(pts):
-            if replay_state.stop_requested:
-                log.info("Replay stopped by user request")
-                break
+    prev_ts: datetime | None = None
+    errors = 0
+    alerts_to_broadcast: list[dict] = []
+    processed_count = 0
+    
+    for idx, p in enumerate(pts):
+        if replay_state.stop_requested:
+            log.info("Replay stopped by user request")
+            break
 
-            # Pacing (optional)
-            if prev_ts is not None:
-                dt = (p.timestamp - prev_ts).total_seconds()
-                if dt > 0:
-                    await asyncio.sleep(dt / max(speedup, 0.1))
-            prev_ts = p.timestamp
+        # Pacing (optional)
+        if prev_ts is not None:
+            dt = (p.timestamp - prev_ts).total_seconds()
+            if dt > 0:
+                await asyncio.sleep(dt / max(speedup, 0.1))
+        prev_ts = p.timestamp
 
+        # Use per-point transaction for error isolation
+        with SessionLocal() as db:
             try:
-                alerts = process_point(db, p)
-                batch.append((p, alerts))
+                alerts = process_point(db, p, session_id)
+                
+                # Commit immediately for this point (prevents rollback of entire batch)
+                db.commit()
                 
                 # Log if alerts were generated
                 if alerts:
                     log.info("Generated %d alert(s) for point %d (MMSI %s)", len(alerts), idx, p.mmsi)
+                    alerts_to_broadcast.extend(alerts)
                 
-                # Commit in batches for better performance
-                if len(batch) >= batch_size:
-                    db.commit()
-                    log.debug("Committed batch of %d points", len(batch))
-                    
-                    # Broadcast updates
-                    total_alerts_in_batch = 0
-                    for _, alerts_list in batch:
-                        if alerts_list:
-                            total_alerts_in_batch += len(alerts_list)
-                            for a in alerts_list:
-                                await broadcast({"kind": "alert", "data": a})
-                    
-                    if total_alerts_in_batch > 0:
-                        log.info("Broadcast %d alert(s) from batch", total_alerts_in_batch)
-                    
-                    replay_state.processed += len(batch)
-                    if batch:
-                        replay_state.last_timestamp = batch[-1][0].timestamp.isoformat()
+                processed_count += 1
+                replay_state.processed = processed_count
+                replay_state.last_timestamp = p.timestamp.isoformat()
+                
+                # Broadcast progress periodically (every batch_size points)
+                if processed_count % batch_size == 0:
+                    # Broadcast alerts accumulated so far
+                    for a in alerts_to_broadcast:
+                        await broadcast({"kind": "alert", "data": a})
+                    alerts_to_broadcast = []  # Clear after broadcasting
                     
                     # Broadcast progress update
                     await broadcast({"kind": "tick", "processed": replay_state.processed})
-                    
-                    batch = []  # Clear batch
+                    log.debug("Processed %d points", processed_count)
                     
             except Exception as e:
                 log.error("Error processing point %d (MMSI %s): %s", idx, p.mmsi, e, exc_info=True)
-                db.rollback()
+                db.rollback()  # Rollback only this point's transaction
                 errors += 1
-                continue
+                continue  # Continue processing next point
 
-        # Commit remaining batch
-        if batch:
-            try:
-                db.commit()
-                log.debug("Committed final batch of %d points", len(batch))
-                
-                # Broadcast remaining updates
-                total_alerts_in_batch = 0
-                for _, alerts_list in batch:
-                    if alerts_list:
-                        total_alerts_in_batch += len(alerts_list)
-                        for a in alerts_list:
-                            await broadcast({"kind": "alert", "data": a})
-                
-                if total_alerts_in_batch > 0:
-                    log.info("Broadcast %d alert(s) from final batch", total_alerts_in_batch)
-                
-                replay_state.processed += len(batch)
-                if batch:
-                    replay_state.last_timestamp = batch[-1][0].timestamp.isoformat()
-                
-                await broadcast({"kind": "tick", "processed": replay_state.processed})
-            except Exception as e:
-                log.error("Error committing final batch: %s", e, exc_info=True)
-                db.rollback()
-
-        if errors > 0:
-            log.warning("Replay completed with %d errors out of %d points", errors, len(pts))
-        
-        log.info("Processed batch: %d points, %d errors", len(pts), errors)
+    # Broadcast remaining alerts
+    if alerts_to_broadcast:
+        for a in alerts_to_broadcast:
+            await broadcast({"kind": "alert", "data": a})
+        log.info("Broadcast %d remaining alert(s)", len(alerts_to_broadcast))
+    
+    # Final progress update
+    await broadcast({"kind": "tick", "processed": replay_state.processed})
+    
+    if errors > 0:
+        log.warning("Replay completed with %d errors out of %d points", errors, len(pts))
+    
+    log.info("Processed batch: %d points, %d errors", len(pts), errors)

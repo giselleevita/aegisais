@@ -1,7 +1,8 @@
 import logging
+from datetime import datetime, timedelta
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
-from ..models import VesselLatest, Alert
+from ..models import VesselLatest, Alert, AlertCooldown
 from ..ingest.loaders import AisPoint
 from ..tracking.track_store import TrackStore
 from ..settings import settings
@@ -16,21 +17,33 @@ from ..detection.rules import (
 )
 
 log = logging.getLogger("aegisais.pipeline")
-_track_store = TrackStore(window_size=5)
 
-# Alert cooldown tracking: (MMSI, rule_type) -> last_alert_timestamp
-_alert_cooldowns: dict[tuple[str, str], float] = {}
+# Per-request track stores (will be created per processing session)
+# In a multi-worker setup, consider using Redis or database-backed track storage
+_track_stores: dict[str, TrackStore] = {}
 
-def process_point(db: Session, p: AisPoint) -> list[dict]:
+def _get_track_store(session_id: str = "default") -> TrackStore:
+    """Get or create a track store for a processing session."""
+    if session_id not in _track_stores:
+        _track_stores[session_id] = TrackStore(window_size=5)
+    return _track_stores[session_id]
+
+def process_point(db: Session, p: AisPoint, session_id: str = "default") -> list[dict]:
     """
     - Update latest vessel position
     - Run detectors using last track points
     - Persist alerts
     
+    Args:
+        db: Database session
+        p: AIS point to process
+        session_id: Identifier for the processing session (for track store isolation)
+    
     Returns list of new alerts (as dicts) generated from this point.
     """
     try:
-        tw = _track_store.push(p)
+        track_store = _get_track_store(session_id)
+        tw = track_store.push(p)
         pts = list(tw.points)
 
         # upsert vessel latest
@@ -73,19 +86,56 @@ def process_point(db: Session, p: AisPoint) -> list[dict]:
                 try:
                     res = rule(p1, p2)
                     if res:
-                        # Check cooldown (prevent spam)
-                        cooldown_key = (p2.mmsi, res["type"])
-                        last_alert_time = _alert_cooldowns.get(cooldown_key, 0)
-                        current_time = p2.timestamp.timestamp()
-                        time_since_last = current_time - last_alert_time
+                        # Check cooldown in database (prevent spam)
+                        cooldown = db.query(AlertCooldown).filter(
+                            AlertCooldown.mmsi == p2.mmsi,
+                            AlertCooldown.rule_type == res["type"]
+                        ).first()
                         
-                        if time_since_last < settings.alert_cooldown_sec:
-                            log.debug("Alert %s for MMSI %s in cooldown (%.1f s < %d s)", 
-                                     res["type"], p2.mmsi, time_since_last, settings.alert_cooldown_sec)
-                            continue
+                        if cooldown:
+                            time_since_last = (p2.timestamp - cooldown.last_alert_timestamp).total_seconds()
+                            if time_since_last < settings.alert_cooldown_sec:
+                                log.debug("Alert %s for MMSI %s in cooldown (%.1f s < %d s)", 
+                                         res["type"], p2.mmsi, time_since_last, settings.alert_cooldown_sec)
+                                continue
+                            # Update existing cooldown
+                            cooldown.last_alert_timestamp = p2.timestamp
+                        else:
+                            # Create new cooldown record
+                            cooldown = AlertCooldown(
+                                mmsi=p2.mmsi,
+                                rule_type=res["type"],
+                                last_alert_timestamp=p2.timestamp
+                            )
+                            db.add(cooldown)
                         
-                        # Update cooldown
-                        _alert_cooldowns[cooldown_key] = current_time
+                        # Reduce evidence bloat - store only essential fields
+                        evidence = res.get("evidence", {})
+                        if isinstance(evidence, dict):
+                            # Extract only key metrics, not full point objects
+                            slim_evidence = {
+                                "dt_sec": evidence.get("dt_sec"),
+                                "distance_m": evidence.get("distance_m"),
+                                "implied_speed_kn": evidence.get("implied_speed_kn"),
+                                "turn_rate_deg_per_sec": evidence.get("turn_rate_deg_per_sec"),
+                                "accel_knots_per_sec": evidence.get("accel_knots_per_sec"),
+                                "tier": evidence.get("tier"),
+                                "p1_lat": p1.lat,
+                                "p1_lon": p1.lon,
+                                "p1_timestamp": p1.timestamp.isoformat(),
+                                "p2_lat": p2.lat,
+                                "p2_lon": p2.lon,
+                                "p2_timestamp": p2.timestamp.isoformat(),
+                                "p2_sog": p2.sog,
+                                "p2_cog": p2.cog,
+                                "p2_heading": p2.heading,
+                            }
+                            # Add any other rule-specific fields
+                            for key in ["reason", "sog_diff", "implied_speed", "heading_delta", "cog_delta"]:
+                                if key in evidence:
+                                    slim_evidence[key] = evidence[key]
+                        else:
+                            slim_evidence = evidence
                         
                         log.info("Alert triggered: %s for MMSI %s - %s", res["type"], p2.mmsi, res["summary"])
                         a = Alert(
@@ -94,7 +144,7 @@ def process_point(db: Session, p: AisPoint) -> list[dict]:
                             type=res["type"],
                             severity=int(res["severity"]),
                             summary=res["summary"],
-                            evidence=res["evidence"],
+                            evidence=slim_evidence,
                         )
                         db.add(a)
                         new_alerts.append(
@@ -104,7 +154,7 @@ def process_point(db: Session, p: AisPoint) -> list[dict]:
                                 "type": res["type"],
                                 "severity": int(res["severity"]),
                                 "summary": res["summary"],
-                                "evidence": res["evidence"],
+                                "evidence": slim_evidence,
                             }
                         )
                         v.last_alert_severity = max(v.last_alert_severity or 0, int(res["severity"]))
