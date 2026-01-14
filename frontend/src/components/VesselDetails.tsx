@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { apiClient } from '../api/client'
-import type { Vessel, Alert, VesselPosition } from '../api/client'
+import type { Vessel, Alert, VesselPosition } from '../types'
 import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from 'react-leaflet'
 import type { LatLngExpression, LatLngBoundsExpression } from 'leaflet'
 import 'leaflet/dist/leaflet.css'
@@ -66,7 +66,10 @@ export default function VesselDetails({ mmsi, onClose }: VesselDetailsProps) {
             setAlerts(alertsData)
             setTrack(trackData)
         } catch (error) {
-            console.error('Failed to load vessel data:', error)
+            if (import.meta.env.DEV) {
+                // eslint-disable-next-line no-console
+                console.error('Failed to load vessel data:', error)
+            }
         } finally {
             setLoading(false)
         }
@@ -231,7 +234,7 @@ export default function VesselDetails({ mmsi, onClose }: VesselDetailsProps) {
                                     {Object.entries(alertStats.byType).map(([type, count]) => (
                                         <div key={type} className="type-item">
                                             <span className="type-name">{type}</span>
-                                            <span className="type-count">{count}</span>
+                                            <span className="type-count">{typeof count === 'number' ? count : 0}</span>
                                         </div>
                                     ))}
                                 </div>
@@ -327,10 +330,12 @@ export default function VesselDetails({ mmsi, onClose }: VesselDetailsProps) {
                                 )}
 
                                 {/* Alert positions */}
-                                {alertPositions.map(({ alert, lat, lon }) => (
+                                {alertPositions
+                                    .filter(({ lat, lon }) => typeof lat === 'number' && typeof lon === 'number')
+                                    .map(({ alert, lat, lon }) => (
                                     <Marker
                                         key={alert.id}
-                                        position={[lat, lon]}
+                                        position={[lat as number, lon as number]}
                                         icon={getAlertIcon(alert.severity)}
                                     >
                                         <Popup>

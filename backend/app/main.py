@@ -8,6 +8,7 @@ from .api.routes_alerts import router as alerts_router
 from .api.routes_tracks import router as tracks_router
 from .api.ws import router as ws_router
 from .api.routes_upload import router as upload_router
+from .api.routes_health import router as health_router
 
 configure_logging()
 # Note: Database migrations are handled by Alembic
@@ -31,3 +32,15 @@ app.include_router(alerts_router, prefix="/v1", tags=["alerts"])
 app.include_router(tracks_router, prefix="/v1", tags=["replay"])
 app.include_router(ws_router, prefix="/v1", tags=["stream"])
 app.include_router(upload_router, prefix="/v1", tags=["upload"])
+app.include_router(health_router, prefix="/v1", tags=["health"])
+
+@app.get("/")
+async def root():
+    """Root endpoint with API information."""
+    return {
+        "name": "AegisAIS",
+        "version": "0.1.0",
+        "description": "AIS Data Integrity and Anomaly Detection Tool",
+        "docs": "/docs",
+        "health": "/v1/health"
+    }

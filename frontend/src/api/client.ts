@@ -1,45 +1,16 @@
 import { API_BASE_URL } from '../config'
-
-export interface Vessel {
-    mmsi: string
-    timestamp: string
-    lat: number
-    lon: number
-    sog: number | null
-    cog: number | null
-    heading: number | null
-    last_alert_severity: number
-}
-
-export interface Alert {
-    id: number
-    timestamp: string
-    mmsi: string
-    type: string
-    severity: number
-    summary: string
-    evidence: any
-    status?: string
-    notes?: string | null
-}
-
-export interface VesselPosition {
-    id: number
-    mmsi: string
-    timestamp: string
-    lat: number
-    lon: number
-    sog: number | null
-    cog: number | null
-    heading: number | null
-}
-
-export interface ReplayStatus {
-    running: boolean
-    processed: number
-    last_timestamp: string | null
-    stop_requested: boolean
-}
+import type {
+    Vessel,
+    Alert,
+    VesselPosition,
+    ReplayStatus,
+    AlertStats,
+    AlertFilters,
+    UploadedFile,
+    UploadResponse,
+    ReplayStartResponse,
+    ReplayStopResponse,
+} from '../types'
 
 class ApiClient {
     private baseUrl: string
@@ -49,19 +20,33 @@ class ApiClient {
     }
 
     private async request<T>(endpoint: string, options?: RequestInit): Promise<T> {
-        const response = await fetch(`${this.baseUrl}${endpoint}`, {
-            ...options,
-            headers: {
-                'Content-Type': 'application/json',
-                ...options?.headers,
-            },
-        })
+        try {
+            const response = await fetch(`${this.baseUrl}${endpoint}`, {
+                ...options,
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...options?.headers,
+                },
+            })
 
-        if (!response.ok) {
-            throw new Error(`API error: ${response.statusText}`)
+            if (!response.ok) {
+                let errorMessage = `API error: ${response.statusText}`
+                try {
+                    const errorData = await response.json()
+                    errorMessage = errorData.detail || errorData.message || errorMessage
+                } catch {
+                    // If JSON parsing fails, use default message
+                }
+                throw new Error(errorMessage)
+            }
+
+            return response.json() as Promise<T>
+        } catch (error) {
+            if (error instanceof Error) {
+                throw error
+            }
+            throw new Error('Unknown error occurred')
         }
-
-        return response.json()
     }
 
     async getVessels(minSeverity = 0, limit = 500): Promise<Vessel[]> {
@@ -72,17 +57,7 @@ class ApiClient {
         return this.request<Vessel>(`/v1/vessels/${mmsi}`)
     }
 
-    async getAlerts(params: {
-        mmsi?: string
-        alert_type?: string
-        status?: string
-        min_severity?: number
-        max_severity?: number
-        start_time?: string
-        end_time?: string
-        limit?: number
-        offset?: number
-    } = {}): Promise<Alert[]> {
+    async getAlerts(params: AlertFilters = {}): Promise<Alert[]> {
         const queryParams = new URLSearchParams()
         Object.entries(params).forEach(([key, value]) => {
             if (value !== undefined && value !== null) {
@@ -100,7 +75,7 @@ class ApiClient {
     async getAlertStats(params: {
         start_time?: string
         end_time?: string
-    } = {}): Promise<any> {
+    } = {}): Promise<AlertStats> {
         const queryParams = new URLSearchParams()
         Object.entries(params).forEach(([key, value]) => {
             if (value !== undefined && value !== null) {
@@ -116,7 +91,7 @@ class ApiClient {
         speedup = 100.0,
         useStreaming = true,
         batchSize = 100
-    ): Promise<{ status: string; path: string; speedup: number; streaming: boolean; batch_size: number }> {
+    ): Promise<ReplayStartResponse> {
         const params = new URLSearchParams({
             path,
             speedup: speedup.toString(),
@@ -128,7 +103,7 @@ class ApiClient {
         })
     }
 
-    async stopReplay(): Promise<{ status: string }> {
+    async stopReplay(): Promise<ReplayStopResponse> {
         return this.request(`/v1/replay/stop`, {
             method: 'POST',
         })
@@ -138,7 +113,7 @@ class ApiClient {
         return this.request<ReplayStatus>(`/v1/replay/status`)
     }
 
-    async uploadFile(file: File): Promise<{ status: string; filename: string; path: string; size_bytes: number; size_mb: number }> {
+    async uploadFile(file: File): Promise<UploadResponse> {
         const formData = new FormData()
         formData.append('file', file)
 
@@ -156,8 +131,8 @@ class ApiClient {
         return response.json()
     }
 
-    async listUploadedFiles(): Promise<{ files: Array<{ filename: string; path: string; size_bytes: number; size_mb: number }> }> {
-        return this.request(`/v1/upload/list`)
+    async listUploadedFiles(): Promise<{ files: UploadedFile[] }> {
+        return this.request<{ files: UploadedFile[] }>(`/v1/upload/list`)
     }
 
     async updateAlertStatus(alertId: number, status: string, notes?: string): Promise<Alert> {
@@ -179,15 +154,7 @@ class ApiClient {
         return this.request<VesselPosition[]>(`/v1/vessels/${mmsi}/track?${params.toString()}`)
     }
 
-    exportAlerts(format: 'csv' | 'json', params: {
-        mmsi?: string
-        alert_type?: string
-        status?: string
-        min_severity?: number
-        max_severity?: number
-        start_time?: string
-        end_time?: string
-    } = {}): string {
+    exportAlerts(format: 'csv' | 'json', params: AlertFilters = {}): string {
         const queryParams = new URLSearchParams()
         Object.entries(params).forEach(([key, value]) => {
             if (value !== undefined && value !== null) {

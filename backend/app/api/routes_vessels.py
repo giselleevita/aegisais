@@ -5,6 +5,7 @@ from typing import Optional
 from ..db import get_db
 from ..models import VesselLatest, VesselPosition
 from ..schemas import VesselLatestOut, VesselPositionOut
+from ..api.validators import validate_mmsi
 
 router = APIRouter()
 
@@ -28,7 +29,20 @@ def get_vessel(
     mmsi: str,
     db: Session = Depends(get_db),
 ):
-    """Get a specific vessel by MMSI."""
+    """
+    Get a specific vessel by MMSI.
+    
+    Args:
+        mmsi: Vessel MMSI (9 digits)
+        db: Database session
+    
+    Returns:
+        Vessel information
+    
+    Raises:
+        HTTPException: If MMSI is invalid or vessel not found
+    """
+    validate_mmsi(mmsi)
     vessel = db.query(VesselLatest).filter(VesselLatest.mmsi == mmsi).first()
     if vessel is None:
         raise HTTPException(status_code=404, detail=f"Vessel with MMSI {mmsi} not found")
@@ -42,7 +56,23 @@ def get_vessel_track(
     limit: int = Query(1000, ge=1, le=10000, description="Maximum number of positions"),
     db: Session = Depends(get_db),
 ):
-    """Get historical track positions for a vessel."""
+    """
+    Get historical track positions for a vessel.
+    
+    Args:
+        mmsi: Vessel MMSI (9 digits)
+        start_time: Optional start timestamp filter
+        end_time: Optional end timestamp filter
+        limit: Maximum number of positions to return (1-10000)
+        db: Database session
+    
+    Returns:
+        List of vessel positions
+    
+    Raises:
+        HTTPException: If MMSI is invalid
+    """
+    validate_mmsi(mmsi)
     query = db.query(VesselPosition).filter(VesselPosition.mmsi == mmsi)
     
     if start_time:

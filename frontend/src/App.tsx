@@ -70,34 +70,44 @@ function App() {
         </div>
       </header>
 
-      <nav className="app-nav">
+      <nav className="app-nav" role="navigation" aria-label="Main navigation">
         <button
           className={activeTab === 'home' ? 'active' : ''}
           onClick={() => setActiveTab('home')}
+          aria-label="Home page"
+          aria-current={activeTab === 'home' ? 'page' : undefined}
         >
           Home
         </button>
         <button
           className={activeTab === 'dashboard' ? 'active' : ''}
           onClick={() => setActiveTab('dashboard')}
+          aria-label="Dashboard"
+          aria-current={activeTab === 'dashboard' ? 'page' : undefined}
         >
           Dashboard
         </button>
         <button
           className={activeTab === 'vessels' ? 'active' : ''}
           onClick={() => setActiveTab('vessels')}
+          aria-label="Vessels"
+          aria-current={activeTab === 'vessels' ? 'page' : undefined}
         >
           Vessels
         </button>
         <button
           className={activeTab === 'alerts' ? 'active' : ''}
           onClick={() => setActiveTab('alerts')}
+          aria-label="Alerts"
+          aria-current={activeTab === 'alerts' ? 'page' : undefined}
         >
           Alerts
         </button>
         <button
           className={activeTab === 'map' ? 'active' : ''}
           onClick={() => setActiveTab('map')}
+          aria-label="Map view"
+          aria-current={activeTab === 'map' ? 'page' : undefined}
         >
           Map
         </button>

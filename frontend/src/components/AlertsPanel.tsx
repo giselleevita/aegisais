@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { apiClient } from '../api/client'
-import type { Alert } from '../api/client'
+import type { Alert, AlertFilters, AlertEvidence } from '../types'
 import './AlertsPanel.css'
 
 export default function AlertsPanel() {
@@ -23,7 +23,7 @@ export default function AlertsPanel() {
     const loadAlerts = async () => {
         try {
             setLoading(true)
-            const params: any = { limit: 100 }
+            const params: AlertFilters = { limit: 100 }
             if (filterType) params.alert_type = filterType
             if (filterStatus) params.status = filterStatus
             if (minSeverity > 0) params.min_severity = minSeverity
@@ -31,8 +31,11 @@ export default function AlertsPanel() {
             if (endTime) params.end_time = new Date(endTime).toISOString()
             const data = await apiClient.getAlerts(params)
             setAlerts(data)
-        } catch (error) {
-            console.error('Failed to load alerts:', error)
+        } catch (err) {
+            if (import.meta.env.DEV) {
+                // eslint-disable-next-line no-console
+                console.error('Failed to load alerts:', err)
+            }
         } finally {
             setLoading(false)
         }
@@ -44,14 +47,18 @@ export default function AlertsPanel() {
             await loadAlerts()
             setEditingAlert(null)
             setAlertNotes('')
-        } catch (error) {
-            console.error('Failed to update alert status:', error)
-            alert('Failed to update alert status')
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : 'Failed to update alert status'
+            if (import.meta.env.DEV) {
+                // eslint-disable-next-line no-console
+                console.error('Failed to update alert status:', err)
+            }
+            alert(`Failed to update alert status: ${errorMessage}`)
         }
     }
 
     const handleExport = (format: 'csv' | 'json') => {
-        const params: any = {}
+        const params: AlertFilters = {}
         if (filterType) params.alert_type = filterType
         if (filterStatus) params.status = filterStatus
         if (minSeverity > 0) params.min_severity = minSeverity
@@ -314,7 +321,7 @@ function getAlertClassification(type: string): { tier: 'integrity' | 'suspicious
 }
 
 function renderEvidence(alert: Alert) {
-    const e: any = alert.evidence || {}
+    const e: AlertEvidence = alert.evidence || {}
 
     switch (alert.type) {
         case 'TELEPORT':
@@ -399,7 +406,7 @@ function renderEvidence(alert: Alert) {
 
             return (
                 <ul className="evidence-list">
-                    {lat !== undefined && lon !== undefined && (
+                    {typeof lat === 'number' && typeof lon === 'number' && (
                         <li>
                             <span className="label">Position:</span> {lat.toFixed(4)}, {lon.toFixed(4)}
                         </li>
