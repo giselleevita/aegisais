@@ -119,3 +119,34 @@
     margin: 0.5rem 0;
     line-height: 1.5;
 }
+
+.demo-features {
+    margin-top: 1rem;
+    padding: 1rem;
+    background: white;
+    border-radius: 6px;
+    border: 1px solid #e5e7eb;
+}
+
+.demo-features p {
+    margin: 0 0 0.75rem 0;
+    color: #1f2937;
+    font-weight: 500;
+}
+
+.demo-features ul {
+    margin: 0;
+    padding-left: 1.5rem;
+    color: #374151;
+    font-size: 0.875rem;
+}
+
+.demo-features li {
+    margin: 0.5rem 0;
+    line-height: 1.5;
+}
+
+.demo-features strong {
+    color: #1f2937;
+    font-weight: 600;
+}

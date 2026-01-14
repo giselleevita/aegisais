@@ -46,6 +46,20 @@ export default function DemoMode({ onStartDemo }: DemoModeProps) {
             <div className="demo-header">
                 <h3>🚀 Try Demo Mode</h3>
                 <p>Start with a sample file to see how AegisAIS works</p>
+                <div className="demo-features">
+                    <p><strong>Available demo files:</strong></p>
+                    <ul>
+                        <li><strong>demo_comprehensive.csv</strong> - All alert types (recommended)</li>
+                        <li><strong>demo_teleport_t1.csv</strong> - TELEPORT Tier 1 (impossible speed)</li>
+                        <li><strong>demo_teleport_t2.csv</strong> - TELEPORT Tier 2 (suspicious speed)</li>
+                        <li><strong>demo_turn_rate_t1.csv</strong> - TURN_RATE Tier 1 (impossible turn)</li>
+                        <li><strong>demo_turn_rate_t2.csv</strong> - TURN_RATE Tier 2 (suspicious turn)</li>
+                        <li><strong>demo_position_invalid.csv</strong> - Invalid coordinates</li>
+                        <li><strong>demo_acceleration.csv</strong> - Impossible acceleration</li>
+                        <li><strong>demo_heading_cog.csv</strong> - Heading/COG mismatch</li>
+                        <li><strong>demo_normal.csv</strong> - Normal track (no alerts)</li>
+                    </ul>
+                </div>
             </div>
 
             {loading ? (
