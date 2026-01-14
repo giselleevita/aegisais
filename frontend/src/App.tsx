@@ -5,6 +5,7 @@ import VesselsPanel from './components/VesselsPanel'
 import AlertsPanel from './components/AlertsPanel'
 import ReplayControls from './components/ReplayControls'
 import AboutAegisAIS from './components/AboutAegisAIS'
+import ErrorBoundary from './components/ErrorBoundary'
 import { useWebSocket } from './hooks/useWebSocket'
 import { API_BASE_URL } from './config'
 
@@ -48,14 +49,20 @@ function App() {
 
       <main className="app-main">
         <div className="main-content">
-          {activeTab === 'dashboard' && <Dashboard lastMessage={lastMessage} />}
-          {activeTab === 'vessels' && <VesselsPanel />}
-          {activeTab === 'alerts' && <AlertsPanel />}
+          <ErrorBoundary>
+            {activeTab === 'dashboard' && <Dashboard lastMessage={lastMessage} />}
+            {activeTab === 'vessels' && <VesselsPanel />}
+            {activeTab === 'alerts' && <AlertsPanel />}
+          </ErrorBoundary>
         </div>
 
         <aside className="app-sidebar">
-          <ReplayControls lastMessage={lastMessage} />
-          <AboutAegisAIS />
+          <ErrorBoundary>
+            <ReplayControls lastMessage={lastMessage} />
+          </ErrorBoundary>
+          <ErrorBoundary>
+            <AboutAegisAIS />
+          </ErrorBoundary>
         </aside>
       </main>
     </div>

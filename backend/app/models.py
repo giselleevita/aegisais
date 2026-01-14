@@ -29,7 +29,21 @@ class Alert(Base):
     summary = Column(String, nullable=False)
     evidence = Column(JSON, nullable=False)
 
+class AlertCooldown(Base):
+    """Tracks last alert time per (MMSI, rule_type) for cooldown mechanism."""
+    __tablename__ = "alert_cooldowns"
+
+    mmsi = Column(String, primary_key=True, nullable=False)
+    rule_type = Column(String, primary_key=True, nullable=False)
+    last_alert_timestamp = Column(DateTime, nullable=False, index=True)
+
+# Composite indexes for common query patterns
 Index("idx_alerts_mmsi_time", Alert.mmsi, Alert.timestamp)
+Index("idx_alerts_type_time", Alert.type, Alert.timestamp)  # For filtering by type and time
+Index("idx_alerts_severity_time", Alert.severity, Alert.timestamp)  # For severity + time queries
 Index("idx_alerts_timestamp", Alert.timestamp)
 Index("idx_alerts_severity", Alert.severity)
 Index("idx_vessels_timestamp", VesselLatest.timestamp)
+Index("idx_vessels_severity", VesselLatest.last_alert_severity)  # For severity filtering
+Index("idx_cooldown_mmsi_type", AlertCooldown.mmsi, AlertCooldown.rule_type)
+Index("idx_cooldown_timestamp", AlertCooldown.last_alert_timestamp)  # For cleanup queries
