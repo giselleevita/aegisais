@@ -19,7 +19,10 @@ export default function DemoMode({ onStartDemo }: DemoModeProps) {
             const result = await apiClient.listUploadedFiles()
             setDemoFiles(result.files)
         } catch (error) {
-            console.error('Failed to load demo files:', error)
+            if (import.meta.env.DEV) {
+                // eslint-disable-next-line no-console
+                console.error('Failed to load demo files:', error)
+            }
         } finally {
             setLoading(false)
         }
@@ -30,7 +33,10 @@ export default function DemoMode({ onStartDemo }: DemoModeProps) {
             await apiClient.startReplay(filePath, 100, true, 100)
             onStartDemo()
         } catch (error) {
-            console.error('Failed to start demo:', error)
+            if (import.meta.env.DEV) {
+                // eslint-disable-next-line no-console
+                console.error('Failed to start demo:', error)
+            }
             alert('Failed to start demo. Please check if the file exists.')
         }
     }

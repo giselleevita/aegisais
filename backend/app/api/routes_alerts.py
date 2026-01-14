@@ -9,6 +9,7 @@ import json
 from ..db import get_db
 from ..models import Alert
 from ..schemas import AlertOut, AlertStatusUpdate
+from ..api.validators import validate_alert_type, validate_alert_status, validate_mmsi
 
 router = APIRouter()
 
@@ -31,12 +32,15 @@ def list_alerts(
     """
     query = db.query(Alert)
     
-    # Apply filters
+    # Apply filters with validation
     if mmsi:
+        validate_mmsi(mmsi)
         query = query.filter(Alert.mmsi == mmsi)
     if alert_type:
+        validate_alert_type(alert_type)
         query = query.filter(Alert.type == alert_type)
     if status:
+        validate_alert_status(status)
         query = query.filter(Alert.status == status)
     if min_severity is not None:
         query = query.filter(Alert.severity >= min_severity)
@@ -49,7 +53,6 @@ def list_alerts(
     
     # Order and paginate
     query = query.order_by(Alert.timestamp.desc())
-    total = query.count()
     results = query.offset(offset).limit(limit).all()
     
     return [AlertOut.model_validate(a.__dict__) for a in results]
@@ -114,17 +117,23 @@ def update_alert_status(
     update: AlertStatusUpdate,
     db: Session = Depends(get_db),
 ):
-    """Update alert status and/or notes."""
+    """
+    Update alert status and/or notes.
+    
+    Args:
+        alert_id: Alert ID to update
+        update: Status update request with status and optional notes
+        db: Database session
+    
+    Returns:
+        Updated alert
+    """
     alert = db.query(Alert).filter(Alert.id == alert_id).first()
     if alert is None:
         raise HTTPException(status_code=404, detail="Alert not found")
     
-    valid_statuses = ["new", "reviewed", "resolved", "false_positive"]
-    if update.status not in valid_statuses:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Invalid status. Must be one of: {', '.join(valid_statuses)}"
-        )
+    # Validate status
+    validate_alert_status(update.status)
     
     alert.status = update.status
     if update.notes is not None:
@@ -136,23 +145,32 @@ def update_alert_status(
 
 @router.get("/alerts/export/csv")
 def export_alerts_csv(
-    mmsi: Optional[str] = Query(None),
-    alert_type: Optional[str] = Query(None),
-    status: Optional[str] = Query(None),
-    min_severity: int = Query(0),
-    max_severity: int = Query(100),
-    start_time: Optional[datetime] = Query(None),
-    end_time: Optional[datetime] = Query(None),
+    mmsi: Optional[str] = Query(None, description="Filter by MMSI"),
+    alert_type: Optional[str] = Query(None, description="Filter by alert type"),
+    status: Optional[str] = Query(None, description="Filter by status"),
+    min_severity: int = Query(0, ge=0, le=100, description="Minimum severity"),
+    max_severity: int = Query(100, ge=0, le=100, description="Maximum severity"),
+    start_time: Optional[datetime] = Query(None, description="Start timestamp filter"),
+    end_time: Optional[datetime] = Query(None, description="End timestamp filter"),
     db: Session = Depends(get_db),
 ):
-    """Export alerts as CSV."""
+    """
+    Export alerts as CSV file.
+    
+    Supports all the same filters as GET /v1/alerts.
+    Returns a CSV file download.
+    """
     query = db.query(Alert)
     
+    # Apply filters with validation
     if mmsi:
+        validate_mmsi(mmsi)
         query = query.filter(Alert.mmsi == mmsi)
     if alert_type:
+        validate_alert_type(alert_type)
         query = query.filter(Alert.type == alert_type)
     if status:
+        validate_alert_status(status)
         query = query.filter(Alert.status == status)
     if min_severity is not None:
         query = query.filter(Alert.severity >= min_severity)
@@ -196,23 +214,32 @@ def export_alerts_csv(
 
 @router.get("/alerts/export/json")
 def export_alerts_json(
-    mmsi: Optional[str] = Query(None),
-    alert_type: Optional[str] = Query(None),
-    status: Optional[str] = Query(None),
-    min_severity: int = Query(0),
-    max_severity: int = Query(100),
-    start_time: Optional[datetime] = Query(None),
-    end_time: Optional[datetime] = Query(None),
+    mmsi: Optional[str] = Query(None, description="Filter by MMSI"),
+    alert_type: Optional[str] = Query(None, description="Filter by alert type"),
+    status: Optional[str] = Query(None, description="Filter by status"),
+    min_severity: int = Query(0, ge=0, le=100, description="Minimum severity"),
+    max_severity: int = Query(100, ge=0, le=100, description="Maximum severity"),
+    start_time: Optional[datetime] = Query(None, description="Start timestamp filter"),
+    end_time: Optional[datetime] = Query(None, description="End timestamp filter"),
     db: Session = Depends(get_db),
 ):
-    """Export alerts as JSON."""
+    """
+    Export alerts as JSON file.
+    
+    Supports all the same filters as GET /v1/alerts.
+    Returns a JSON file download.
+    """
     query = db.query(Alert)
     
+    # Apply filters with validation
     if mmsi:
+        validate_mmsi(mmsi)
         query = query.filter(Alert.mmsi == mmsi)
     if alert_type:
+        validate_alert_type(alert_type)
         query = query.filter(Alert.type == alert_type)
     if status:
+        validate_alert_status(status)
         query = query.filter(Alert.status == status)
     if min_severity is not None:
         query = query.filter(Alert.severity >= min_severity)

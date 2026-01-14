@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react'
 import { apiClient } from '../api/client'
-import type { ReplayStatus } from '../api/client'
+import type { ReplayStatus, WebSocketMessage } from '../types'
 import FileDropZone from './FileDropZone'
 import './ReplayControls.css'
 
 interface ReplayControlsProps {
-    lastMessage?: any
+    lastMessage?: WebSocketMessage | null
 }
 
 export default function ReplayControls({ lastMessage }: ReplayControlsProps) {
@@ -37,7 +37,10 @@ export default function ReplayControls({ lastMessage }: ReplayControlsProps) {
             const data = await apiClient.getReplayStatus()
             setStatus(data)
         } catch (error) {
-            console.error('Failed to load replay status:', error)
+            if (import.meta.env.DEV) {
+                // eslint-disable-next-line no-console
+                console.error('Failed to load replay status:', error)
+            }
         }
     }
 
@@ -52,8 +55,9 @@ export default function ReplayControls({ lastMessage }: ReplayControlsProps) {
             setLoading(true)
             await apiClient.startReplay(filePath, speedup, useStreaming, parsedBatchSize)
             await loadStatus()
-        } catch (error: any) {
-            alert(`Failed to start replay: ${error.message}`)
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : 'Failed to start replay'
+            alert(`Failed to start replay: ${errorMessage}`)
         } finally {
             setLoading(false)
         }
@@ -63,8 +67,9 @@ export default function ReplayControls({ lastMessage }: ReplayControlsProps) {
         try {
             await apiClient.stopReplay()
             await loadStatus()
-        } catch (error: any) {
-            alert(`Failed to stop replay: ${error.message}`)
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : 'Failed to stop replay'
+            alert(`Failed to stop replay: ${errorMessage}`)
         }
     }
 
@@ -74,19 +79,15 @@ export default function ReplayControls({ lastMessage }: ReplayControlsProps) {
             setError(null)
 
             // Step 1: Upload file
-            console.log('Uploading file:', file.name)
             const result = await apiClient.uploadFile(file)
-            console.log('File uploaded successfully:', result)
 
             // Automatically set the file path
             setFilePath(result.path)
 
             // Step 2: Start replay
-            console.log('Starting replay with path:', result.path, 'speedup:', speedup)
             try {
                 const parsedBatchSize = Number(batchSize) || 1
-                const replayResult = await apiClient.startReplay(result.path, speedup, useStreaming, parsedBatchSize)
-                console.log('Replay start response:', replayResult)
+                await apiClient.startReplay(result.path, speedup, useStreaming, parsedBatchSize)
 
                 // Wait a bit and check if it's actually running
                 await new Promise(resolve => setTimeout(resolve, 1500))
@@ -96,20 +97,17 @@ export default function ReplayControls({ lastMessage }: ReplayControlsProps) {
                 setTimeout(async () => {
                     await loadStatus()
                     const newStatus = await apiClient.getReplayStatus()
-                    console.log('Replay status check:', newStatus)
                     if (!newStatus.running && newStatus.processed === 0) {
                         setError('Replay may have failed to start. Check server logs for details.')
                     }
                 }, 2000)
-            } catch (replayError: any) {
-                console.error('Replay start error:', replayError)
-                const errorMsg = replayError.message || 'Failed to start replay'
+            } catch (replayError) {
+                const errorMsg = replayError instanceof Error ? replayError.message : 'Failed to start replay'
                 setError(`Replay failed: ${errorMsg}`)
                 alert(`Replay failed: ${errorMsg}`)
             }
-        } catch (error: any) {
-            console.error('Upload error:', error)
-            const errorMessage = error.message || 'Unknown error occurred'
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred'
             setError(`Upload failed: ${errorMessage}`)
             alert(`Upload failed: ${errorMessage}`)
         } finally {

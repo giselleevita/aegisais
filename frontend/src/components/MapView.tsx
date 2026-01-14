@@ -3,7 +3,7 @@ import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from 'react-
 import type { LatLngExpression, LatLngBoundsExpression } from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import { apiClient } from '../api/client'
-import type { Vessel, Alert, VesselPosition } from '../api/client'
+import type { Vessel, Alert, VesselPosition } from '../types'
 import './MapView.css'
 import L from 'leaflet'
 
@@ -68,7 +68,10 @@ export default function MapView({ selectedVessel, onVesselClick }: MapViewProps)
             setVessels(vesselsData)
             setAlerts(alertsData)
         } catch (error) {
-            console.error('Failed to load map data:', error)
+            if (import.meta.env.DEV) {
+                // eslint-disable-next-line no-console
+                console.error('Failed to load map data:', error)
+            }
         } finally {
             setLoading(false)
         }
@@ -79,7 +82,10 @@ export default function MapView({ selectedVessel, onVesselClick }: MapViewProps)
             const track = await apiClient.getVesselTrack(mmsi, undefined, undefined, 1000)
             setVesselTrack(track)
         } catch (error) {
-            console.error('Failed to load vessel track:', error)
+            if (import.meta.env.DEV) {
+                // eslint-disable-next-line no-console
+                console.error('Failed to load vessel track:', error)
+            }
         }
     }
 
@@ -182,10 +188,12 @@ export default function MapView({ selectedVessel, onVesselClick }: MapViewProps)
                 ))}
 
                 {/* Alert markers */}
-                {showAlerts && alertPositions.map(({ alert, lat, lon }) => (
+                {showAlerts && alertPositions
+                    .filter(({ lat, lon }) => typeof lat === 'number' && typeof lon === 'number')
+                    .map(({ alert, lat, lon }) => (
                     <Marker
                         key={alert.id}
-                        position={[lat, lon]}
+                        position={[lat as number, lon as number]}
                         icon={getAlertIcon(alert.severity)}
                     >
                         <Popup>

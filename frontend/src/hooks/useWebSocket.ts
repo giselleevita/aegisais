@@ -1,15 +1,17 @@
 import { useEffect, useRef, useState } from 'react'
+import type { WebSocketMessage } from '../types'
 
 interface UseWebSocketReturn {
   connected: boolean
-  lastMessage: any
+  lastMessage: WebSocketMessage | null
   sendMessage: (message: string) => void
 }
 
 export function useWebSocket(url: string): UseWebSocketReturn {
   const [connected, setConnected] = useState(false)
-  const [lastMessage, setLastMessage] = useState<any>(null)
+  const [lastMessage, setLastMessage] = useState<WebSocketMessage | null>(null)
   const wsRef = useRef<WebSocket | null>(null)
+  const pingIntervalRef = useRef<number | null>(null)
 
   useEffect(() => {
     const ws = new WebSocket(url)
@@ -18,40 +20,49 @@ export function useWebSocket(url: string): UseWebSocketReturn {
     ws.onopen = () => {
       setConnected(true)
       // Send a ping to keep connection alive
-      const pingInterval = setInterval(() => {
+      pingIntervalRef.current = window.setInterval(() => {
         if (ws.readyState === WebSocket.OPEN) {
           ws.send(JSON.stringify({ type: 'ping' }))
         } else {
-          clearInterval(pingInterval)
+          if (pingIntervalRef.current) {
+            clearInterval(pingIntervalRef.current)
+            pingIntervalRef.current = null
+          }
         }
       }, 30000) // Ping every 30 seconds
     }
 
     ws.onmessage = (event) => {
       try {
-        const data = JSON.parse(event.data)
+        const data = JSON.parse(event.data) as WebSocketMessage
         setLastMessage(data)
       } catch (e) {
-        console.error('Failed to parse WebSocket message:', e)
+        // Silently handle parse errors - invalid messages are ignored
+        // In production, consider logging to monitoring service
+        if (import.meta.env.DEV) {
+          // eslint-disable-next-line no-console
+          console.warn('Failed to parse WebSocket message:', e)
+        }
       }
     }
 
-    ws.onerror = (error) => {
-      console.error('WebSocket error:', error)
+    ws.onerror = () => {
       setConnected(false)
+      // Error details are logged by browser, no need to duplicate
     }
 
     ws.onclose = () => {
       setConnected(false)
-      // Attempt to reconnect after 3 seconds
-      setTimeout(() => {
-        if (wsRef.current?.readyState === WebSocket.CLOSED) {
-          // Reconnect logic handled by useEffect
-        }
-      }, 3000)
+      if (pingIntervalRef.current) {
+        clearInterval(pingIntervalRef.current)
+        pingIntervalRef.current = null
+      }
     }
 
     return () => {
+      if (pingIntervalRef.current) {
+        clearInterval(pingIntervalRef.current)
+      }
       ws.close()
     }
   }, [url])

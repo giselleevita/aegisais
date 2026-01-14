@@ -57,8 +57,9 @@ export default function FileDropZone({ onFileDrop, acceptedTypes = ['.csv', '.da
             onFileDrop(file)
             setUploadProgress(`Uploaded ${file.name} successfully!`)
             setTimeout(() => setUploadProgress(''), 2000)
-        } catch (err: any) {
-            alert(`Upload failed: ${err.message}`)
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : 'Upload failed'
+            alert(`Upload failed: ${errorMessage}`)
             setUploadProgress('')
         } finally {
             setIsUploading(false)
@@ -94,8 +95,9 @@ export default function FileDropZone({ onFileDrop, acceptedTypes = ['.csv', '.da
             onFileDrop(file)
             setUploadProgress(`Uploaded ${file.name} successfully!`)
             setTimeout(() => setUploadProgress(''), 2000)
-        } catch (err: any) {
-            alert(`Upload failed: ${err.message}`)
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : 'Upload failed'
+            alert(`Upload failed: ${errorMessage}`)
             setUploadProgress('')
         } finally {
             setIsUploading(false)

@@ -1,15 +1,17 @@
 import { useEffect, useState } from 'react'
 import { apiClient } from '../api/client'
+import type { AlertStats, WebSocketMessage } from '../types'
 import './Dashboard.css'
 
 interface DashboardProps {
-    lastMessage: any
+    lastMessage: WebSocketMessage | null
 }
 
 export default function Dashboard({ lastMessage }: DashboardProps) {
-    const [stats, setStats] = useState<any>(null)
+    const [stats, setStats] = useState<AlertStats | null>(null)
     const [vesselCount, setVesselCount] = useState(0)
     const [loading, setLoading] = useState(true)
+    const [error, setError] = useState<string | null>(null)
 
     useEffect(() => {
         loadStats()
@@ -33,8 +35,14 @@ export default function Dashboard({ lastMessage }: DashboardProps) {
         try {
             const data = await apiClient.getAlertStats()
             setStats(data)
-        } catch (error) {
-            console.error('Failed to load stats:', error)
+            setError(null)
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : 'Failed to load stats'
+            setError(errorMessage)
+            if (import.meta.env.DEV) {
+                // eslint-disable-next-line no-console
+                console.error('Failed to load stats:', err)
+            }
         } finally {
             setLoading(false)
         }
@@ -45,8 +53,11 @@ export default function Dashboard({ lastMessage }: DashboardProps) {
             // Get total count by fetching with a high limit
             const allVessels = await apiClient.getVessels(0, 5000)
             setVesselCount(allVessels.length)
-        } catch (error) {
-            console.error('Failed to load vessel count:', error)
+        } catch (err) {
+            if (import.meta.env.DEV) {
+                // eslint-disable-next-line no-console
+                console.error('Failed to load vessel count:', err)
+            }
         }
     }
 
@@ -80,11 +91,17 @@ export default function Dashboard({ lastMessage }: DashboardProps) {
                 </div>
             </div>
 
+            {error && (
+                <div className="dashboard-error" role="alert">
+                    Error: {error}
+                </div>
+            )}
+
             {stats?.by_type && Object.keys(stats.by_type).length > 0 && (
                 <div className="alert-types">
                     <h3>Alerts by Type</h3>
                     <div className="type-list">
-                        {Object.entries(stats.by_type).map(([type, count]: [string, any]) => (
+                        {Object.entries(stats.by_type).map(([type, count]) => (
                             <div key={type} className="type-item">
                                 <span className="type-name">{type}</span>
                                 <span className="type-count">{count}</span>

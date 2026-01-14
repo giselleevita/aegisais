@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { apiClient } from '../api/client'
-import type { Vessel } from '../api/client'
+import type { Vessel } from '../types'
 import './VesselsPanel.css'
 
 interface VesselsPanelProps {
