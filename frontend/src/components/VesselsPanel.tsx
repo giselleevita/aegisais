@@ -3,7 +3,11 @@ import { apiClient } from '../api/client'
 import type { Vessel } from '../api/client'
 import './VesselsPanel.css'
 
-export default function VesselsPanel() {
+interface VesselsPanelProps {
+    onVesselClick?: (mmsi: string) => void
+}
+
+export default function VesselsPanel({ onVesselClick }: VesselsPanelProps) {
     const [vessels, setVessels] = useState<Vessel[]>([])
     const [loading, setLoading] = useState(true)
     const [minSeverity, setMinSeverity] = useState(0)
@@ -64,7 +68,12 @@ export default function VesselsPanel() {
                         <div className="empty-state">No vessels found</div>
                     ) : (
                         filteredVessels.map((vessel) => (
-                            <div key={vessel.mmsi} className="vessel-card">
+                            <div 
+                                key={vessel.mmsi} 
+                                className="vessel-card"
+                                onClick={() => onVesselClick?.(vessel.mmsi)}
+                                style={{ cursor: onVesselClick ? 'pointer' : 'default' }}
+                            >
                                 <div className="vessel-header">
                                     <span className="vessel-mmsi">MMSI: {vessel.mmsi}</span>
                                     <span className={`severity-badge severity-${getSeverityLevel(vessel.last_alert_severity)}`}>

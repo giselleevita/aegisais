@@ -28,6 +28,10 @@ class Alert(Base):
 
     summary = Column(String, nullable=False)
     evidence = Column(JSON, nullable=False)
+    
+    # Alert management fields
+    status = Column(String, default="new", nullable=False, index=True)  # new, reviewed, resolved, false_positive
+    notes = Column(String, nullable=True)  # User notes/comments
 
 class AlertCooldown(Base):
     """Tracks last alert time per (MMSI, rule_type) for cooldown mechanism."""
@@ -36,6 +40,24 @@ class AlertCooldown(Base):
     mmsi = Column(String, primary_key=True, nullable=False)
     rule_type = Column(String, primary_key=True, nullable=False)
     last_alert_timestamp = Column(DateTime, nullable=False, index=True)
+
+class VesselPosition(Base):
+    """Historical vessel positions for track visualization."""
+    __tablename__ = "vessel_positions"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    mmsi = Column(String, index=True, nullable=False)
+    timestamp = Column(DateTime, index=True, nullable=False)
+    
+    lat = Column(Float, nullable=False)
+    lon = Column(Float, nullable=False)
+    
+    sog = Column(Float, nullable=True)
+    cog = Column(Float, nullable=True)
+    heading = Column(Float, nullable=True)
+
+Index("idx_vessel_positions_mmsi_time", VesselPosition.mmsi, VesselPosition.timestamp)
+Index("idx_vessel_positions_timestamp", VesselPosition.timestamp)
 
 # Composite indexes for common query patterns
 Index("idx_alerts_mmsi_time", Alert.mmsi, Alert.timestamp)

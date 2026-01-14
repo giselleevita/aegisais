@@ -7,20 +7,28 @@ export default function AlertsPanel() {
     const [alerts, setAlerts] = useState<Alert[]>([])
     const [loading, setLoading] = useState(true)
     const [filterType, setFilterType] = useState<string>('')
+    const [filterStatus, setFilterStatus] = useState<string>('')
     const [minSeverity, setMinSeverity] = useState(0)
+    const [startTime, setStartTime] = useState<string>('')
+    const [endTime, setEndTime] = useState<string>('')
+    const [editingAlert, setEditingAlert] = useState<number | null>(null)
+    const [alertNotes, setAlertNotes] = useState<string>('')
 
     useEffect(() => {
         loadAlerts()
         const interval = setInterval(loadAlerts, 5000)
         return () => clearInterval(interval)
-    }, [filterType, minSeverity])
+    }, [filterType, filterStatus, minSeverity, startTime, endTime])
 
     const loadAlerts = async () => {
         try {
             setLoading(true)
             const params: any = { limit: 100 }
             if (filterType) params.alert_type = filterType
+            if (filterStatus) params.status = filterStatus
             if (minSeverity > 0) params.min_severity = minSeverity
+            if (startTime) params.start_time = new Date(startTime).toISOString()
+            if (endTime) params.end_time = new Date(endTime).toISOString()
             const data = await apiClient.getAlerts(params)
             setAlerts(data)
         } catch (error) {
@@ -28,6 +36,30 @@ export default function AlertsPanel() {
         } finally {
             setLoading(false)
         }
+    }
+
+    const handleStatusUpdate = async (alertId: number, status: string, notes?: string) => {
+        try {
+            await apiClient.updateAlertStatus(alertId, status, notes)
+            await loadAlerts()
+            setEditingAlert(null)
+            setAlertNotes('')
+        } catch (error) {
+            console.error('Failed to update alert status:', error)
+            alert('Failed to update alert status')
+        }
+    }
+
+    const handleExport = (format: 'csv' | 'json') => {
+        const params: any = {}
+        if (filterType) params.alert_type = filterType
+        if (filterStatus) params.status = filterStatus
+        if (minSeverity > 0) params.min_severity = minSeverity
+        if (startTime) params.start_time = new Date(startTime).toISOString()
+        if (endTime) params.end_time = new Date(endTime).toISOString()
+        
+        const url = apiClient.exportAlerts(format, params)
+        window.open(url, '_blank')
     }
 
     return (
@@ -41,30 +73,70 @@ export default function AlertsPanel() {
                     </div>
                 </div>
                 <div className="panel-controls">
-                    <select
-                        value={filterType}
-                        onChange={(e) => setFilterType(e.target.value)}
-                        className="type-filter"
-                    >
-                        <option value="">All Types</option>
-                        <option value="TELEPORT">Teleport (integrity)</option>
-                        <option value="TELEPORT_T2">Teleport (suspicious)</option>
-                        <option value="TURN_RATE">Turn rate (integrity)</option>
-                        <option value="TURN_RATE_T2">Turn rate (suspicious)</option>
-                        <option value="POSITION_INVALID">Position invalid</option>
-                        <option value="ACCELERATION">Acceleration / SOG mismatch</option>
-                        <option value="HEADING_COG_CONSISTENCY">Heading / COG consistency</option>
-                    </select>
-                    <select
-                        value={minSeverity}
-                        onChange={(e) => setMinSeverity(Number(e.target.value))}
-                        className="severity-filter"
-                    >
-                        <option value={0}>All Severities</option>
-                        <option value={30}>Low (30+)</option>
-                        <option value={50}>Medium (50+)</option>
-                        <option value={70}>High (70+)</option>
-                    </select>
+                    <div className="filter-row">
+                        <select
+                            value={filterType}
+                            onChange={(e) => setFilterType(e.target.value)}
+                            className="type-filter"
+                        >
+                            <option value="">All Types</option>
+                            <option value="TELEPORT">Teleport (integrity)</option>
+                            <option value="TELEPORT_T2">Teleport (suspicious)</option>
+                            <option value="TURN_RATE">Turn rate (integrity)</option>
+                            <option value="TURN_RATE_T2">Turn rate (suspicious)</option>
+                            <option value="POSITION_INVALID">Position invalid</option>
+                            <option value="ACCELERATION">Acceleration / SOG mismatch</option>
+                            <option value="HEADING_COG_CONSISTENCY">Heading / COG consistency</option>
+                        </select>
+                        <select
+                            value={filterStatus}
+                            onChange={(e) => setFilterStatus(e.target.value)}
+                            className="status-filter"
+                        >
+                            <option value="">All Statuses</option>
+                            <option value="new">New</option>
+                            <option value="reviewed">Reviewed</option>
+                            <option value="resolved">Resolved</option>
+                            <option value="false_positive">False Positive</option>
+                        </select>
+                        <select
+                            value={minSeverity}
+                            onChange={(e) => setMinSeverity(Number(e.target.value))}
+                            className="severity-filter"
+                        >
+                            <option value={0}>All Severities</option>
+                            <option value={30}>Low (30+)</option>
+                            <option value={50}>Medium (50+)</option>
+                            <option value={70}>High (70+)</option>
+                        </select>
+                    </div>
+                    <div className="filter-row">
+                        <input
+                            type="datetime-local"
+                            value={startTime}
+                            onChange={(e) => setStartTime(e.target.value)}
+                            placeholder="Start time"
+                            className="time-filter"
+                        />
+                        <input
+                            type="datetime-local"
+                            value={endTime}
+                            onChange={(e) => setEndTime(e.target.value)}
+                            placeholder="End time"
+                            className="time-filter"
+                        />
+                        <button onClick={() => { setStartTime(''); setEndTime('') }} className="btn-clear">
+                            Clear Dates
+                        </button>
+                    </div>
+                    <div className="export-buttons">
+                        <button onClick={() => handleExport('csv')} className="btn-export">
+                            Export CSV
+                        </button>
+                        <button onClick={() => handleExport('json')} className="btn-export">
+                            Export JSON
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -102,16 +174,56 @@ export default function AlertsPanel() {
                                         <span>{getAlertClassification(alert.type).tierLabel}</span>
                                     </div>
                                     <div className="detail-item">
-                                        <span className="label">Purpose:</span>
-                                        <span>{getAlertClassification(alert.type).purpose}</span>
+                                        <span className="label">Status:</span>
+                                        <span className={`status-badge status-${alert.status || 'new'}`}>
+                                            {alert.status || 'new'}
+                                        </span>
                                     </div>
                                 </div>
+                                {alert.notes && (
+                                    <div className="alert-notes">
+                                        <strong>Notes:</strong> {alert.notes}
+                                    </div>
+                                )}
                                 {alert.evidence && (
                                     <details className="alert-evidence">
                                         <summary>Evidence</summary>
                                         {renderEvidence(alert)}
                                     </details>
                                 )}
+                                <div className="alert-actions">
+                                    {editingAlert === alert.id ? (
+                                        <div className="status-edit">
+                                            <select
+                                                value={alert.status || 'new'}
+                                                onChange={(e) => handleStatusUpdate(alert.id, e.target.value, alertNotes)}
+                                                className="status-select"
+                                            >
+                                                <option value="new">New</option>
+                                                <option value="reviewed">Reviewed</option>
+                                                <option value="resolved">Resolved</option>
+                                                <option value="false_positive">False Positive</option>
+                                            </select>
+                                            <input
+                                                type="text"
+                                                value={alertNotes}
+                                                onChange={(e) => setAlertNotes(e.target.value)}
+                                                placeholder="Add notes..."
+                                                className="notes-input"
+                                            />
+                                            <button onClick={() => handleStatusUpdate(alert.id, alert.status || 'new', alertNotes)} className="btn-save">
+                                                Save
+                                            </button>
+                                            <button onClick={() => { setEditingAlert(null); setAlertNotes(''); }} className="btn-cancel">
+                                                Cancel
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <button onClick={() => { setEditingAlert(alert.id); setAlertNotes(alert.notes || ''); }} className="btn-edit">
+                                            Update Status
+                                        </button>
+                                    )}
+                                </div>
                             </div>
                         ))
                     )}

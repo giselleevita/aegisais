@@ -2,7 +2,7 @@ import logging
 from datetime import datetime, timedelta
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
-from ..models import VesselLatest, Alert, AlertCooldown
+from ..models import VesselLatest, Alert, AlertCooldown, VesselPosition
 from ..ingest.loaders import AisPoint
 from ..tracking.track_store import TrackStore
 from ..settings import settings
@@ -67,6 +67,20 @@ def process_point(db: Session, p: AisPoint, session_id: str = "default") -> list
             v.sog = p.sog
             v.cog = p.cog
             v.heading = p.heading
+        
+        # Store historical position for track visualization
+        # Only store every Nth position to avoid database bloat (store every 10th point)
+        # Or store all points if you have sufficient storage
+        position = VesselPosition(
+            mmsi=p.mmsi,
+            timestamp=p.timestamp,
+            lat=p.lat,
+            lon=p.lon,
+            sog=p.sog,
+            cog=p.cog,
+            heading=p.heading
+        )
+        db.add(position)
 
         new_alerts: list[dict] = []
         if len(pts) >= 2:
