@@ -259,4 +259,3 @@ def export_alerts_json(
         media_type="application/json",
         headers={"Content-Disposition": "attachment; filename=alerts_export.json"}
     )
-
