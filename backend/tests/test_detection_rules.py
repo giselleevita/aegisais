@@ -126,7 +126,9 @@ class TestAccelerationRule:
     def test_acceleration_normal(self):
         """Should not detect normal acceleration."""
         p1 = create_point("123456789", 40.0, -74.0, datetime.now(), sog=10.0)
-        p2 = create_point("123456789", 40.01, -74.0, datetime.now() + timedelta(seconds=60), sog=12.0)
+        # Move a short distance over 60 seconds at a slightly higher SOG; implied speed
+        # stays close enough to reported SOG that this should be considered normal.
+        p2 = create_point("123456789", 40.001, -74.0, datetime.now() + timedelta(seconds=60), sog=12.0)
         
         result = rule_acceleration(p1, p2)
         # Normal acceleration should not trigger

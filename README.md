@@ -1,8 +1,12 @@
 # AegisAIS
 
+[![CI](https://github.com/giselleevita/aegisais/actions/workflows/ci.yml/badge.svg)](https://github.com/giselleevita/aegisais/actions/workflows/ci.yml)
+
 **AIS Data Integrity and Anomaly Detection Tool**
 
 AegisAIS is an automated data integrity checker for Automatic Identification System (AIS) maritime data. It ingests AIS position reports, maintains track history per vessel, and automatically detects physically impossible or internally inconsistent data patterns.
+
+See [`SECURITY.md`](./SECURITY.md) for scope, limitations, and responsible use.
 
 ## 🚀 Features
 
