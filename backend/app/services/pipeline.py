@@ -2,11 +2,14 @@ import logging
 from datetime import datetime, timedelta
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
-from ..models import VesselLatest, Alert, AlertCooldown, VesselPosition
-from ..ingest.loaders import AisPoint
-from ..tracking.track_store import TrackStore
-from ..settings import settings
-from ..detection.rules import (
+from app.modules.vessels.models import VesselLatest
+from app.modules.alerts.models import Alert
+from app.modules.alerts.models import AlertCooldown
+from app.modules.vessels.models import VesselPosition
+from app.infrastructure.ingest.loaders import AisPoint
+from app.tracking.track_store import TrackStore
+from app.core.config import settings
+from app.detection.rules import (
     rule_teleport,
     rule_teleport_t2,
     rule_turn_rate,

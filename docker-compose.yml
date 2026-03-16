@@ -23,5 +23,16 @@ services:
     depends_on:
       - db
 
+  itdae-ingestion:
+    build:
+      context: ./backend
+    command: python -m app.modules.itdae.ingestion.stream
+    environment:
+      DATABASE_URL: postgresql+psycopg://aegisais:aegisais@db:5432/aegisais
+      ITDAE_AIS_API_KEY: ${ITDAE_AIS_API_KEY:-}
+      ITDAE_BALTIC_BBOX: ${ITDAE_BALTIC_BBOX:-}
+    depends_on:
+      - db
+
 volumes:
   aegisais_pg:

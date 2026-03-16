@@ -1,7 +1,7 @@
 from collections import deque
 from dataclasses import dataclass
 from typing import Deque, Dict
-from ..ingest.loaders import AisPoint
+from app.infrastructure.ingest.loaders import AisPoint
 
 @dataclass
 class TrackWindow:

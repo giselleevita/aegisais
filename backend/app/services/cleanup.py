@@ -2,8 +2,8 @@
 import logging
 from datetime import datetime, timedelta
 from sqlalchemy.orm import Session
-from ..models import AlertCooldown
-from ..settings import settings
+from app.modules.alerts.models import AlertCooldown
+from app.core.config import settings
 
 log = logging.getLogger("aegisais.cleanup")
 

@@ -1,20 +1,21 @@
 import { useState, useEffect } from 'react'
 import './App.css'
-import WelcomePage from './components/WelcomePage'
-import Dashboard from './components/Dashboard'
-import VesselsPanel from './components/VesselsPanel'
-import AlertsPanel from './components/AlertsPanel'
-import MapView from './components/MapView'
-import VesselDetails from './components/VesselDetails'
-import ReplayControls from './components/ReplayControls'
-import AboutAegisAIS from './components/AboutAegisAIS'
-import Onboarding from './components/Onboarding'
-import ErrorBoundary from './components/ErrorBoundary'
-import { useWebSocket } from './hooks/useWebSocket'
-import { API_BASE_URL } from './config'
+import WelcomePage from '@/shared/components/WelcomePage/WelcomePage'
+import Dashboard from '@/shared/components/Dashboard/Dashboard'
+import VesselsPanel from '@/features/vessels/components/VesselsPanel'
+import AlertsPanel from '@/features/alerts/components/AlertsPanel'
+import MapView from '@/features/map/components/MapView'
+import VesselDetails from '@/features/vessels/components/VesselDetails'
+import ReplayControls from '@/shared/components/ReplayControls/ReplayControls'
+import AboutAegisAIS from '@/shared/components/AboutAegisAIS/AboutAegisAIS'
+import Onboarding from '@/shared/components/Onboarding/Onboarding'
+import ErrorBoundary from '@/shared/components/ErrorBoundary'
+import ITDAEPanel from '@/features/itdae/components/ITDAEPanel'
+import { useWebSocket } from '@/shared/hooks/useWebSocket'
+import { API_BASE_URL } from '@/core/config'
 
 function App() {
-  const [activeTab, setActiveTab] = useState<'home' | 'dashboard' | 'vessels' | 'alerts' | 'map' | 'vessel-details'>('home')
+  const [activeTab, setActiveTab] = useState<'home' | 'dashboard' | 'vessels' | 'alerts' | 'map' | 'itdae' | 'vessel-details'>('home')
   const [selectedVessel, setSelectedVessel] = useState<string | null>(null)
   const [showOnboarding, setShowOnboarding] = useState(false)
   const { connected, lastMessage } = useWebSocket(`${API_BASE_URL.replace('http', 'ws')}/v1/stream`)
@@ -111,13 +112,21 @@ function App() {
         >
           Map
         </button>
+        <button
+          className={activeTab === 'itdae' ? 'active' : ''}
+          onClick={() => setActiveTab('itdae')}
+          aria-label="Infrastructure threats"
+          aria-current={activeTab === 'itdae' ? 'page' : undefined}
+        >
+          ⚠ ITDAE
+        </button>
       </nav>
 
       <main className="app-main">
         <div className="main-content">
           <ErrorBoundary>
             {activeTab === 'home' && (
-              <WelcomePage 
+              <WelcomePage
                 onStartOnboarding={() => {
                   localStorage.removeItem('aegisais_onboarding_completed')
                   setShowOnboarding(true)
@@ -127,11 +136,16 @@ function App() {
             {activeTab === 'dashboard' && <Dashboard lastMessage={lastMessage} />}
             {activeTab === 'vessels' && <VesselsPanel onVesselClick={(mmsi) => { setSelectedVessel(mmsi); setActiveTab('vessel-details'); }} />}
             {activeTab === 'alerts' && <AlertsPanel />}
-            {activeTab === 'map' && <MapView selectedVessel={selectedVessel} onVesselClick={(mmsi) => { setSelectedVessel(mmsi); setActiveTab('vessel-details'); }} />}
+            {activeTab === 'itdae' && (
+              <ErrorBoundary>
+                <ITDAEPanel />
+              </ErrorBoundary>
+            )}
+            {activeTab === 'map' && <MapView selectedVessel={selectedVessel} onVesselClick={(mmsi) => { setSelectedVessel(mmsi); setActiveTab('vessel-details'); }} showInfrastructure={activeTab === 'map'} />}
             {activeTab === 'vessel-details' && selectedVessel && (
-              <VesselDetails 
-                mmsi={selectedVessel} 
-                onClose={() => { setSelectedVessel(null); setActiveTab('vessels'); }} 
+              <VesselDetails
+                mmsi={selectedVessel}
+                onClose={() => { setSelectedVessel(null); setActiveTab('vessels'); }}
               />
             )}
           </ErrorBoundary>
