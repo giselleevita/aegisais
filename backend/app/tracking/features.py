@@ -1,5 +1,6 @@
+from typing import Optional
 import math
-from ..ingest.loaders import AisPoint
+from app.infrastructure.ingest.loaders import AisPoint
 
 EARTH_R = 6371000.0  # meters
 
@@ -18,7 +19,7 @@ def heading_delta_deg(h1: float, h2: float) -> float:
     d = abs((h2 - h1) % 360.0)
     return min(d, 360.0 - d)
 
-def implied_speed_knots(p1: AisPoint, p2: AisPoint) -> float | None:
+def implied_speed_knots(p1: AisPoint, p2: AisPoint) ->Optional[ float]:
     dt = (p2.timestamp - p1.timestamp).total_seconds()
     if dt <= 0:
         return None

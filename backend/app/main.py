@@ -1,14 +1,18 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from .logging_config import configure_logging
-from .db import Base, engine
-from .models import AlertCooldown, VesselPosition  # Ensure all tables are created
-from .api.routes_vessels import router as vessels_router
-from .api.routes_alerts import router as alerts_router
-from .api.routes_tracks import router as tracks_router
-from .api.ws import router as ws_router
-from .api.routes_upload import router as upload_router
-from .api.routes_health import router as health_router
+from app.core.logging import configure_logging
+from app.core.database import Base, engine
+from app.modules.alerts.models import AlertCooldown
+from app.modules.vessels.models import VesselPosition
+from app.api.v1.vessels import router as vessels_router
+from app.api.v1.alerts import router as alerts_router
+from app.api.v1.tracks import router as tracks_router
+from app.infrastructure.ws.manager import router as ws_router
+from app.api.v1.upload import router as upload_router
+from app.api.v1.health import router as health_router
+
+# ITDAE integration
+from app.modules.itdae.api.routes_itdae import router as itdae_router
 
 configure_logging()
 # Note: Database migrations are handled by Alembic
@@ -33,6 +37,7 @@ app.include_router(tracks_router, prefix="/v1", tags=["replay"])
 app.include_router(ws_router, prefix="/v1", tags=["stream"])
 app.include_router(upload_router, prefix="/v1", tags=["upload"])
 app.include_router(health_router, prefix="/v1", tags=["health"])
+app.include_router(itdae_router, prefix="/api/v1/itdae", tags=["itdae"])
 
 @app.get("/")
 async def root():

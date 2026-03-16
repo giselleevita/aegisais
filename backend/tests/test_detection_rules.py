@@ -1,7 +1,7 @@
 """Unit tests for detection rules."""
 import pytest
 from datetime import datetime, timedelta
-from app.ingest.loaders import AisPoint
+from app.infrastructure.ingest.loaders import AisPoint
 from app.detection.rules import (
     rule_teleport,
     rule_teleport_t2,

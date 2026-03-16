@@ -1,10 +1,10 @@
 from dataclasses import asdict
-from typing import Any
-from ..settings import settings
-from ..ingest.loaders import AisPoint
-from ..tracking.features import implied_speed_knots, heading_delta_deg, haversine_m, mps_to_knots
+from typing import Optional, Any
+from app.core.config import settings
+from app.infrastructure.ingest.loaders import AisPoint
+from app.tracking.features import implied_speed_knots, heading_delta_deg, haversine_m, mps_to_knots
 
-def rule_teleport(p1: AisPoint, p2: AisPoint) -> dict[str, Any] | None:
+def rule_teleport(p1: AisPoint, p2: AisPoint) ->Optional[ dict[str, Any]]:
     """
     Gap-aware teleport detection with tiered thresholds.
     - Short gap (≤120s): 60 kn threshold
@@ -67,7 +67,7 @@ def rule_teleport(p1: AisPoint, p2: AisPoint) -> dict[str, Any] | None:
     return None
 
 
-def rule_teleport_t2(p1: AisPoint, p2: AisPoint) -> dict[str, Any] | None:
+def rule_teleport_t2(p1: AisPoint, p2: AisPoint) ->Optional[ dict[str, Any]]:
     """
     Tier‑2 teleport: suspicious medium/long‑gap jumps below Tier‑1 thresholds.
     Lower‑severity data‑quality signal.
@@ -132,7 +132,7 @@ def rule_teleport_t2(p1: AisPoint, p2: AisPoint) -> dict[str, Any] | None:
     }
 
 
-def rule_turn_rate(p1: AisPoint, p2: AisPoint) -> dict[str, Any] | None:
+def rule_turn_rate(p1: AisPoint, p2: AisPoint) ->Optional[ dict[str, Any]]:
     """
     Turn rate detection using COG when heading is missing/unreliable.
     Uses confidence tiers based on speed.
@@ -152,7 +152,7 @@ def rule_turn_rate(p1: AisPoint, p2: AisPoint) -> dict[str, Any] | None:
     # Prefer COG over heading (more reliable in AIS)
     # Use heading only if both are valid and heading is changing plausibly
     use_heading = False
-    angle_change: float | None = None
+    angle_change:Optional[ float] = None
 
     # Check if heading is available and valid (not stuck/not available)
     heading_valid = (
@@ -244,7 +244,7 @@ def rule_turn_rate(p1: AisPoint, p2: AisPoint) -> dict[str, Any] | None:
     return None
 
 
-def rule_turn_rate_t2(p1: AisPoint, p2: AisPoint) -> dict[str, Any] | None:
+def rule_turn_rate_t2(p1: AisPoint, p2: AisPoint) ->Optional[ dict[str, Any]]:
     """
     Tier‑2 turn‑rate: moderate but suspicious turns below Tier‑1 threshold.
     Higher‑volume, lower‑severity data‑quality signal.
@@ -258,7 +258,7 @@ def rule_turn_rate_t2(p1: AisPoint, p2: AisPoint) -> dict[str, Any] | None:
 
     # Same heading/COG selection as Tier‑1
     use_heading = False
-    angle_change: float | None = None
+    angle_change:Optional[ float] = None
 
     heading_valid = (
         p1.heading is not None
@@ -328,7 +328,7 @@ def rule_turn_rate_t2(p1: AisPoint, p2: AisPoint) -> dict[str, Any] | None:
     }
 
 
-def rule_position_invalid(p1: AisPoint, p2: AisPoint) -> dict[str, Any] | None:
+def rule_position_invalid(p1: AisPoint, p2: AisPoint) ->Optional[ dict[str, Any]]:
     """
     Basic position sanity checks:
     - Out-of-bounds latitude/longitude
@@ -380,7 +380,7 @@ def rule_position_invalid(p1: AisPoint, p2: AisPoint) -> dict[str, Any] | None:
     return None
 
 
-def rule_acceleration(p1: AisPoint, p2: AisPoint) -> dict[str, Any] | None:
+def rule_acceleration(p1: AisPoint, p2: AisPoint) ->Optional[ dict[str, Any]]:
     """
     Detects impossible acceleration/deceleration and SOG vs implied-speed mismatch.
     """
@@ -436,7 +436,7 @@ def rule_acceleration(p1: AisPoint, p2: AisPoint) -> dict[str, Any] | None:
     return None
 
 
-def rule_heading_cog_consistency(p1: AisPoint, p2: AisPoint) -> dict[str, Any] | None:
+def rule_heading_cog_consistency(p1: AisPoint, p2: AisPoint) ->Optional[ dict[str, Any]]:
     """
     Detects wild heading/COG changes at high speed (teleport-turn style anomalies).
     """
@@ -452,7 +452,7 @@ def rule_heading_cog_consistency(p1: AisPoint, p2: AisPoint) -> dict[str, Any] |
         return None
 
     # Combine heading + COG where available
-    angle_change: float | None = None
+    angle_change:Optional[ float] = None
     angle_type = "unknown"
 
     if (
