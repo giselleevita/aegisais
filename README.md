@@ -150,52 +150,44 @@ Comprehensive API documentation is available at:
 
 ## 🏗️ Architecture
 
-### Backend
+### Backend (Modular Monolith)
 
-```
+```text
 backend/app/
-├── api/              # FastAPI routes
-│   ├── routes_alerts.py
-│   ├── routes_vessels.py
-│   ├── routes_tracks.py
-│   ├── routes_upload.py
-│   ├── routes_health.py
-│   └── ws.py
-├── detection/        # Detection rules
-│   ├── rules.py      # 7 detection rules
-│   └── scoring.py
-├── ingest/           # Data loading
-│   ├── loaders.py    # CSV/DAT/ZST loading
-│   └── replay.py     # Replay engine
-├── services/         # Business logic
-│   ├── pipeline.py   # Main processing pipeline
-│   └── cleanup.py    # Maintenance tasks
-├── tracking/         # Track management
-│   ├── track_store.py
-│   └── features.py   # Distance, speed calculations
-├── models.py         # SQLAlchemy models
-├── schemas.py        # Pydantic schemas
-└── settings.py       # Configuration
-```
-
-### Frontend
-
-```
-frontend/src/
-├── api/              # API client
-├── components/        # React components
-│   ├── Dashboard.tsx
-│   ├── AlertsPanel.tsx
-│   ├── VesselsPanel.tsx
-│   ├── MapView.tsx
-│   ├── VesselDetails.tsx
-│   ├── Onboarding.tsx
+├── api/              # Versioned API application layers (e.g., v1/)
+├── core/             # Global configurations, database, and logging setup
+├── infrastructure/   # Technical services (e.g., ingest loaders, replay engine, websockets)
+├── modules/          # Domain-specific logic, organized by feature (e.g., alerts, vessels, itdae)
+│   ├── alerts/       # Alert models, schemas, and detection logic
+│   ├── itdae/        # ITDAE specific data models and services
+│   ├── vessels/      # Vessel models and tracking logic
 │   └── ...
-├── hooks/            # Custom hooks
-│   └── useWebSocket.ts
-├── types/            # TypeScript types
-└── config.ts         # Configuration
-```
+├── services/         # Legacy application services (Pipeline, Cleanup)
+├── tracking/         # Legacy tracking logic
+├── utils/            # Utility functions
+├── main.py           # FastAPI entry point
+└── __init__.py       # Package definition
+```text
+
+### Frontend (Feature-Based)
+
+```text
+frontend/src/
+├── core/             # Core configurations and API clients
+├── features/         # Feature-specific components and logic
+│   ├── alerts/       # Alerts panel and related UI
+│   ├── itdae/        # ITDAE specific layers
+│   ├── map/          # Map view and vessel track visualization
+│   └── vessels/      # Vessel details and panels
+├── layouts/          # Application-wide layout components
+├── shared/           # Reusable components, hooks, and types across features
+│   ├── components/   # FileDropZone, WelcomePage, DemoMode, etc.
+│   ├── hooks/        # useWebSocket, etc.
+│   └── types/        # common.ts
+├── App.tsx           # Main application wrapper
+├── main.tsx          # React entry point
+└── index.css         # Global styles
+```text
 
 ## ⚙️ Configuration
 
