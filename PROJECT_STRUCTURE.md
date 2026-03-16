@@ -1,7 +1,7 @@
 # AegisAIS Project Structure
 
 ## Root Directory
-```
+```text
 aegisais/
 ├── backend/          # Python FastAPI backend
 ├── frontend/         # React TypeScript frontend
@@ -12,86 +12,90 @@ aegisais/
 ├── .gitignore
 ├── README.md
 └── LARGE_DATASET_GUIDE.md
-```
+```text
 
 ## Backend Structure (`backend/`)
-```
+
+AegisAIS follows a **Modular Monolith** architecture to ensure separation of concerns while keeping deployment simple.
+
+```text
 backend/
 ├── app/                    # Main application package
 │   ├── __init__.py
-│   ├── main.py            # FastAPI app entry point
-│   ├── settings.py        # Configuration
-│   ├── db.py              # Database setup
-│   ├── models.py          # SQLAlchemy models
-│   ├── schemas.py         # Pydantic schemas
-│   ├── logging_config.py  # Logging setup
+│   ├── main.py             # FastAPI app entry point
 │   │
-│   ├── api/               # API routes
-│   │   ├── routes_alerts.py
-│   │   ├── routes_tracks.py
-│   │   ├── routes_upload.py
-│   │   ├── routes_vessels.py
-│   │   └── ws.py          # WebSocket handler
+│   ├── api/                # Versioned API routes
+│   │   └── v1/             # API Version 1 endpoints
 │   │
-│   ├── detection/         # Alert detection rules
-│   │   ├── rules.py       # Detection rules (Tier 1 & 2)
-│   │   └── scoring.py     # (Future: scoring logic)
+│   ├── core/               # Global infrastructure
+│   │   ├── config.py       # Settings & environment
+│   │   ├── database.py     # Database session
+│   │   └── logging.py      # Global logger setup
 │   │
-│   ├── ingest/            # Data ingestion
-│   │   ├── loaders.py     # CSV/AIS point loaders
-│   │   └── replay.py      # Replay engine
+│   ├── infrastructure/     # Technical services
+│   │   ├── ingest/         # AIS Data loaders & replay
+│   │   └── ws/             # WebSocket management
 │   │
-│   ├── services/          # Business logic
-│   │   └── pipeline.py    # Point processing pipeline
+│   ├── modules/            # Domain-specific logic
+│   │   ├── alerts/         # Alert rules, schemas
+│   │   ├── itdae/          # ITDAE specific algorithms
+│   │   └── vessels/        # Vessel tracking, models
 │   │
-│   └── tracking/          # Track management
-│       ├── features.py    # Distance/speed calculations
-│       └── track_store.py # Per-vessel track windows
+│   ├── utils/              # Shared utilities
+│   ├── middleware/         # Custom Middlewares
+│   │
+│   ├── detection/          # (Legacy) Core detection logic
+│   ├── services/           # (Legacy) Cross-domain pipelines
+│   └── tracking/           # (Legacy) Core tracking functions
 │
-├── pyproject.toml         # Python dependencies
-├── Dockerfile             # Docker build config
-├── start.sh              # Local dev start script
-└── aegisais.db           # SQLite database (gitignored)
-```
+├── pyproject.toml          # Python dependencies
+├── Dockerfile              # Docker build config
+└── aegisais.db             # SQLite database (gitignored)
+```text
 
 ## Frontend Structure (`frontend/`)
-```
+
+The frontend follows a **Feature-Based** architecture, co-locating components with their respective logic to improve maintainability.
+
+```text
 frontend/
 ├── src/
-│   ├── api/
-│   │   └── client.ts      # API client
+│   ├── core/               # App-wide configurations
+│   │   ├── api-client.ts   # Main API client
+│   │   └── config.ts       # Global settings
 │   │
-│   ├── components/        # React components
-│   │   ├── AboutAegisAIS.tsx/css
-│   │   ├── AlertsPanel.tsx/css
-│   │   ├── Dashboard.tsx/css
-│   │   ├── FileDropZone.tsx/css
-│   │   ├── ReplayControls.tsx/css
-│   │   └── VesselsPanel.tsx/css
+│   ├── features/           # Feature domains
+│   │   ├── alerts/         # Alerts panel, views
+│   │   ├── map/            # Map visualization views
+│   │   ├── vessels/        # Vessel details
+│   │   └── itdae/          # Specific ITDAE feature sets
 │   │
-│   ├── hooks/
-│   │   └── useWebSocket.ts
+│   ├── layouts/            # Page layouts and wrappers
 │   │
-│   ├── App.tsx/css        # Main app component
-│   ├── main.tsx           # Entry point
-│   ├── config.ts          # Configuration
-│   └── index.css          # Global styles
+│   ├── shared/             # Generic, reusable code
+│   │   ├── components/     # UI components (WelcomePage, FileDropZone)
+│   │   ├── hooks/          # Shared hooks (useWebSocket)
+│   │   └── types/          # Types (common.ts)
+│   │
+│   ├── App.tsx             # Main application component
+│   ├── main.tsx            # React entry point
+│   └── index.css           # Global styles
 │
-├── public/
-├── package.json
-├── vite.config.ts
-└── tsconfig.*.json
-```
+├── public/                 # Static assets
+├── package.json            # Node dependencies
+├── vite.config.ts          # Vite build configuration
+└── tsconfig.*.json         # TypeScript configurations
+```text
 
 ## Data Directory (`data/`)
-```
+```text
 data/
 ├── raw/                   # Input AIS files
 │   ├── .gitkeep          # Keep directory in git
 │   └── *.csv, *.dat, *.zst  # (gitignored)
 └── processed/             # Processed outputs (future)
     └── .gitkeep
-```
+```text
 
 ## Key Files
 
