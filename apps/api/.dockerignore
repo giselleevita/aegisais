@@ -1,0 +1,12 @@
+.git
+.pytest_cache
+.ruff_cache
+.lock-venv
+.venv
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+dist
+build
+tests
