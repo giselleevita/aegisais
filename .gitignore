@@ -5,6 +5,7 @@ __pycache__/
 *.so
 .Python
 .venv/
+.lock-venv/
 venv/
 ENV/
 env/
@@ -46,7 +47,12 @@ data/raw/*
 data/processed/*
 !data/processed/.gitkeep
 
-# Frontend
+# Node / Monorepo
+node_modules/
+.turbo/
+package-lock.json
+
+# Frontend (legacy paths)
 frontend/node_modules/
 frontend/dist/
 frontend/.vite/

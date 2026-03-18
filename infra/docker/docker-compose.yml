@@ -1,0 +1,82 @@
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: aegisais
+      POSTGRES_USER: aegisais
+      POSTGRES_PASSWORD: aegisais
+    ports:
+      - "5432:5432"
+    volumes:
+      - aegisais_pg:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - aegisais_redis:/data
+
+  api:
+    build:
+      context: ../../apps/api
+    environment:
+      DATABASE_URL: postgresql+psycopg://aegisais:aegisais@db:5432/aegisais
+      REDIS_URL: redis://redis:6379/0
+      APP_ENV: docker
+    ports:
+      - "8000:8000"
+    volumes:
+      - ../../data:/app/data
+    depends_on:
+      - db
+      - redis
+
+  itdae-ingestion:
+    build:
+      context: ../../apps/api
+    command: python -m app.modules.itdae.ingestion.stream
+    environment:
+      DATABASE_URL: postgresql+psycopg://aegisais:aegisais@db:5432/aegisais
+      REDIS_URL: redis://redis:6379/0
+      ITDAE_AIS_API_KEY: ${ITDAE_AIS_API_KEY:-}
+      ITDAE_BALTIC_BBOX: ${ITDAE_BALTIC_BBOX:-}
+    depends_on:
+      - db
+      - redis
+
+  processing-worker:
+    build:
+      context: ../../apps/api
+    command: python -m app.services.workers.processing_worker
+    environment:
+      DATABASE_URL: postgresql+psycopg://aegisais:aegisais@db:5432/aegisais
+      REDIS_URL: redis://redis:6379/0
+    depends_on:
+      - redis
+
+  persistence-worker:
+    build:
+      context: ../../apps/api
+    command: python -m app.services.workers.persistence_worker
+    environment:
+      DATABASE_URL: postgresql+psycopg://aegisais:aegisais@db:5432/aegisais
+      REDIS_URL: redis://redis:6379/0
+    depends_on:
+      - db
+      - redis
+
+  alert-worker:
+    build:
+      context: ../../apps/api
+    command: python -m app.services.workers.alert_worker
+    environment:
+      DATABASE_URL: postgresql+psycopg://aegisais:aegisais@db:5432/aegisais
+      REDIS_URL: redis://redis:6379/0
+    depends_on:
+      - db
+      - redis
+
+volumes:
+  aegisais_pg:
+  aegisais_redis:

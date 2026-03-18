@@ -6,7 +6,10 @@
 
 AegisAIS is an automated data integrity checker for Automatic Identification System (AIS) maritime data. It ingests AIS position reports, maintains track history per vessel, and automatically detects physically impossible or internally inconsistent data patterns.
 
-See [`SECURITY.md`](./SECURITY.md) for scope, limitations, and responsible use.
+See [`docs/SECURITY.md`](./docs/SECURITY.md) for scope, limitations, and responsible use.
+
+> Note
+> The active application layout is `apps/api` and `apps/web`. Some legacy setup examples and path references below still refer to the older `backend` and `frontend` layout and should be read accordingly until the README is fully refreshed.
 
 ## 🚀 Features
 
