@@ -1,10 +1,16 @@
-from sqlalchemy import Column, Integer, String, DateTime, JSON, Index
+from sqlalchemy import Column, ForeignKey, Integer, String, DateTime, JSON, Index
 from app.core.database import Base
 
 class Alert(Base):
     __tablename__ = "alerts"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
+    organisation_id = Column(
+        Integer,
+        ForeignKey("organisations.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
+    )
     timestamp = Column(DateTime, index=True, nullable=False)
     mmsi = Column(String, index=True, nullable=False)
 

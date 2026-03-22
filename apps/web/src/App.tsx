@@ -12,13 +12,20 @@ import Onboarding from '@/shared/components/Onboarding/Onboarding'
 import ErrorBoundary from '@/shared/components/ErrorBoundary'
 import ITDAEPanel from '@/features/itdae/components/ITDAEPanel'
 import { useWebSocket } from '@/shared/hooks/useWebSocket'
-import { API_BASE_URL } from '@/core/config'
+import { getStreamWebSocketUrl } from '@/core/ws-url'
+import { subscribeAuth } from '@/core/auth-token'
+import AuthBar from '@/shared/components/AuthBar/AuthBar'
+import WatchlistPanel from '@/features/vessels/components/WatchlistPanel'
 
 function App() {
-  const [activeTab, setActiveTab] = useState<'home' | 'dashboard' | 'vessels' | 'alerts' | 'map' | 'itdae' | 'vessel-details'>('home')
+  const [activeTab, setActiveTab] = useState<'home' | 'dashboard' | 'vessels' | 'alerts' | 'map' | 'itdae' | 'watchlist' | 'vessel-details'>('home')
   const [selectedVessel, setSelectedVessel] = useState<string | null>(null)
   const [showOnboarding, setShowOnboarding] = useState(false)
-  const { connected, lastMessage } = useWebSocket(`${API_BASE_URL.replace('http', 'ws')}/v1/stream`)
+  const [streamUrl, setStreamUrl] = useState(() => getStreamWebSocketUrl())
+
+  useEffect(() => subscribeAuth(() => setStreamUrl(getStreamWebSocketUrl())), [])
+
+  const { connected, lastMessage } = useWebSocket(streamUrl)
 
   useEffect(() => {
     // Check if user has completed onboarding
@@ -53,6 +60,7 @@ function App() {
       <header className="app-header">
         <div className="header-content">
           <h1>🛡️ AegisAIS</h1>
+          <AuthBar />
           <div className="header-status">
             <span className={`status-indicator ${connected ? 'connected' : 'disconnected'}`}>
               {connected ? '● Connected' : '○ Disconnected'}
@@ -120,6 +128,14 @@ function App() {
         >
           ⚠ ITDAE
         </button>
+        <button
+          className={activeTab === 'watchlist' ? 'active' : ''}
+          onClick={() => setActiveTab('watchlist')}
+          aria-label="Watchlist"
+          aria-current={activeTab === 'watchlist' ? 'page' : undefined}
+        >
+          Watchlist
+        </button>
       </nav>
 
       <main className="app-main">
@@ -135,10 +151,15 @@ function App() {
             )}
             {activeTab === 'dashboard' && <Dashboard lastMessage={lastMessage} />}
             {activeTab === 'vessels' && <VesselsPanel onVesselClick={(mmsi) => { setSelectedVessel(mmsi); setActiveTab('vessel-details'); }} />}
-            {activeTab === 'alerts' && <AlertsPanel />}
+            {activeTab === 'alerts' && <AlertsPanel streamMessage={lastMessage} />}
             {activeTab === 'itdae' && (
               <ErrorBoundary>
                 <ITDAEPanel />
+              </ErrorBoundary>
+            )}
+            {activeTab === 'watchlist' && (
+              <ErrorBoundary>
+                <WatchlistPanel />
               </ErrorBoundary>
             )}
             {activeTab === 'map' && <MapView selectedVessel={selectedVessel} onVesselClick={(mmsi) => { setSelectedVessel(mmsi); setActiveTab('vessel-details'); }} showInfrastructure={activeTab === 'map'} />}

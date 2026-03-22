@@ -50,7 +50,7 @@ data/processed/*
 # Node / Monorepo
 node_modules/
 .turbo/
-package-lock.json
+# Root package-lock.json is committed for reproducible npm ci in CI.
 
 # Frontend (legacy paths)
 frontend/node_modules/

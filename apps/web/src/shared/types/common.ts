@@ -23,6 +23,8 @@ export interface AlertEvidence {
     implied_speed?: number
     heading_delta?: number
     cog_delta?: number
+    /** Set when the vessel MMSI is on the analyst watchlist (alert pipeline). */
+    watchlist_priority?: 'low' | 'medium' | 'high'
     [key: string]: unknown // Allow additional fields
 }
 
@@ -78,11 +80,20 @@ export interface AlertStats {
     }
 }
 
+/**
+ * Real-time payloads from `/v1/stream` (legacy `kind` events + typed status updates).
+ * Single struct keeps dashboard/replay code simple; not every field applies to every message.
+ */
 export interface WebSocketMessage {
-    kind: 'alert' | 'tick' | 'error'
+    kind?: 'alert' | 'tick' | 'error'
+    type?: 'alert_status_updated'
     data?: Alert
     processed?: number
     message?: string
+    alert_id?: number
+    status?: string
+    updated_by?: string
+    timestamp?: string
 }
 
 export interface AlertFilters {
@@ -122,4 +133,14 @@ export interface ReplayStartResponse {
 
 export interface ReplayStopResponse {
     status: string
+}
+
+export interface WatchlistEntry {
+    id: number
+    mmsi: string
+    label: string
+    priority: 'low' | 'medium' | 'high'
+    added_by_id: number
+    created_at: string
+    is_active: boolean
 }

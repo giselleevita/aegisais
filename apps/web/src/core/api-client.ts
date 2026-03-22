@@ -1,4 +1,5 @@
 import { API_BASE_URL } from '@/core/config'
+import { getAccessToken, setAccessToken } from '@/core/auth-token'
 import type {
     Vessel,
     Alert,
@@ -10,7 +11,9 @@ import type {
     UploadResponse,
     ReplayStartResponse,
     ReplayStopResponse,
+    WatchlistEntry,
 } from '@/shared/types/common'
+import type { ItdaeGeofenceZone } from '@/features/itdae/types'
 
 class ApiClient {
     private baseUrl: string
@@ -19,13 +22,19 @@ class ApiClient {
         this.baseUrl = baseUrl
     }
 
+    private authHeaders(): Record<string, string> {
+        const t = getAccessToken()
+        return t ? { Authorization: `Bearer ${t}` } : {}
+    }
+
     private async request<T>(endpoint: string, options?: RequestInit): Promise<T> {
         try {
             const response = await fetch(`${this.baseUrl}${endpoint}`, {
                 ...options,
                 headers: {
                     'Content-Type': 'application/json',
-                    ...options?.headers,
+                    ...this.authHeaders(),
+                    ...(options?.headers as Record<string, string> | undefined),
                 },
             })
 
@@ -120,7 +129,7 @@ class ApiClient {
         const response = await fetch(`${this.baseUrl}/v1/upload`, {
             method: 'POST',
             body: formData,
-            // Don't set Content-Type header - browser will set it with boundary for FormData
+            headers: this.authHeaders(),
         })
 
         if (!response.ok) {
@@ -154,6 +163,10 @@ class ApiClient {
         return this.request<VesselPosition[]>(`/v1/vessels/${mmsi}/track?${params.toString()}`)
     }
 
+    /**
+     * Legacy URL for unauthenticated download attempts (will 401 when exports require admin).
+     * Prefer {@link downloadAlertsExport}.
+     */
     exportAlerts(format: 'csv' | 'json', params: AlertFilters = {}): string {
         const queryParams = new URLSearchParams()
         Object.entries(params).forEach(([key, value]) => {
@@ -163,6 +176,116 @@ class ApiClient {
         })
         const query = queryParams.toString()
         return `${this.baseUrl}/v1/alerts/export/${format}${query ? `?${query}` : ''}`
+    }
+
+    /**
+     * Download export with Bearer token (required when API enforces auth on export routes).
+     */
+    async downloadAlertsExport(format: 'csv' | 'json', params: AlertFilters = {}): Promise<void> {
+        const queryParams = new URLSearchParams()
+        Object.entries(params).forEach(([key, value]) => {
+            if (value !== undefined && value !== null) {
+                queryParams.append(key, value.toString())
+            }
+        })
+        const query = queryParams.toString()
+        const url = `${this.baseUrl}/v1/alerts/export/${format}${query ? `?${query}` : ''}`
+        const response = await fetch(url, { headers: this.authHeaders() })
+        if (!response.ok) {
+            let message = `Export failed: ${response.statusText}`
+            try {
+                const err = await response.json()
+                message = err.detail || message
+            } catch {
+                /* ignore */
+            }
+            throw new Error(message)
+        }
+        const blob = await response.blob()
+        const cd = response.headers.get('Content-Disposition')
+        let filename = `alerts_export.${format}`
+        const m = cd?.match(/filename="?([^";]+)"?/i)
+        if (m?.[1]) filename = m[1].trim()
+        const objectUrl = URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = objectUrl
+        a.download = filename
+        a.click()
+        URL.revokeObjectURL(objectUrl)
+    }
+
+    async login(username: string, password: string): Promise<{ access_token: string; token_type: string }> {
+        const body = new URLSearchParams()
+        body.set('username', username)
+        body.set('password', password)
+        const response = await fetch(`${this.baseUrl}/v1/auth/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body,
+        })
+        if (!response.ok) {
+            let message = 'Login failed'
+            try {
+                const err = await response.json()
+                message = err.detail || message
+            } catch {
+                /* ignore */
+            }
+            throw new Error(message)
+        }
+        const data = (await response.json()) as { access_token: string; token_type: string }
+        setAccessToken(data.access_token)
+        return data
+    }
+
+    logout(): void {
+        setAccessToken(null)
+    }
+
+    /** ITDAE routes live under `/api/v1/itdae` (not `/v1`). Requires Bearer auth when enforced server-side. */
+    async getItdaeBalticGeofences(): Promise<{ count: number; zones: ItdaeGeofenceZone[] }> {
+        return this.request<{ count: number; zones: ItdaeGeofenceZone[] }>(
+            `/api/v1/itdae/geofences/baltic`
+        )
+    }
+
+    async getWatchlist(): Promise<WatchlistEntry[]> {
+        return this.request<WatchlistEntry[]>(`/v1/watchlist`)
+    }
+
+    async addWatchlistEntry(payload: {
+        mmsi: string
+        label?: string
+        priority?: 'low' | 'medium' | 'high'
+    }): Promise<WatchlistEntry> {
+        return this.request<WatchlistEntry>(`/v1/watchlist`, {
+            method: 'POST',
+            body: JSON.stringify({
+                label: payload.label ?? '',
+                priority: payload.priority ?? 'medium',
+                mmsi: payload.mmsi,
+            }),
+        })
+    }
+
+    async removeWatchlistEntry(mmsi: string): Promise<void> {
+        const response = await fetch(
+            `${this.baseUrl}/v1/watchlist/${encodeURIComponent(mmsi)}`,
+            {
+                method: 'DELETE',
+                headers: this.authHeaders(),
+            }
+        )
+        if (!response.ok) {
+            let errorMessage = `API error: ${response.statusText}`
+            try {
+                const errorData = await response.json()
+                errorMessage = errorData.detail || errorData.message || errorMessage
+            } catch {
+                /* ignore */
+            }
+            throw new Error(errorMessage)
+        }
     }
 }
 

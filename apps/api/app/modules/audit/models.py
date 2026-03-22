@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, JSON
+from sqlalchemy import Column, ForeignKey, Integer, String, DateTime, JSON
 from app.core.database import Base
 
 class AuditLog(Base):
@@ -9,6 +9,12 @@ class AuditLog(Base):
     __tablename__ = "audit_logs"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
+    organisation_id = Column(
+        Integer,
+        ForeignKey("organisations.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
+    )
     timestamp = Column(DateTime, nullable=False, index=True)
     user_id = Column(String, nullable=True, index=True)  # System actions might have null user_id
     

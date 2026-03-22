@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Float, DateTime, SmallInteger, JSON, Index, Text
+from sqlalchemy import Column, Integer, String, Float, DateTime, SmallInteger, JSON, Index, Text, Boolean, ForeignKey
 from app.core.database import Base
 
 class ItdaePosition(Base):
@@ -23,9 +23,17 @@ class ItdaeGeofenceZone(Base):
     __tablename__ = "itdae_geofence_zones"
 
     id = Column(String(64), primary_key=True, nullable=False)
+    organisation_id = Column(
+        Integer,
+        ForeignKey("organisations.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
+    )
     name = Column(String(255), nullable=False)
     description = Column(Text, nullable=True)
     risk_level = Column(String(16), nullable=False)
     polygon_geojson = Column(JSON, nullable=False)
+    is_active = Column(Boolean, nullable=False, default=True)
+    created_by_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default="now()")
     updated_at = Column(DateTime(timezone=True), server_default="now()")
