@@ -24,6 +24,55 @@
   align-items: center;
   max-width: 1400px;
   margin: 0 auto;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.auth-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+  font-size: 0.8rem;
+}
+
+.auth-bar input {
+  padding: 0.25rem 0.45rem;
+  border-radius: 0.35rem;
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  background: rgba(255, 255, 255, 0.12);
+  color: white;
+  width: 6.5rem;
+}
+
+.auth-bar input::placeholder {
+  color: rgba(255, 255, 255, 0.65);
+}
+
+.auth-bar button {
+  padding: 0.25rem 0.55rem;
+  font-size: 0.8rem;
+  border-radius: 0.35rem;
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  cursor: pointer;
+}
+
+.auth-bar button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.auth-bar-label {
+  opacity: 0.95;
+  white-space: nowrap;
+}
+
+.auth-bar-error {
+  color: #fecaca;
+  font-size: 0.75rem;
+  max-width: 12rem;
 }
 
 .app-header h1 {

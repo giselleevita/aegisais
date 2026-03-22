@@ -1,43 +1,19 @@
 import { useEffect, useState } from 'react'
-import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from 'react-leaflet'
-import type { LatLngExpression, LatLngBoundsExpression } from 'leaflet'
+import { MapContainer, TileLayer, Marker, Popup, Polyline } from 'react-leaflet'
+import type { LatLngExpression } from 'leaflet'
 import 'leaflet/dist/leaflet.css'
+import '@/shared/map/leafletSetup'
+import MapBounds from '@/shared/map/MapBounds'
+import { createAlertDivIcon, createVesselDivIcon } from '@/shared/map/alertMarkers'
 import { apiClient } from '@/core/api-client'
 import type { Vessel, Alert, VesselPosition } from '@/shared/types/common'
 import './MapView.css'
-import L from 'leaflet'
 import InfrastructureLayer from '@/features/itdae/components/InfrastructureLayer'
-
-// Fix for default marker icons in React-Leaflet
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-delete (L.Icon.Default.prototype as any)._getIconUrl
-L.Icon.Default.mergeOptions({
-    iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
-    iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
-    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
-})
 
 interface MapViewProps {
     selectedVessel?: string | null
     onVesselClick?: (mmsi: string) => void
     showInfrastructure?: boolean
-}
-
-function MapBounds({ bounds }: { bounds: LatLngExpression[] }) {
-    const map = useMap()
-    useEffect(() => {
-        if (bounds.length > 0) {
-            // Convert to proper bounds format: [[minLat, minLon], [maxLat, maxLon]]
-            const lats = bounds.map(b => Array.isArray(b) ? b[0] : b.lat)
-            const lons = bounds.map(b => Array.isArray(b) ? b[1] : b.lng)
-            const minLat = Math.min(...lats)
-            const maxLat = Math.max(...lats)
-            const minLon = Math.min(...lons)
-            const maxLon = Math.max(...lons)
-            map.fitBounds([[minLat, minLon], [maxLat, maxLon]] as LatLngBoundsExpression)
-        }
-    }, [bounds, map])
-    return null
 }
 
 export default function MapView({ selectedVessel, onVesselClick, showInfrastructure = false }: MapViewProps) {
@@ -48,6 +24,7 @@ export default function MapView({ selectedVessel, onVesselClick, showInfrastruct
     const [showAlerts, setShowAlerts] = useState(true)
     const [showTracks, setShowTracks] = useState(false)
     const [infraVisible, setInfraVisible] = useState(showInfrastructure)
+    const [watchMmsi, setWatchMmsi] = useState<Set<string>>(new Set())
 
     useEffect(() => {
         loadData()
@@ -65,12 +42,14 @@ export default function MapView({ selectedVessel, onVesselClick, showInfrastruct
 
     const loadData = async () => {
         try {
-            const [vesselsData, alertsData] = await Promise.all([
+            const [vesselsData, alertsData, watchlistData] = await Promise.all([
                 apiClient.getVessels(0, 1000),
-                apiClient.getAlerts({ limit: 500, status: 'new' })
+                apiClient.getAlerts({ limit: 500, status: 'new' }),
+                apiClient.getWatchlist().catch(() => [] as { mmsi: string }[]),
             ])
             setVessels(vesselsData)
             setAlerts(alertsData)
+            setWatchMmsi(new Set(watchlistData.map((w) => w.mmsi)))
         } catch (error) {
             if (import.meta.env.DEV) {
                 // eslint-disable-next-line no-console
@@ -91,20 +70,6 @@ export default function MapView({ selectedVessel, onVesselClick, showInfrastruct
                 console.error('Failed to load vessel track:', error)
             }
         }
-    }
-
-    const getSeverityColor = (severity: number): string => {
-        if (severity >= 70) return '#dc2626' // red
-        if (severity >= 30) return '#f59e0b' // amber
-        return '#10b981' // green
-    }
-
-    const getAlertIcon = (severity: number) => {
-        return L.divIcon({
-            className: 'alert-marker',
-            html: `<div style="background-color: ${getSeverityColor(severity)}; width: 12px; height: 12px; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3);"></div>`,
-            iconSize: [12, 12],
-        })
     }
 
     if (loading) {
@@ -180,6 +145,7 @@ export default function MapView({ selectedVessel, onVesselClick, showInfrastruct
                     <Marker
                         key={vessel.mmsi}
                         position={[vessel.lat, vessel.lon]}
+                        icon={createVesselDivIcon(watchMmsi.has(vessel.mmsi))}
                         eventHandlers={{
                             click: () => onVesselClick?.(vessel.mmsi),
                         }}
@@ -206,7 +172,7 @@ export default function MapView({ selectedVessel, onVesselClick, showInfrastruct
                         <Marker
                             key={alert.id}
                             position={[lat as number, lon as number]}
-                            icon={getAlertIcon(alert.severity)}
+                            icon={createAlertDivIcon(alert.severity)}
                         >
                             <Popup>
                                 <div>

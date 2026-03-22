@@ -1,6 +1,6 @@
 """
 ITDAE per-vessel track window store.
-Mirrors app.tracking.track_store but typed for ItdaePoint.
+In-memory per-process window store for ITDAE (main pipeline uses RedisTrackStore).
 """
 from collections import deque
 from dataclasses import dataclass
@@ -18,7 +18,7 @@ class ItdaeTrackWindow:
 class ItdaeTrackStore:
     """
     In-memory store of per-vessel track windows for the ITDAE pipeline.
-    Mirrors TrackStore but operates on ItdaePoint objects.
+    Operates on ItdaePoint objects (same pattern as RedisTrackStore windowing).
 
     Args:
         window_size: Max points to retain per vessel

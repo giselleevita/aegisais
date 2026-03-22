@@ -12,10 +12,12 @@ sys.path.insert(0, str(backend_dir))
 # Import app models and settings
 from app.core.database import Base
 from app.core.config import settings
-from app.modules.auth.models import User
+from app.modules.auth.models import Organisation, PasswordResetToken, User  # noqa: F401
 from app.modules.alerts.models import Alert, AlertCooldown
-from app.modules.vessels.models import VesselLatest, VesselPosition
+from app.modules.vessels.models import VesselLatest, VesselPosition, WatchlistEntry
 from app.modules.itdae.models import ItdaePosition, ItdaeGeofenceZone
+from app.modules.audit.models import AuditLog
+from app.modules.fusion.models import FusedVessel  # noqa: F401 — register metadata for autogenerate
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

@@ -10,8 +10,11 @@ from app.core.database import SessionLocal
 from app.core.logging import configure_logging
 from app.infrastructure.messaging.consumer import RedisConsumer
 from app.modules.alerts.models import Alert
+from app.services.workers.heartbeat import WorkerHeartbeat
 
 log = structlog.get_logger("aegisais.worker.alerts")
+
+HEARTBEAT = WorkerHeartbeat("/tmp/worker_alert_heartbeat")
 
 # Metrics definitions
 ALERTS_PERSISTED = Counter('aegisais_alerts_persisted_total', 'Total alerts persisted to DB')
@@ -28,6 +31,7 @@ def handle_alert(msg_id: str, data: Dict[str, Any]):
         try:
             with SessionLocal() as db:
                 a = Alert(
+                    organisation_id=settings.default_organisation_id,
                     timestamp=datetime.fromisoformat(data["timestamp"]),
                     mmsi=data["mmsi"],
                     type=data["type"],
@@ -68,8 +72,12 @@ def main():
     signal.signal(signal.SIGINT, shutdown_handler)
     signal.signal(signal.SIGTERM, shutdown_handler)
     
+    def on_tick():
+        STREAM_LAG.labels(stream=settings.stream_ais_alerts).set(consumer.get_lag())
+        HEARTBEAT.on_loop_tick()
+
     try:
-        consumer.listen(callback=handle_alert)
+        consumer.listen(callback=handle_alert, on_tick=on_tick)
     except KeyboardInterrupt:
         pass
 

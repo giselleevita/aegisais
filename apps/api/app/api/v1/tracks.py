@@ -1,13 +1,13 @@
 import asyncio
 import structlog
-from typing import Any
+from typing import Annotated, Any
+
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.core.config import settings
-from app.core.logging import configure_logging
-from app.modules.auth.dependencies import get_current_user, require_admin
-from app.infrastructure.ingest.schemas import ReplayStartIn
+from app.middleware.rate_limit import api_read_rate_limit, api_write_rate_limit
+from app.modules.auth.dependencies import require_admin, require_viewer_or_above
 from app.infrastructure.ingest.replay import start_replay_task, replay_state
 
 log = structlog.get_logger("aegisais.replay")
@@ -16,6 +16,7 @@ router = APIRouter()
 
 @router.post("/replay/start")
 async def replay_start(
+    _: Annotated[None, Depends(api_write_rate_limit)],
     path: str = Query(..., description="Server-side path to data file (.csv, .dat, or .zst compressed)"),
     speedup: float = Query(100.0, ge=0.1),
     use_streaming: bool = Query(True, description="Use streaming mode for large files (memory-efficient)"),
@@ -59,8 +60,8 @@ async def replay_start(
             log.error("replay_task_failed", error=str(e), path=path, exc_info=True)
             try:
                 await broadcast({"kind": "error", "message": error_msg, "path": path})
-            except:
-                pass
+            except Exception as broadcast_err:
+                log.debug("replay_error_broadcast_failed", error=str(broadcast_err))
     
     # fire-and-forget asyncio task with proper error handling
     task = asyncio.create_task(run_replay_with_error_handling())
@@ -68,21 +69,28 @@ async def replay_start(
     # Add a callback to log if task fails (but don't await it)
     def log_task_result(task):
         try:
-            if task.exception():
-                log.error("replay_task_exception", exception=str(task.exception()), exc_info=True)
-        except:
-            pass
+            exc = task.exception()
+        except asyncio.CancelledError:
+            return
+        if exc is not None:
+            log.error("replay_task_exception", exception=str(exc), exc_info=True)
     
     task.add_done_callback(log_task_result)
     return {"status": "started", "path": path, "speedup": speedup, "streaming": use_streaming, "batch_size": batch_size}
 
 @router.post("/replay/stop")
-async def replay_stop(admin: Any = Depends(require_admin)):
+async def replay_stop(
+    _: Annotated[None, Depends(api_write_rate_limit)],
+    admin: Any = Depends(require_admin),
+):
     replay_state.stop_requested = True
     return {"status": "stopping"}
 
 @router.get("/replay/status")
-async def replay_status(current_user: Any = Depends(get_current_user)):
+async def replay_status(
+    _: Annotated[None, Depends(api_read_rate_limit)],
+    _viewer: Any = Depends(require_viewer_or_above),
+):
     return {
         "running": replay_state.running,
         "processed": replay_state.processed,

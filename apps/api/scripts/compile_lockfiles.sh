@@ -42,6 +42,7 @@ trap 'rm -f "$runtime_raw" "$dev_input" "$dev_only_raw"' EXIT
 
 "$VENV_DIR/bin/pip-compile" \
   --quiet \
+  --no-annotate \
   --generate-hashes \
   --allow-unsafe \
   --strip-extras \
@@ -92,6 +93,7 @@ PY
 
 "$VENV_DIR/bin/pip-compile" \
   --quiet \
+  --no-annotate \
   --generate-hashes \
   --allow-unsafe \
   --strip-extras \

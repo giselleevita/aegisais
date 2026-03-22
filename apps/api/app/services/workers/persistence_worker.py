@@ -11,9 +11,12 @@ from app.core.database import SessionLocal
 from app.core.logging import configure_logging
 from app.infrastructure.messaging.consumer import RedisConsumer
 from app.modules.vessels.models import VesselLatest, VesselPosition
+from app.services.workers.heartbeat import WorkerHeartbeat
 import sqlalchemy as sa
 
 log = structlog.get_logger("aegisais.worker.persistence")
+
+HEARTBEAT = WorkerHeartbeat("/tmp/worker_persistence_heartbeat")
 
 # Metrics definitions
 FLUSH_LATENCY = Summary('aegisais_persistence_flush_latency_seconds', 'Time spent flushing batch to DB')
@@ -36,7 +39,8 @@ class PersistenceWorker:
         Add message to batch. Flush if batch is full.
         """
         self.batch.append(data)
-        
+        HEARTBEAT.on_successful_message()
+
         if len(self.batch) >= settings.persistence_batch_size:
             self.flush()
         elif time.time() - self.last_flush > settings.persistence_flush_interval_sec:
@@ -99,6 +103,7 @@ class PersistenceWorker:
                     db.commit()
                 
                 log.info("flushed_batch", count=batch_size)
+                HEARTBEAT.on_successful_message()
                 self.batch = []
                 self.last_flush = time.time()
                 
@@ -111,10 +116,13 @@ class PersistenceWorker:
     def run(self):
         log.info("starting_persistence_worker")
         try:
-            self.consumer.listen(
-                callback=self.handle_message,
-                on_tick=lambda: STREAM_LAG.labels(stream=settings.stream_ais_processed).set(self.consumer.get_lag())
-            )
+            def on_tick():
+                STREAM_LAG.labels(stream=settings.stream_ais_processed).set(
+                    self.consumer.get_lag()
+                )
+                HEARTBEAT.on_loop_tick()
+
+            self.consumer.listen(callback=self.handle_message, on_tick=on_tick)
         except KeyboardInterrupt:
             self.stop()
 

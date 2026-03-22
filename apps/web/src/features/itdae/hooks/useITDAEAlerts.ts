@@ -1,8 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
 import type { ItdaeAlert } from '@/features/itdae/types'
-import { API_BASE_URL } from '@/core/config'
-
-const WS_URL = API_BASE_URL.replace(/^http/, 'ws') + '/v1/ws'
+import { getStreamWebSocketUrl } from '@/core/ws-url'
+import { subscribeAuth } from '@/core/auth-token'
 const ITDAE_TYPES = new Set([
     'GEOFENCE_ENTRY',
     'LOITER_IN_ZONE',
@@ -18,21 +17,21 @@ interface UseITDAEAlertsReturn {
 }
 
 /**
- * useITDAEAlerts — extends the existing WebSocket connection to filter
- * and surface only ITDAE-specific alert events in real-time.
- *
- * Reuses the existing /v1/ws WebSocket endpoint; filters by alert type.
- * Keeps a sliding window of the last 50 ITDAE alerts in state.
+ * useITDAEAlerts — subscribes to the shared /v1/stream WebSocket and filters
+ * ITDAE-specific alert events (same transport as useWebSocket).
  */
 export function useITDAEAlerts(): UseITDAEAlertsReturn {
     const [alerts, setAlerts] = useState<ItdaeAlert[]>([])
     const [connected, setConnected] = useState(false)
     const [unreadCount, setUnreadCount] = useState(0)
+    const [streamUrl, setStreamUrl] = useState(() => getStreamWebSocketUrl())
     const wsRef = useRef<WebSocket | null>(null)
     const pingRef = useRef<number | null>(null)
 
+    useEffect(() => subscribeAuth(() => setStreamUrl(getStreamWebSocketUrl())), [])
+
     useEffect(() => {
-        const ws = new WebSocket(WS_URL)
+        const ws = new WebSocket(streamUrl)
         wsRef.current = ws
 
         ws.onopen = () => {
@@ -67,7 +66,7 @@ export function useITDAEAlerts(): UseITDAEAlertsReturn {
             if (pingRef.current) clearInterval(pingRef.current)
             ws.close()
         }
-    }, [])
+    }, [streamUrl])
 
     const clearUnread = useCallback(() => setUnreadCount(0), [])
 

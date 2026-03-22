@@ -1,0 +1,42 @@
+# Alert rules for AegisAIS (Sprint 2 — IMPLEMENTATION_PLAN Task 2.5)
+groups:
+  - name: aegisais
+    rules:
+      - alert: AegisAISStreamLagHigh
+        expr: |
+          max(aegisais_stream_lag) > 1000
+          or max(aegisais_stream_lag_persistence) > 1000
+          or max(aegisais_stream_lag_alert) > 1000
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: Redis stream lag is high for at least one AIS stream
+          description: Processing consumer backlog suggests ingestion or processing is falling behind.
+
+      - alert: AegisAISAPIDown
+        expr: up{job="aegisais_api"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: AegisAIS API scrape target is down
+          description: Prometheus cannot scrape the API /metrics endpoint.
+
+      - alert: AegisAISHighAlertRate
+        expr: sum(rate(aegisais_alerts_total[5m])) * 60 > 100
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: Alert generation rate is unusually high
+          description: Possible data feed issue or detection threshold misconfiguration.
+
+      - alert: AegisAISNoPositionsProcessed
+        expr: increase(aegisais_positions_processed_total[10m]) == 0
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: No AIS positions processed in the last 10 minutes
+          description: Ingestion or processing worker may be stalled.

@@ -1,4 +1,16 @@
-from sqlalchemy import Column, String, Float, DateTime, Index, Integer
+from sqlalchemy import (
+    Column,
+    String,
+    Float,
+    DateTime,
+    Index,
+    Integer,
+    Boolean,
+    ForeignKey,
+    UniqueConstraint,
+)
+from sqlalchemy.sql import func
+
 from app.core.database import Base
 
 class VesselLatest(Base):
@@ -35,3 +47,26 @@ Index("idx_vessel_positions_mmsi_time", VesselPosition.mmsi, VesselPosition.time
 Index("idx_vessel_positions_timestamp", VesselPosition.timestamp)
 Index("idx_vessels_timestamp", VesselLatest.timestamp)
 Index("idx_vessels_severity", VesselLatest.last_alert_severity)
+
+
+class WatchlistEntry(Base):
+    """Analyst-flagged MMSI for priority monitoring."""
+
+    __tablename__ = "watchlist_entries"
+    __table_args__ = (
+        UniqueConstraint("organisation_id", "mmsi", name="uq_watchlist_entries_org_mmsi"),
+    )
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    organisation_id = Column(
+        Integer,
+        ForeignKey("organisations.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
+    )
+    mmsi = Column(String, nullable=False, index=True)
+    label = Column(String, nullable=False, default="")
+    priority = Column(String, nullable=False, default="medium")  # low | medium | high
+    added_by_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    is_active = Column(Boolean, nullable=False, default=True)

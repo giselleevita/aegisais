@@ -2,7 +2,7 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from sqlalchemy import text
-from datetime import datetime
+from datetime import datetime, timezone
 from app.core.database import get_db
 
 router = APIRouter()
@@ -15,7 +15,7 @@ async def health_check():
     """
     return {
         "status": "healthy",
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.now(timezone.utc).isoformat(),
         "service": "AegisAIS"
     }
 
@@ -48,7 +48,7 @@ async def detailed_health_check(db: Session = Depends(get_db)):
 
     return {
         "status": overall,
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.now(timezone.utc).isoformat(),
         "service": "AegisAIS",
         "database": {
             "connected": db_healthy,
@@ -83,7 +83,7 @@ async def get_metrics(db: Session = Depends(get_db)):
         )
         
         return {
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "vessels": {
                 "total": vessel_count
             },
@@ -98,5 +98,5 @@ async def get_metrics(db: Session = Depends(get_db)):
     except Exception as e:
         return {
             "error": str(e),
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.now(timezone.utc).isoformat()
         }

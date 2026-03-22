@@ -2,6 +2,7 @@ import pytest
 from sqlalchemy import create_mock_engine
 from sqlalchemy.orm import sessionmaker
 from app.core.database import Base
+from app.modules.auth.models import Organisation
 from app.modules.audit.models import AuditLog
 from app.modules.audit.services import AuditService
 from sqlalchemy import create_engine
@@ -16,6 +17,8 @@ def db_session():
     TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
     session = TestingSessionLocal()
     try:
+        session.add(Organisation(id=1, name="Default", slug="default"))
+        session.commit()
         yield session
     finally:
         session.close()
@@ -26,8 +29,9 @@ def test_log_event_persistence(db_session):
         db_session,
         action="test.action",
         change_summary="This is a test summary",
+        organisation_id=1,
         user_id="test_user",
-        details={"key": "value"}
+        details={"key": "value"},
     )
     db_session.commit()
     
@@ -43,7 +47,8 @@ def test_log_event_system_action(db_session):
     AuditService.log_event(
         db_session,
         action="system.startup",
-        change_summary="System started successfully"
+        change_summary="System started successfully",
+        organisation_id=1,
     )
     db_session.commit()
     

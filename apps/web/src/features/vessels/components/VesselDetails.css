@@ -41,6 +41,55 @@
     background: #e5e7eb;
 }
 
+.vessel-watchlist-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1.25rem;
+    padding: 0.75rem 1rem;
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+}
+
+.vessel-watchlist-badge {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #6d28d9;
+    background: #ede9fe;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+}
+
+.vessel-watchlist-hint {
+    font-size: 0.8rem;
+    color: #6b7280;
+}
+
+.vessel-watchlist-input,
+.vessel-watchlist-select {
+    padding: 0.35rem 0.5rem;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 0.875rem;
+}
+
+.btn-watchlist-add {
+    padding: 0.4rem 0.75rem;
+    background: #2563eb;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    cursor: pointer;
+    font-weight: 500;
+}
+
+.btn-watchlist-add:hover {
+    background: #1d4ed8;
+}
+
 .vessel-info-cards {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));

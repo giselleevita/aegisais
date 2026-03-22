@@ -1,7 +1,4 @@
-/**
- * ITDAE-specific type definitions.
- * Extends types/index.ts with infrastructure threat detection types.
- */
+/** ITDAE-specific type definitions (infrastructure threat detection). */
 
 export interface ItdaeAlert {
     id: number

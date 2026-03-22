@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { Polygon, Tooltip } from 'react-leaflet'
 import type { LatLngExpression } from 'leaflet'
 import type { ItdaeGeofenceZone } from '@/features/itdae/types'
-import { API_BASE_URL } from '@/core/config'
+import { apiClient } from '@/core/api-client'
 
 const RISK_COLOURS = {
     critical: { fill: '#ff4d4d', stroke: '#cc0000' },
@@ -28,13 +28,12 @@ export default function InfrastructureLayer({ visible = true }: InfrastructureLa
 
     useEffect(() => {
         if (!visible) return
-        fetch(`${API_BASE_URL}/api/v1/itdae/geofences/baltic`)
-            .then((r) => r.json())
+        apiClient
+            .getItdaeBalticGeofences()
             .then((data) => setZones(data.zones ?? []))
             .catch(() => {
-                // Fallback to hardcoded zones if API unreachable (dev mode / no backend)
                 if (import.meta.env.DEV) {
-                    console.warn('InfrastructureLayer: ITDAE API unavailable, using empty zones')
+                    console.warn('InfrastructureLayer: ITDAE geofences unavailable, using empty zones')
                 }
             })
     }, [visible])

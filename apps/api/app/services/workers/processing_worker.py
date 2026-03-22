@@ -7,13 +7,18 @@ from typing import Any, Dict
 from prometheus_client import start_http_server, Gauge, Summary, Counter
 
 from app.core.config import settings
+from app.core.database import SessionLocal
 from app.core.logging import configure_logging
 from app.infrastructure.messaging.consumer import RedisConsumer
 from app.infrastructure.messaging.publisher import publisher
 from app.infrastructure.ingest.loaders import AisPoint
+from app.modules.vessels.watchlist_enrich import priority_map_for_mmsis
 from app.services.pipeline import process_point
+from app.services.workers.heartbeat import WorkerHeartbeat
 
 log = structlog.get_logger("aegisais.worker.processing")
+
+HEARTBEAT = WorkerHeartbeat("/tmp/worker_processing_heartbeat")
 
 # Metrics definitions
 STREAM_LAG = Gauge('aegisais_stream_lag', 'Redis Stream Lag (pending messages)', ['stream'])
@@ -43,16 +48,30 @@ def handle_ais_point(msg_id: str, data: Dict[str, Any]):
         # Pure logic processing (no DB)
         start_time = time.time()
         result = process_point(p)
-        
+        alerts_out = result["alerts"]
+        if alerts_out:
+            mmsis = {a["mmsi"] for a in alerts_out}
+            with SessionLocal() as db:
+                prios = priority_map_for_mmsis(db, mmsis)
+            for alert in alerts_out:
+                pr = prios.get(alert["mmsi"])
+                if not pr:
+                    continue
+                ev = alert.get("evidence") or {}
+                if not isinstance(ev, dict):
+                    ev = {}
+                alert["evidence"] = {**ev, "watchlist_priority": pr}
+
         # 1. Publish to processed stream for persistence
         publisher.publish(settings.stream_ais_processed, result["point"])
-        
+
         # 2. Publish alerts to alerts stream for dispatch
-        for alert in result["alerts"]:
+        for alert in alerts_out:
             publisher.publish(settings.stream_ais_alerts, alert)
             ALERTS_GENERATED.labels(rule_type=alert["type"], severity=alert["severity"]).inc()
             
         POSITION_PROCESSED.inc()
+        HEARTBEAT.on_successful_message()
         log.debug("processed_message", 
                   msg_id=msg_id, 
                   mmsi=p.mmsi, 
@@ -82,11 +101,12 @@ def main():
     signal.signal(signal.SIGINT, shutdown)
     signal.signal(signal.SIGTERM, shutdown)
     
+    def on_tick():
+        STREAM_LAG.labels(stream=settings.stream_ais_raw).set(consumer.get_lag())
+        HEARTBEAT.on_loop_tick()
+
     try:
-        consumer.listen(
-            callback=handle_ais_point,
-            on_tick=lambda: STREAM_LAG.labels(stream=settings.stream_ais_raw).set(consumer.get_lag())
-        )
+        consumer.listen(callback=handle_ais_point, on_tick=on_tick)
     except KeyboardInterrupt:
         shutdown(None, None)
 
