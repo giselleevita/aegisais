@@ -111,7 +111,7 @@ export default function Dashboard({ lastMessage }: DashboardProps) {
                 </div>
             )}
 
-            {lastMessage && (
+            {lastMessage && 'kind' in lastMessage && (
                 <div className="recent-activity">
                     <h3>Recent Activity</h3>
                     <div className="activity-item">

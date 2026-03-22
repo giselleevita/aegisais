@@ -11,10 +11,12 @@ from typing import Any
 
 from sqlalchemy.orm import Session
 
+from app.core.config import settings
 from app.modules.itdae.tracking.features_itdae import ItdaePoint
 from app.modules.itdae.tracking.track_store_itdae import ItdaeTrackStore
 from app.modules.itdae.detection.rules_itdae import POINT_PAIR_RULES, WINDOW_RULES
-from app.modules.alerts.models import Alert# Reuse existing Alert table
+from app.modules.alerts.models import Alert  # Reuse existing Alert table
+from app.modules.vessels.watchlist_enrich import enrich_evidence_dict
 
 log = logging.getLogger("aegisais.itdae.pipeline")
 
@@ -80,13 +82,21 @@ def process_itdae_point(point: ItdaePoint, db: Session) -> list[dict[str, Any]]:
 def _persist_alert(alert: dict[str, Any], db: Session) -> None:
     """Persist an ITDAE alert into the shared alerts table."""
     try:
+        raw_ev = alert.get("evidence") or {}
+        mmsi = raw_ev.get("mmsi", "UNKNOWN")
+        evidence = (
+            enrich_evidence_dict(db, mmsi, raw_ev)
+            if mmsi != "UNKNOWN"
+            else (dict(raw_ev) if isinstance(raw_ev, dict) else {})
+        )
         record = Alert(
+            organisation_id=settings.default_organisation_id,
             timestamp=datetime.now(timezone.utc),
-            mmsi=alert["evidence"].get("mmsi", "UNKNOWN"),
+            mmsi=mmsi,
             type=alert["type"],
             severity=alert["severity"],
             summary=alert["summary"],
-            evidence=alert["evidence"],
+            evidence=evidence,
             status="new",
         )
         db.add(record)

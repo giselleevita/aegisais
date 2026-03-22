@@ -1,11 +1,17 @@
-import shutil
 from pathlib import Path
-from typing import Any
+from typing import Annotated, Any
+
 from fastapi import APIRouter, UploadFile, File, HTTPException, Depends
 from fastapi.responses import JSONResponse
 import structlog
-import os
-from app.modules.auth.dependencies import get_current_user, require_admin
+from sqlalchemy.orm import Session
+
+from app.core.config import settings
+from app.core.database import get_db
+from app.infrastructure.ingest import upload_validation
+from app.middleware.rate_limit import upload_file_rate_limit
+from app.modules.audit.services import AuditService
+from app.modules.auth.dependencies import require_admin, require_viewer_or_above
 
 log = structlog.get_logger("aegisais.upload")
 
@@ -27,10 +33,22 @@ MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024
 log.info("Upload directory configured: %s", DATA_RAW_DIR.absolute())
 log.info("Directory exists: %s", DATA_RAW_DIR.exists())
 
+
+def _delimiter_for_upload(filename: str) -> str:
+    """Match loaders: .dat / .dat.zst use tab; .csv / .csv.zst use comma."""
+    p = Path(filename.lower())
+    if p.suffix == ".zst":
+        inner = Path(p.stem).suffix
+        return "\t" if inner == ".dat" else ","
+    return "\t" if p.suffix == ".dat" else ","
+
+
 @router.post("/upload")
 async def upload_file(
+    _: Annotated[None, Depends(upload_file_rate_limit)],
     file: UploadFile = File(...),
     admin: Any = Depends(require_admin),
+    db: Session = Depends(get_db),
 ):
     """
     Upload a file to the data/raw directory.
@@ -40,6 +58,7 @@ async def upload_file(
     - Validates file extension
     - Enforces file size limits
     - Sanitizes filename to prevent path traversal
+    - CSV/DAT header validation (first 4KB) and zstd decompressed size bound
     """
     # Validate file extension
     filename = file.filename
@@ -128,9 +147,48 @@ async def upload_file(
         # Get file size
         file_size = file_path.stat().st_size
         file_size_mb = file_size / (1024 * 1024)
-        
+
+        if settings.scan_uploads_for_malware:
+            # TODO: integrate antivirus / malware scanning pipeline when enabled
+            pass
+
+        max_dec = int(settings.max_decompressed_size_gb * (1024**3))
+        name_lower = safe_filename.lower()
+        is_zst = name_lower.endswith(".zst")
+        delim = _delimiter_for_upload(safe_filename)
+
+        try:
+            if is_zst:
+                upload_validation.validate_zst_decompressed_bound(file_path, max_dec)
+                upload_validation.validate_zst_header_row(file_path, delimiter=delim)
+            else:
+                upload_validation.validate_uncompressed_upload(file_path, delimiter=delim)
+        except ValueError as ve:
+            msg = str(ve)
+            if file_path.exists():
+                file_path.unlink()
+            code = 413 if "exceeds configured limit" in msg else 400
+            raise HTTPException(status_code=code, detail=msg) from ve
+
+        if settings.enable_audit_logging:
+            AuditService.log_event(
+                db,
+                action="upload.file.success",
+                change_summary=f"Uploaded {safe_filename} ({file_size} bytes)",
+                organisation_id=admin.organisation_id,
+                user_id=admin.username,
+                resource_type="upload",
+                resource_id=safe_filename,
+                details={
+                    "filename": safe_filename,
+                    "size_bytes": file_size,
+                    "user": admin.username,
+                },
+            )
+            db.commit()
+
         log.info("upload_success", filename=safe_filename, size_mb=round(file_size_mb, 2), path=str(file_path.absolute()))
-        
+
         return JSONResponse({
             "status": "success",
             "filename": safe_filename,
@@ -139,18 +197,20 @@ async def upload_file(
             "size_mb": round(file_size_mb, 2),
             "absolute_path": str(file_path.absolute()),
         })
+    except HTTPException:
+        raise
     except Exception as e:
         log.error("upload_failed", filename=filename, path=str(file_path.absolute()), error=str(e), exc_info=True)
         # Clean up partial file if it exists
         if file_path.exists():
             try:
                 file_path.unlink()
-            except:
+            except OSError:
                 pass
         raise HTTPException(status_code=500, detail=f"Failed to upload file: {str(e)}")
 
 @router.get("/upload/list")
-async def list_uploaded_files(current_user: Any = Depends(get_current_user)):
+async def list_uploaded_files(_viewer: Any = Depends(require_viewer_or_above)):
     """List all files in the data/raw directory."""
     try:
         files = []

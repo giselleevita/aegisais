@@ -1,37 +1,14 @@
 import { useEffect, useState } from 'react'
 import { apiClient } from '@/core/api-client'
 import type { Vessel, Alert, VesselPosition } from '@/shared/types/common'
-import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from 'react-leaflet'
-import type { LatLngExpression, LatLngBoundsExpression } from 'leaflet'
+import { getSeverityLevel } from '@/features/alerts/lib/alertEvidence'
+import { MapContainer, TileLayer, Marker, Popup, Polyline } from 'react-leaflet'
+import type { LatLngExpression } from 'leaflet'
 import 'leaflet/dist/leaflet.css'
-import L from 'leaflet'
+import '@/shared/map/leafletSetup'
+import MapBounds from '@/shared/map/MapBounds'
+import { createAlertDivIcon, createVesselDivIcon } from '@/shared/map/alertMarkers'
 import './VesselDetails.css'
-
-// Fix for default marker icons
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-delete (L.Icon.Default.prototype as any)._getIconUrl
-L.Icon.Default.mergeOptions({
-    iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
-    iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
-    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
-})
-
-function MapBounds({ bounds }: { bounds: LatLngExpression[] }) {
-    const map = useMap()
-    useEffect(() => {
-        if (bounds.length > 0) {
-            // Convert to proper bounds format: [[minLat, minLon], [maxLat, maxLon]]
-            const lats = bounds.map(b => Array.isArray(b) ? b[0] : b.lat)
-            const lons = bounds.map(b => Array.isArray(b) ? b[1] : b.lng)
-            const minLat = Math.min(...lats)
-            const maxLat = Math.max(...lats)
-            const minLon = Math.min(...lons)
-            const maxLon = Math.max(...lons)
-            map.fitBounds([[minLat, minLon], [maxLat, maxLon]] as LatLngBoundsExpression)
-        }
-    }, [bounds, map])
-    return null
-}
 
 interface VesselDetailsProps {
     mmsi: string
@@ -44,6 +21,9 @@ export default function VesselDetails({ mmsi, onClose }: VesselDetailsProps) {
     const [track, setTrack] = useState<VesselPosition[]>([])
     const [loading, setLoading] = useState(true)
     const [activeTab, setActiveTab] = useState<'overview' | 'alerts' | 'track'>('overview')
+    const [onWatchlist, setOnWatchlist] = useState(false)
+    const [wlLabel, setWlLabel] = useState('')
+    const [wlPriority, setWlPriority] = useState<'low' | 'medium' | 'high'>('medium')
 
     useEffect(() => {
         if (mmsi) {
@@ -58,14 +38,16 @@ export default function VesselDetails({ mmsi, onClose }: VesselDetailsProps) {
         
         try {
             setLoading(true)
-            const [vesselData, alertsData, trackData] = await Promise.all([
+            const [vesselData, alertsData, trackData, watchlistData] = await Promise.all([
                 apiClient.getVessel(mmsi),
                 apiClient.getAlerts({ mmsi, limit: 1000 }),
-                apiClient.getVesselTrack(mmsi, undefined, undefined, 1000)
+                apiClient.getVesselTrack(mmsi, undefined, undefined, 1000),
+                apiClient.getWatchlist().catch(() => [] as { mmsi: string }[]),
             ])
             setVessel(vesselData)
             setAlerts(alertsData)
             setTrack(trackData)
+            setOnWatchlist(watchlistData.some((e) => e.mmsi === mmsi))
         } catch (error) {
             if (import.meta.env.DEV) {
                 // eslint-disable-next-line no-console
@@ -74,21 +56,6 @@ export default function VesselDetails({ mmsi, onClose }: VesselDetailsProps) {
         } finally {
             setLoading(false)
         }
-    }
-
-    const getSeverityLevel = (severity: number): string => {
-        if (severity >= 70) return 'high'
-        if (severity >= 30) return 'medium'
-        return 'low'
-    }
-
-    const getAlertIcon = (severity: number) => {
-        const color = severity >= 70 ? '#dc2626' : severity >= 30 ? '#f59e0b' : '#10b981'
-        return L.divIcon({
-            className: 'alert-marker',
-            html: `<div style="background-color: ${color}; width: 12px; height: 12px; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3);"></div>`,
-            iconSize: [12, 12],
-        })
     }
 
     if (loading) {
@@ -147,6 +114,49 @@ export default function VesselDetails({ mmsi, onClose }: VesselDetailsProps) {
                     ← Back
                 </button>
                 <h2>Vessel Details: MMSI {vessel.mmsi}</h2>
+            </div>
+
+            <div className="vessel-watchlist-bar">
+                {onWatchlist ? (
+                    <span className="vessel-watchlist-badge">On watchlist</span>
+                ) : (
+                    <span className="vessel-watchlist-hint">Not on watchlist</span>
+                )}
+                <input
+                    type="text"
+                    placeholder="Label (optional)"
+                    value={wlLabel}
+                    onChange={(e) => setWlLabel(e.target.value)}
+                    className="vessel-watchlist-input"
+                />
+                <select
+                    value={wlPriority}
+                    onChange={(e) => setWlPriority(e.target.value as 'low' | 'medium' | 'high')}
+                    className="vessel-watchlist-select"
+                >
+                    <option value="low">Low</option>
+                    <option value="medium">Medium</option>
+                    <option value="high">High</option>
+                </select>
+                <button
+                    type="button"
+                    className="btn-watchlist-add"
+                    onClick={async () => {
+                        try {
+                            await apiClient.addWatchlistEntry({
+                                mmsi: vessel.mmsi,
+                                label: wlLabel.trim(),
+                                priority: wlPriority,
+                            })
+                            setOnWatchlist(true)
+                            setWlLabel('')
+                        } catch (err) {
+                            alert(err instanceof Error ? err.message : 'Could not update watchlist')
+                        }
+                    }}
+                >
+                    {onWatchlist ? 'Update watchlist' : 'Add to watchlist'}
+                </button>
             </div>
 
             <div className="vessel-info-cards">
@@ -319,7 +329,10 @@ export default function VesselDetails({ mmsi, onClose }: VesselDetailsProps) {
 
                                 {/* Current position */}
                                 {vessel.lat && vessel.lon && (
-                                    <Marker position={[vessel.lat, vessel.lon]}>
+                                    <Marker
+                                        position={[vessel.lat, vessel.lon]}
+                                        icon={createVesselDivIcon(onWatchlist)}
+                                    >
                                         <Popup>
                                             <div>
                                                 <strong>Current Position</strong><br />
@@ -337,7 +350,7 @@ export default function VesselDetails({ mmsi, onClose }: VesselDetailsProps) {
                                     <Marker
                                         key={alert.id}
                                         position={[lat as number, lon as number]}
-                                        icon={getAlertIcon(alert.severity)}
+                                        icon={createAlertDivIcon(alert.severity)}
                                     >
                                         <Popup>
                                             <div>

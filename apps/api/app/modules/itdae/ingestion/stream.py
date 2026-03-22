@@ -1,5 +1,10 @@
 import asyncio
+
 from app.core.logging import logger
+from app.services.workers.heartbeat import WorkerHeartbeat
+
+HEARTBEAT = WorkerHeartbeat("/tmp/worker_itdae_heartbeat")
+
 
 class ITDAEStreamManager:
     def __init__(self):
@@ -21,3 +26,15 @@ class ITDAEStreamManager:
         logger.info("ITDAE stream stopped.")
 
 stream_manager = ITDAEStreamManager()
+
+
+async def main() -> None:
+    """Keep the ingestion container alive until the live AIS feed is wired (Sprint 2 liveness)."""
+    await stream_manager.start()
+    while True:
+        HEARTBEAT.on_loop_tick()
+        await asyncio.sleep(5)
+
+
+if __name__ == "__main__":
+    asyncio.run(main())

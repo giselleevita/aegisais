@@ -161,6 +161,33 @@
   margin-bottom: 0.75rem;
 }
 
+.alert-header-badges {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.watchlist-tag {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 0.2rem 0.45rem;
+  border-radius: 4px;
+  color: #fff;
+}
+
+.watchlist-tag-high {
+  background: #7c3aed;
+}
+
+.watchlist-tag-medium {
+  background: #d97706;
+}
+
+.watchlist-tag-low {
+  background: #059669;
+}
+
 .alert-type {
   font-weight: 700;
   font-size: 1rem;

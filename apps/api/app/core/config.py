@@ -1,17 +1,50 @@
+import logging
 from pydantic_settings import BaseSettings
-from pydantic import field_validator
+from pydantic import field_validator, ValidationInfo
 from typing import Any
+
+_log = logging.getLogger("aegisais.config")
+
 
 class Settings(BaseSettings):
     app_name: str = "AegisAIS"
+    # development | test | staging | production | docker — production gate (IMPLEMENTATION_PLAN Sprint 1)
+    app_env: str = "development"
+
     database_url: str = "sqlite:///./aegisais.db"  # default local
+    # SQLAlchemy pool (PostgreSQL and other non-SQLite drivers; Sprint 2)
+    db_pool_size: int = 10
+    db_max_overflow: int = 20
+    db_pool_timeout: int = 30
+    db_pool_recycle: int = 1800
     allow_replay: bool = True
     
     # Security settings
     secret_key: str = "supersecretkey"  # Change in production!
+    # Comma-separated origins; env CORS_ALLOWED_ORIGINS
+    cors_allowed_origins: str = (
+        "http://localhost:5173,http://localhost:3000,http://127.0.0.1:5173"
+    )
+    # Optional explicit Redis password (compose may embed in REDIS_URL instead).
+    redis_password: str = ""
+    # When True, WebSocket /v1/stream requires ?token=<JWT> for an active user (Sprint 1 default: on).
+    websocket_require_auth: bool = True
     algorithm: str = "HS256"
-    access_token_expire_minutes: int = 43200  # 30 days for MVP convenience
-    
+    access_token_expire_minutes: int = 60
+    refresh_token_expire_days: int = 7
+    password_reset_token_ttl_hours: int = 1
+    # Base URL for password reset links (query: ?token=...). Used in dev logs and SMTP emails.
+    password_reset_link_base: str = "http://localhost:5173"
+    # Optional SMTP for password reset emails; if SMTP_HOST is empty, dev logs link instead (see auth service).
+    smtp_host: str = ""
+    smtp_port: int = 587
+    smtp_user: str = ""
+    smtp_password: str = ""
+    email_from: str = ""
+
+    # Multi-tenancy (Sprint 4): default org id for workers and backfilled data
+    default_organisation_id: int = 1
+
     # Infrastructure settings
     redis_url: str = "redis://localhost:6379/0"
     redis_max_connections: int = 10
@@ -30,6 +63,15 @@ class Settings(BaseSettings):
     default_batch_size: int = 100  # Database commit batch size
     streaming_threshold_mb: float = 50.0  # Use streaming for files larger than this
     chunk_size: int = 10000  # CSV chunk size for streaming
+
+    # Upload / ingest hardening (Sprint 3)
+    max_decompressed_size_gb: float = 50.0
+    scan_uploads_for_malware: bool = False  # TODO: integrate AV / malware scanning when True
+
+    # Satellite AIS (S-AIS) — Sprint 4 stub; real HTTP when keys are configured (see app.modules.sais)
+    SAIS_PROVIDER: str = "none"  # spire | orbcomm | exactearth | none
+    SAIS_API_KEY: str = ""
+    SAIS_API_BASE_URL: str = ""
 
     # ITDAE Core Settings
     ITDAE_AIS_API_KEY: str = ""
@@ -67,6 +109,32 @@ class Settings(BaseSettings):
     # Deduplication/cooldown
     alert_cooldown_sec: int = 300  # 5 minutes cooldown per (MMSI, rule_type)
 
+    @field_validator("database_url")
+    @classmethod
+    def validate_database_url(cls, v: str, info: ValidationInfo) -> str:
+        env = (info.data or {}).get("app_env") or "development"
+        low = v.strip().lower()
+        if low.startswith("sqlite") and env not in ("development", "test", "production"):
+            _log.warning(
+                "DATABASE_URL uses SQLite while APP_ENV=%s; not recommended for production workloads",
+                env,
+            )
+        return v
+
+    @field_validator("secret_key")
+    @classmethod
+    def validate_secret_key(cls, v: str, info: ValidationInfo) -> str:
+        env = (info.data or {}).get("app_env") or "development"
+        if env == "production":
+            if v == "supersecretkey" or len(v) < 32:
+                raise ValueError(
+                    "SECRET_KEY must be at least 32 characters and not the default when APP_ENV=production"
+                )
+        return v
+
+    def cors_origins_list(self) -> list[str]:
+        return [o.strip() for o in self.cors_allowed_origins.split(",") if o.strip()]
+
     @field_validator("teleport_speed_knots_short", "teleport_speed_knots_medium")
     @classmethod
     def validate_positive_speed(cls, v: float) -> float:
@@ -103,6 +171,17 @@ class Settings(BaseSettings):
             raise ValueError("Cooldown unreasonably large (>24 hours)")
         return v
 
+    @field_validator("SAIS_PROVIDER")
+    @classmethod
+    def validate_sais_provider(cls, v: str) -> str:
+        allowed = {"spire", "orbcomm", "exactearth", "none"}
+        low = (v or "").strip().lower()
+        if low not in allowed:
+            raise ValueError(
+                f"SAIS_PROVIDER must be one of {sorted(allowed)}; got {v!r}"
+            )
+        return low
+
     @field_validator("default_batch_size")
     @classmethod
     def validate_batch_size(cls, v: int) -> int:
@@ -111,6 +190,10 @@ class Settings(BaseSettings):
         if v > 100000:
             raise ValueError("Batch size unreasonably large (>100000)")
         return v
+
+    # Rate limiting: use Redis sorted-set sliding window (shared across workers).
+    # When False, uses in-process memory (fine for dev/tests; single worker only).
+    rate_limit_use_redis: bool = False
 
     # Audit Logging
     enable_audit_logging: bool = True
@@ -127,3 +210,24 @@ class Settings(BaseSettings):
     }
 
 settings = Settings()
+
+
+def validate_production_config() -> None:
+    """Fail fast on insecure defaults when APP_ENV=production (Sprint 1)."""
+    if settings.app_env != "production":
+        return
+    if settings.secret_key == "supersecretkey" or len(settings.secret_key) < 32:
+        raise RuntimeError(
+            "SECRET_KEY must be set to a strong value (>=32 chars, not the default) when APP_ENV=production"
+        )
+    if not settings.websocket_require_auth:
+        raise RuntimeError(
+            "WEBSOCKET_REQUIRE_AUTH must be true when APP_ENV=production"
+        )
+    if settings.database_url.lower().startswith("sqlite"):
+        raise RuntimeError(
+            "DATABASE_URL cannot use SQLite when APP_ENV=production; use PostgreSQL"
+        )
+
+
+validate_production_config()
