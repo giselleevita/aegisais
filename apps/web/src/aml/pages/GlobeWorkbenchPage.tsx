@@ -4,6 +4,7 @@ import {
   ClockRange,
   ClockStep,
   Color,
+  HeadingPitchRange,
   HeightReference,
   PolylineDashMaterialProperty,
   VerticalOrigin,
@@ -24,6 +25,33 @@ import {
 import './globe-workbench.css'
 
 type TimelineMode = 'live' | 'replay'
+type FocusPresetId = 'global' | 'atlantic' | 'indo-pacific' | 'europe-med'
+
+const FOCUS_PRESETS: Record<
+  FocusPresetId,
+  { label: string; destination: Cartesian3; range: number }
+> = {
+  global: {
+    label: 'Global',
+    destination: Cartesian3.fromDegrees(8, 18, 23_000_000),
+    range: 11_000_000,
+  },
+  atlantic: {
+    label: 'Atlantic',
+    destination: Cartesian3.fromDegrees(-35, 36, 9_000_000),
+    range: 5_500_000,
+  },
+  'indo-pacific': {
+    label: 'Indo-Pacific',
+    destination: Cartesian3.fromDegrees(112, 9, 12_000_000),
+    range: 6_500_000,
+  },
+  'europe-med': {
+    label: 'Europe / Med',
+    destination: Cartesian3.fromDegrees(17, 42, 7_500_000),
+    range: 4_200_000,
+  },
+}
 
 export default function GlobeWorkbenchPage() {
   const hostRef = useRef<HTMLDivElement | null>(null)
@@ -33,6 +61,7 @@ export default function GlobeWorkbenchPage() {
   const [catalogue, setCatalogue] = useState<LayerDefinition[]>([])
   const [enabled, setEnabled] = useState<Record<string, boolean>>({})
   const [selectedLayerId, setSelectedLayerId] = useState<string | null>(null)
+  const [activePreset, setActivePreset] = useState<FocusPresetId>('global')
   const [flights, setFlights] = useState<FlightPoint[]>([])
   const [ports, setPorts] = useState<PortPoint[]>([])
   const [cables, setCables] = useState<CableSegment[]>([])
@@ -60,6 +89,31 @@ export default function GlobeWorkbenchPage() {
       cancelled = true
     }
   }, [])
+
+  const moveCameraToPreset = (presetId: FocusPresetId) => {
+    const viewer = viewerRef.current
+    if (!viewer) return
+    const preset = FOCUS_PRESETS[presetId]
+    setActivePreset(presetId)
+    viewer.camera.flyTo({
+      destination: preset.destination,
+      duration: 0.9,
+      orientation: {
+        heading: 0,
+        pitch: -0.95,
+        roll: 0,
+      },
+    })
+  }
+
+  const focusOnVisibleEntities = () => {
+    const viewer = viewerRef.current
+    if (!viewer) return
+    void viewer.flyTo(viewer.entities.values, {
+      duration: 0.9,
+      offset: new HeadingPitchRange(0, -0.9, 3_000_000),
+    })
+  }
 
   useEffect(() => {
     let stop: () => void = () => {}
@@ -176,7 +230,25 @@ export default function GlobeWorkbenchPage() {
   return (
     <section className="globe-workbench">
       <aside className="globe-workbench__catalogue">
-        <h2>Layer Catalogue</h2>
+        <h2>Data Layers</h2>
+        <p className="globe-workbench__lead">
+          Operational overlays with provenance and access controls.
+        </p>
+        <div className="globe-workbench__nav-tools" role="group" aria-label="Globe camera presets">
+          {Object.entries(FOCUS_PRESETS).map(([key, preset]) => (
+            <button
+              key={key}
+              type="button"
+              className={activePreset === key ? 'is-selected' : undefined}
+              onClick={() => moveCameraToPreset(key as FocusPresetId)}
+            >
+              {preset.label}
+            </button>
+          ))}
+          <button type="button" onClick={focusOnVisibleEntities}>
+            Fit Active Data
+          </button>
+        </div>
         <ul>
           {catalogue.map((layer) => (
             <li key={layer.id} className={selectedLayerId === layer.id ? 'is-active' : undefined}>
@@ -214,6 +286,20 @@ export default function GlobeWorkbenchPage() {
 
       <aside className="globe-workbench__inspector">
         <h2>Inspector</h2>
+        <div className="globe-workbench__metrics">
+          <div>
+            <span className="globe-workbench__metric-label">Flights</span>
+            <span className="globe-workbench__metric-value">{enabled['flights-live'] ? flights.length : 0}</span>
+          </div>
+          <div>
+            <span className="globe-workbench__metric-label">Ports</span>
+            <span className="globe-workbench__metric-value">{enabled['ports-reference'] ? ports.length : 0}</span>
+          </div>
+          <div>
+            <span className="globe-workbench__metric-label">Cables</span>
+            <span className="globe-workbench__metric-value">{enabled['subsea-cables'] ? cables.length : 0}</span>
+          </div>
+        </div>
         {selectedLayer ? (
           <dl>
             <dt>Layer</dt>
@@ -236,8 +322,12 @@ export default function GlobeWorkbenchPage() {
 
       <footer className="globe-workbench__timeline">
         <div>
-          <h3>Timeline</h3>
-          <p>{timelineMode === 'live' ? 'Streaming current flight positions.' : 'Replay simulation mode.'}</p>
+          <h3>Timeline Mode</h3>
+          <p>
+            {timelineMode === 'live'
+              ? 'Live stream: current flight positions with periodic refresh.'
+              : 'Replay mode: accelerated timeline for demonstration and review.'}
+          </p>
         </div>
         <div className="globe-workbench__timeline-controls">
           <button

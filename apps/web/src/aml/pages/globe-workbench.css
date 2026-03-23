@@ -27,6 +27,40 @@
   color: var(--text-secondary);
 }
 
+.globe-workbench__lead {
+  margin: 0 0 0.75rem;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+}
+
+.globe-workbench__nav-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-bottom: 0.75rem;
+}
+
+.globe-workbench__nav-tools button {
+  border: 1px solid var(--border-default);
+  background: transparent;
+  color: var(--text-secondary);
+  border-radius: 999px;
+  padding: 0.22rem 0.62rem;
+  font-size: 0.73rem;
+  cursor: pointer;
+}
+
+.globe-workbench__nav-tools button:hover {
+  color: var(--text-primary);
+  border-color: var(--border-strong);
+}
+
+.globe-workbench__nav-tools button.is-selected {
+  color: var(--text-primary);
+  border-color: var(--accent-border);
+  background: var(--accent-dim);
+}
+
 .globe-workbench__catalogue ul {
   margin: 0;
   padding: 0;
@@ -114,6 +148,37 @@
   margin: 0;
   display: grid;
   gap: 0.2rem;
+}
+
+.globe-workbench__metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.45rem;
+  margin-bottom: 0.7rem;
+}
+
+.globe-workbench__metrics div {
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+  padding: 0.4rem 0.45rem;
+  background: var(--bg-base);
+  display: flex;
+  flex-direction: column;
+}
+
+.globe-workbench__metric-label {
+  margin: 0;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  font-size: 0.62rem;
+  letter-spacing: 0.06em;
+}
+
+.globe-workbench__metric-value {
+  margin: 0.2rem 0 0;
+  color: var(--text-primary);
+  font-size: 0.95rem;
+  font-weight: 600;
 }
 
 .globe-workbench__inspector dt {

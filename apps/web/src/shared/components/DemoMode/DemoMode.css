@@ -1,7 +1,7 @@
 .demo-mode {
-    background: #f9fafb;
-    border: 2px dashed #d1d5db;
-    border-radius: 8px;
+    background: var(--bg-surface);
+    border: 1px dashed var(--border-strong);
+    border-radius: var(--radius-lg);
     padding: 1.5rem;
     margin-top: 1rem;
 }
@@ -13,12 +13,12 @@
 .demo-header h3 {
     margin: 0 0 0.5rem 0;
     font-size: 1.25rem;
-    color: #1f2937;
+    color: var(--text-primary);
 }
 
 .demo-header p {
     margin: 0;
-    color: #6b7280;
+    color: var(--text-secondary);
     font-size: 0.875rem;
 }
 
@@ -26,19 +26,20 @@
 .demo-empty {
     text-align: center;
     padding: 2rem;
-    color: #6b7280;
+    color: var(--text-secondary);
 }
 
 .demo-empty code {
-    background: #f3f4f6;
+    background: var(--bg-card);
     padding: 0.25rem 0.5rem;
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border-default);
     font-size: 0.875rem;
-    color: #374151;
+    color: var(--text-primary);
 }
 
 .demo-instructions {
-    color: #4b5563;
+    color: var(--text-secondary);
     font-size: 0.875rem;
     margin-bottom: 1rem;
 }
@@ -53,16 +54,16 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background: white;
+    background: var(--bg-card);
     padding: 1rem;
-    border-radius: 6px;
-    border: 1px solid #e5e7eb;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-default);
     transition: all 0.2s;
 }
 
 .demo-file-card:hover {
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    border-color: #d1d5db;
+    background: var(--bg-elevated);
+    border-color: var(--border-strong);
 }
 
 .demo-file-info {
@@ -71,21 +72,21 @@
 
 .demo-file-name {
     font-weight: 600;
-    color: #1f2937;
+    color: var(--text-primary);
     margin-bottom: 0.25rem;
 }
 
 .demo-file-size {
     font-size: 0.875rem;
-    color: #6b7280;
+    color: var(--text-muted);
 }
 
 .btn-demo-start {
     padding: 0.5rem 1.5rem;
-    background: #3b82f6;
-    color: white;
-    border: none;
-    border-radius: 6px;
+    background: var(--accent-dim);
+    color: var(--accent);
+    border: 1px solid var(--accent-border);
+    border-radius: var(--radius-md);
     cursor: pointer;
     font-size: 0.875rem;
     font-weight: 500;
@@ -93,25 +94,26 @@
 }
 
 .btn-demo-start:hover {
-    background: #2563eb;
+    background: rgba(14, 165, 233, 0.2);
+    color: var(--text-primary);
 }
 
 .demo-tips {
     margin-top: 1.5rem;
     padding-top: 1.5rem;
-    border-top: 1px solid #e5e7eb;
+    border-top: 1px solid var(--border-default);
 }
 
 .demo-tips h4 {
     margin: 0 0 0.75rem 0;
     font-size: 1rem;
-    color: #1f2937;
+    color: var(--text-primary);
 }
 
 .demo-tips ul {
     margin: 0;
     padding-left: 1.5rem;
-    color: #4b5563;
+    color: var(--text-secondary);
     font-size: 0.875rem;
 }
 
@@ -123,21 +125,21 @@
 .demo-features {
     margin-top: 1rem;
     padding: 1rem;
-    background: white;
-    border-radius: 6px;
-    border: 1px solid #e5e7eb;
+    background: var(--bg-card);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-default);
 }
 
 .demo-features p {
     margin: 0 0 0.75rem 0;
-    color: #1f2937;
+    color: var(--text-primary);
     font-weight: 500;
 }
 
 .demo-features ul {
     margin: 0;
     padding-left: 1.5rem;
-    color: #374151;
+    color: var(--text-secondary);
     font-size: 0.875rem;
 }
 
@@ -147,6 +149,6 @@
 }
 
 .demo-features strong {
-    color: #1f2937;
+    color: var(--text-primary);
     font-weight: 600;
 }
