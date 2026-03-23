@@ -63,7 +63,7 @@ def validate_alert_type(alert_type: str) -> str:
     
     return alert_type
 
-def validate_alert_status(status: str) -> str:
+def validate_alert_status(alert_status: str) -> str:
     """
     Validate alert status.
     
@@ -78,13 +78,13 @@ def validate_alert_status(status: str) -> str:
     """
     valid_statuses = {"new", "reviewed", "resolved", "false_positive"}
     
-    if status not in valid_statuses:
+    if alert_status not in valid_statuses:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Invalid status: {status}. Valid statuses: {', '.join(sorted(valid_statuses))}"
+            detail=f"Invalid status: {alert_status}. Valid statuses: {', '.join(sorted(valid_statuses))}"
         )
     
-    return status
+    return alert_status
 
 def sanitize_filename(filename: str) -> str:
     """
