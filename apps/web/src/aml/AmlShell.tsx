@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import type { NavLinkProps } from 'react-router-dom'
 import type { WebSocketMessage } from '@/shared/types/common'
@@ -16,11 +16,33 @@ type AmlShellProps = {
   lastMessage: WebSocketMessage | null
 }
 
+const DOC_TITLE_BY_PATH: Array<{ match: (p: string) => boolean; title: string }> = [
+  { match: (p) => p === '/triage' || p === '/', title: 'Triage' },
+  { match: (p) => p === '/map', title: 'Map' },
+  { match: (p) => p.startsWith('/alerts/'), title: 'Alert' },
+  { match: (p) => p === '/incidents' || p.startsWith('/incidents/'), title: 'Incidents' },
+  { match: (p) => p === '/watchlist', title: 'Watchlist' },
+  { match: (p) => p === '/globe', title: 'Globe' },
+  { match: (p) => p === '/itdae', title: 'ITDAE' },
+  { match: (p) => p === '/lab', title: 'Lab' },
+  { match: (p) => p === '/audit', title: 'Audit' },
+  { match: (p) => p === '/admin', title: 'Admin' },
+]
+
 export default function AmlShell({ streamConnected, lastMessage }: AmlShellProps) {
   const { pathname } = useLocation()
-  const operationsActive = pathname === '/triage' || pathname === '/'
+  const triageActive = pathname === '/triage' || pathname === '/'
   const [replayRunning, setReplayRunning] = useState(false)
   const [replayProcessed, setReplayProcessed] = useState(0)
+
+  const pageTitle = useMemo(() => {
+    const row = DOC_TITLE_BY_PATH.find((x) => x.match(pathname))
+    return row?.title ?? 'Analyst'
+  }, [pathname])
+
+  useEffect(() => {
+    document.title = `${pageTitle} · AegisAIS`
+  }, [pageTitle])
 
   useEffect(() => {
     let mounted = true
@@ -44,6 +66,9 @@ export default function AmlShell({ streamConnected, lastMessage }: AmlShellProps
 
   return (
     <div className="aml-app">
+      <a href="#main-content" className="aml-shell__skip">
+        Skip to main content
+      </a>
       <header className="aml-shell__header">
         <div className="aml-shell__brand">
           <h1>
@@ -57,58 +82,94 @@ export default function AmlShell({ streamConnected, lastMessage }: AmlShellProps
             Demo run active: {replayProcessed.toLocaleString()} points processed
           </div>
         ) : null}
-        <span className={`status-indicator ${streamConnected ? 'connected' : 'disconnected'}`}>
+        <span
+          className={`status-indicator ${streamConnected ? 'connected' : 'disconnected'}`}
+          title={streamConnected ? 'Stream connected' : 'Stream disconnected — data may be stale'}
+        >
           {streamConnected ? 'Live' : 'Offline'}
         </span>
       </header>
 
       <nav className="aml-shell__nav" role="navigation" aria-label="Main navigation">
-        <div className="aml-shell__nav-group" aria-label="Primary views">
-          <NavLink
-            to="/triage"
-            className={operationsActive ? 'aml-shell__nav-link--active' : undefined}
-            aria-current={operationsActive ? 'page' : undefined}
-          >
-            Operations
-          </NavLink>
-          <NavLink to="/map" className={navLinkClass}>
-            Map
-          </NavLink>
-          <NavLink to="/incidents" className={navLinkClass}>
-            Incidents
-          </NavLink>
-          <NavLink to="/watchlist" className={navLinkClass}>
-            Watchlist
-          </NavLink>
+        <div className="aml-shell__nav-section">
+          <span className="aml-shell__nav-section-label" id="aml-nav-work">
+            Work
+          </span>
+          <div className="aml-shell__nav-group" role="group" aria-labelledby="aml-nav-work">
+            <NavLink
+              to="/triage"
+              className={triageActive ? 'aml-shell__nav-link--active' : undefined}
+              aria-current={triageActive ? 'page' : undefined}
+              title="Alert queue and map — primary workflow"
+            >
+              Triage
+            </NavLink>
+            <NavLink to="/map" className={navLinkClass} title="Vessel positions and alerts on the map">
+              Map
+            </NavLink>
+            <NavLink to="/incidents" className={navLinkClass} title="Incident records linked to alerts">
+              Incidents
+            </NavLink>
+            <NavLink to="/watchlist" className={navLinkClass} title="Vessels under active watch">
+              Watchlist
+            </NavLink>
+          </div>
         </div>
-        <span className="aml-shell__nav-separator" aria-hidden="true" />
-        <div className="aml-shell__nav-group" aria-label="Secondary views">
-          <NavLink to="/globe" className={navLinkClass}>
-            Globe
-          </NavLink>
-          <NavLink to="/itdae" className={navLinkClass}>
-            ITDAE
-          </NavLink>
-          <NavLink to="/lab" className={navLinkClass}>
-            Lab
-          </NavLink>
-          <NavLink to="/audit" className={navLinkClass}>
-            Audit
-          </NavLink>
-          <NavLink to="/admin" className={navLinkClass}>
-            Admin
-          </NavLink>
+        <div className="aml-shell__nav-section">
+          <span className="aml-shell__nav-section-label" id="aml-nav-tools">
+            Tools
+          </span>
+          <div className="aml-shell__nav-group" role="group" aria-labelledby="aml-nav-tools">
+            <NavLink to="/globe" className={navLinkClass} title="3D globe and layer overlays">
+              Globe
+            </NavLink>
+            <NavLink to="/itdae" className={navLinkClass} title="Infrastructure threat detection">
+              ITDAE
+            </NavLink>
+            <NavLink to="/lab" className={navLinkClass} title="Uploads, replay, and experiments">
+              Lab
+            </NavLink>
+          </div>
+        </div>
+        <div className="aml-shell__nav-section">
+          <span className="aml-shell__nav-section-label" id="aml-nav-system">
+            System
+          </span>
+          <div className="aml-shell__nav-group" role="group" aria-labelledby="aml-nav-system">
+            <NavLink to="/audit" className={navLinkClass} title="Audit log of analyst actions">
+              Audit
+            </NavLink>
+            <NavLink to="/admin" className={navLinkClass} title="Integrations and control plane">
+              Admin
+            </NavLink>
+          </div>
         </div>
       </nav>
 
-      <main className="aml-shell__main">
+      <main id="main-content" className="aml-shell__main" tabIndex={-1}>
         <Outlet context={{ lastMessage } satisfies AmlOutletContext} />
       </main>
 
       <footer className="aml-shell__footer">
-        <span>Deep links: /triage, /alerts/:id, /map?mmsi=</span>
-        <button type="button" onClick={() => switchToLegacyUi()}>
-          Classic tabbed UI
+        <details className="aml-shell__footer-shortcuts">
+          <summary>Shortcuts &amp; deep links</summary>
+          <ul className="aml-shell__footer-shortcuts-list">
+            <li>
+              <span>Triage (queue + map)</span> <code>/triage</code>
+            </li>
+            <li>
+              <span>Alert investigation</span> <code>/alerts/:id</code>
+            </li>
+            <li>
+              <span>Map with vessel</span> <code>/map?mmsi=</code>
+            </li>
+            <li>
+              <span>Incident detail</span> <code>/incidents/:id</code>
+            </li>
+          </ul>
+        </details>
+        <button type="button" className="aml-shell__footer-legacy" onClick={() => switchToLegacyUi()}>
+          Classic UI
         </button>
       </footer>
     </div>
