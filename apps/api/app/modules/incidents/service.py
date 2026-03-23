@@ -58,9 +58,14 @@ def build_incident_evidence_bundle(alert: Alert) -> dict[str, Any]:
 
 
 def create_incident_from_alert(db: Session, alert: Alert) -> Incident:
+    incident, _ = create_incident_from_alert_with_flag(db, alert)
+    return incident
+
+
+def create_incident_from_alert_with_flag(db: Session, alert: Alert) -> tuple[Incident, bool]:
     existing = db.query(Incident).filter(Incident.alert_id == alert.id).first()
     if existing is not None:
-        return existing
+        return existing, False
 
     incident = Incident(
         organisation_id=alert.organisation_id,
@@ -72,7 +77,7 @@ def create_incident_from_alert(db: Session, alert: Alert) -> Incident:
     )
     db.add(incident)
     db.flush()
-    return incident
+    return incident, True
 
 
 def incident_to_out(incident: Incident) -> IncidentOut:
