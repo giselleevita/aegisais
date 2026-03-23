@@ -13,7 +13,7 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.1em;
-  color: var(--text-muted);
+  color: var(--text-secondary);
   margin-bottom: 4px;
 }
 
@@ -75,6 +75,16 @@
   color: var(--text-muted);
 }
 
+.replay-error {
+  margin-top: 0.55rem;
+  color: var(--sev-high-text);
+  background: var(--sev-high-bg);
+  border: 1px solid var(--sev-high-border);
+  border-radius: var(--radius-md);
+  padding: 0.4rem 0.5rem;
+  font-size: 0.8rem;
+}
+
 /* ── Form ──────────────────────────────────────────────────────────── */
 .replay-form {
   display: flex;
@@ -93,7 +103,7 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: var(--text-muted);
+  color: var(--text-secondary);
 }
 
 .form-group input {
@@ -117,6 +127,13 @@
   background: var(--bg-surface);
   color: var(--text-disabled);
   cursor: not-allowed;
+}
+
+.form-help-text {
+  display: block;
+  margin-top: 0.25rem;
+  color: var(--text-muted);
+  font-size: 0.78rem;
 }
 
 .form-actions {

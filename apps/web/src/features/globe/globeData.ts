@@ -76,6 +76,11 @@ const FALLBACK_PORTS: PortPoint[] = [
   { id: 'rtm', name: 'Port of Rotterdam', lat: 51.94, lon: 4.14 },
   { id: 'dub', name: 'Port of Dubai', lat: 25.246, lon: 55.281 },
   { id: 'ham', name: 'Port of Hamburg', lat: 53.547, lon: 9.966 },
+  { id: 'sue', name: 'Suez Port', lat: 29.966, lon: 32.549 },
+  { id: 'la', name: 'Port of Los Angeles', lat: 33.736, lon: -118.263 },
+  { id: 'cpt', name: 'Port of Cape Town', lat: -33.907, lon: 18.435 },
+  { id: 'tok', name: 'Port of Tokyo', lat: 35.614, lon: 139.795 },
+  { id: 'syd', name: 'Port Botany', lat: -33.966, lon: 151.228 },
 ]
 
 const FALLBACK_CABLES: CableSegment[] = [
@@ -89,6 +94,27 @@ const FALLBACK_CABLES: CableSegment[] = [
       [40.7, -74.0],
     ],
   },
+  {
+    id: 'placeholder-med-indian',
+    label: 'Mediterranean - Indian Ocean (placeholder)',
+    placeholder: true,
+    path: [
+      [36.1, -5.3],
+      [31.0, 32.3],
+      [15.6, 54.0],
+      [1.3, 103.8],
+    ],
+  },
+  {
+    id: 'placeholder-pacific',
+    label: 'Trans-Pacific trunk (placeholder)',
+    placeholder: true,
+    path: [
+      [35.7, 139.8],
+      [33.3, 179.0],
+      [37.7, -122.2],
+    ],
+  },
 ]
 
 function flightSeed(): FlightPoint[] {
@@ -96,6 +122,11 @@ function flightSeed(): FlightPoint[] {
     { id: 'flt-101', label: 'FLT101', lat: 53.2, lon: 5.1, altitudeM: 9400 },
     { id: 'flt-224', label: 'FLT224', lat: 41.5, lon: 2.1, altitudeM: 10100 },
     { id: 'flt-390', label: 'FLT390', lat: 25.8, lon: 55.2, altitudeM: 10800 },
+    { id: 'flt-557', label: 'FLT557', lat: 1.3, lon: 104.1, altitudeM: 11200 },
+    { id: 'flt-612', label: 'FLT612', lat: 35.7, lon: 139.8, altitudeM: 9700 },
+    { id: 'flt-731', label: 'FLT731', lat: 59.2, lon: 18.3, altitudeM: 8900 },
+    { id: 'flt-844', label: 'FLT844', lat: -33.9, lon: 18.4, altitudeM: 10300 },
+    { id: 'flt-905', label: 'FLT905', lat: 37.7, lon: -122.2, altitudeM: 9200 },
   ]
 }
 

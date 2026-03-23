@@ -42,7 +42,9 @@ export default function AuthBar() {
 
     return (
         <form className="auth-bar" onSubmit={onSubmit} aria-label="Sign in">
+            <label className="sr-only" htmlFor="auth-username">Username</label>
             <input
+                id="auth-username"
                 name="username"
                 autoComplete="username"
                 placeholder="User"
@@ -50,7 +52,9 @@ export default function AuthBar() {
                 onChange={(e) => setUsername(e.target.value)}
                 disabled={busy}
             />
+            <label className="sr-only" htmlFor="auth-password">Password</label>
             <input
+                id="auth-password"
                 name="password"
                 type="password"
                 autoComplete="current-password"

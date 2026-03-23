@@ -16,7 +16,7 @@ class ITDAEStreamManager:
             return
         self.is_running = True
         logger.info("ITDAE stream started.")
-        # TODO: Implement actual aisstream.io connection
+        # Live feed wiring tracked in: https://github.com/giselleevita/aegisais/issues/3
 
     async def stop(self):
         if not self.is_running:

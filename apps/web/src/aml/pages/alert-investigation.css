@@ -123,6 +123,16 @@
   padding-top: 1rem;
 }
 
+.aml-inv__error {
+  margin: 0 0 0.75rem;
+  color: var(--sev-high-text);
+  background: var(--sev-high-bg);
+  border: 1px solid var(--sev-high-border);
+  border-radius: 6px;
+  padding: 0.45rem 0.6rem;
+  font-size: 0.84rem;
+}
+
 .aml-inv__edit {
   display: flex;
   flex-direction: column;
