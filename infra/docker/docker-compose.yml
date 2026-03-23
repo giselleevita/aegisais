@@ -6,7 +6,7 @@ services:
       POSTGRES_USER: aegisais
       POSTGRES_PASSWORD: aegisais
     ports:
-      - "5432:5432"
+      - "${POSTGRES_HOST_PORT:-5432}:5432"
     volumes:
       - aegisais_pg:/var/lib/postgresql/data
     healthcheck:
@@ -20,7 +20,7 @@ services:
     image: redis:7-alpine
     command: redis-server --requirepass ${REDIS_PASSWORD:-changeme}
     ports:
-      - "6379:6379"
+      - "${REDIS_HOST_PORT:-6379}:6379"
     volumes:
       - aegisais_redis:/data
     healthcheck:
@@ -80,7 +80,7 @@ services:
       TELEGEOGRAPHY_TOKEN: ${TELEGEOGRAPHY_TOKEN:-}
       EO_PROVIDER_TOKEN: ${EO_PROVIDER_TOKEN:-}
     ports:
-      - "8081:8081"
+      - "${BFF_HOST_PORT:-8081}:8081"
     depends_on:
       db:
         condition: service_healthy
@@ -105,7 +105,7 @@ services:
     environment:
       VITE_BFF_URL: http://bff:8081
     ports:
-      - "5174:5174"
+      - "${WEB_HOST_PORT:-5174}:5174"
     volumes:
       - ../../:/workspace
     depends_on:
