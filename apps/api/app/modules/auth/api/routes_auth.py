@@ -1,5 +1,5 @@
 from datetime import datetime, timezone
-from typing import Annotated, Optional
+from typing import Annotated, Optional, cast
 
 from fastapi import APIRouter, Body, Depends, HTTPException, Request, Response, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer, OAuth2PasswordRequestForm
@@ -106,7 +106,7 @@ async def login(
     db: Session = Depends(get_db),
 ):
     user = db.query(User).filter(User.username == form_data.username).first()
-    if not user or not verify_password(form_data.password, user.hashed_password):
+    if not user or not verify_password(form_data.password, cast(str, user.hashed_password)):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid username or password"
         )
@@ -116,16 +116,16 @@ async def login(
         )
 
     access_token = create_access_token(data={"sub": user.username, "role": user.role})
-    refresh_raw = create_refresh_token(user.id, db)
-    user.last_login = datetime.now(timezone.utc)
+    refresh_raw = create_refresh_token(cast(int, user.id), db)
+    setattr(user, "last_login", datetime.now(timezone.utc))
 
     if settings.enable_audit_logging:
         AuditService.log_event(
             db,
             action="auth.login.success",
             change_summary=f"User logged in: {user.username}",
-            organisation_id=user.organisation_id,
-            user_id=user.username,
+            organisation_id=cast(int, user.organisation_id),
+            user_id=cast(str, user.username),
             resource_type="session",
         )
     db.commit()
@@ -159,7 +159,7 @@ async def refresh_tokens(
         )
 
     access_token = create_access_token(data={"sub": user.username, "role": user.role})
-    user.last_login = datetime.now(timezone.utc)
+    setattr(user, "last_login", datetime.now(timezone.utc))
     db.commit()
 
     _set_refresh_cookie(response, raw)
@@ -254,10 +254,10 @@ async def register(
             db,
             action="auth.register",
             change_summary=f"New user registered: {db_user.username}",
-            organisation_id=db_user.organisation_id,
-            user_id=db_user.username,
+            organisation_id=cast(int, db_user.organisation_id),
+            user_id=cast(str, db_user.username),
             resource_type="user",
-            resource_id=db_user.username,
+            resource_id=cast(str, db_user.username),
         )
     db.commit()
     db.refresh(db_user)

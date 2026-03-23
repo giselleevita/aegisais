@@ -59,10 +59,16 @@ def build_alerts_pdf(
 ) -> BytesIO:
     validate_report_window(start_time, end_time)
 
-    from reportlab.lib import colors
-    from reportlab.lib.pagesizes import letter
-    from reportlab.lib.styles import getSampleStyleSheet
-    from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
+    from reportlab.lib import colors  # type: ignore[import-untyped]
+    from reportlab.lib.pagesizes import letter  # type: ignore[import-untyped]
+    from reportlab.lib.styles import getSampleStyleSheet  # type: ignore[import-untyped]
+    from reportlab.platypus import (  # type: ignore[import-untyped]
+        Paragraph,
+        SimpleDocTemplate,
+        Spacer,
+        Table,
+        TableStyle,
+    )
 
     def q():
         return _base_query(
