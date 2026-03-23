@@ -61,6 +61,42 @@
   background: var(--accent-dim);
 }
 
+.globe-workbench__auto-camera {
+  margin-bottom: 0.85rem;
+  padding: 0.55rem 0.6rem;
+  border-radius: 8px;
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-base);
+}
+
+.globe-workbench__auto-camera-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.globe-workbench__auto-camera-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.globe-workbench__auto-camera-switch {
+  width: 2.75rem;
+  height: 1.35rem;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+.globe-workbench__auto-camera-help {
+  margin: 0.45rem 0 0;
+  font-size: 0.68rem;
+  line-height: 1.35;
+  color: var(--text-muted);
+}
+
 .globe-workbench__catalogue ul {
   margin: 0;
   padding: 0;
