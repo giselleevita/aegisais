@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import asdict, dataclass
 from datetime import datetime
-from math import cos, radians, sqrt
+from math import cos, radians
 from typing import Any, Optional
 
 from app.core.config import settings

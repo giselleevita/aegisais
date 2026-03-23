@@ -3,10 +3,16 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
-PYTHON_BIN="${LOCK_PYTHON_BIN:-$(command -v python3.11 || command -v python3)}"
+PYTHON_BIN="${LOCK_PYTHON_BIN:-$(command -v python3.11)}"
 VENV_DIR="${LOCK_VENV_DIR:-$ROOT_DIR/.lock-venv}"
 OUTPUT_DIR="$ROOT_DIR"
 UPGRADE_FLAG=""
+
+if [[ -z "${PYTHON_BIN:-}" ]]; then
+  echo "python3.11 is required to compile lockfiles consistently with CI." >&2
+  echo "Set LOCK_PYTHON_BIN to an explicit Python 3.11 interpreter path." >&2
+  exit 1
+fi
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
