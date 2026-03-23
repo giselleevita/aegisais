@@ -290,6 +290,7 @@ class ApiClient {
     async getAuditLogs(params: {
         action?: string
         user_id?: string
+        resource_id?: string
         resource_type?: string
         start_time?: string
         end_time?: string
@@ -307,6 +308,7 @@ class ApiClient {
     async downloadAuditLogsCsv(params: {
         action?: string
         user_id?: string
+        resource_id?: string
         resource_type?: string
         start_time?: string
         end_time?: string

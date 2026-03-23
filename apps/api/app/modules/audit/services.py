@@ -51,6 +51,7 @@ class AuditService:
         scope_user: User,
         action: Optional[str] = None,
         user_id: Optional[str] = None,
+        resource_id: Optional[str] = None,
         resource_type: Optional[str] = None,
         start_time: Optional[datetime] = None,
         end_time: Optional[datetime] = None,
@@ -64,6 +65,8 @@ class AuditService:
             q = q.filter(AuditLog.action == action)
         if user_id:
             q = q.filter(AuditLog.user_id == user_id)
+        if resource_id:
+            q = q.filter(AuditLog.resource_id == resource_id)
         if resource_type:
             q = q.filter(AuditLog.resource_type == resource_type)
         if start_time:
@@ -79,6 +82,7 @@ class AuditService:
         scope_user: User,
         action: Optional[str] = None,
         user_id: Optional[str] = None,
+        resource_id: Optional[str] = None,
         resource_type: Optional[str] = None,
         start_time: Optional[datetime] = None,
         end_time: Optional[datetime] = None,
@@ -91,6 +95,8 @@ class AuditService:
             q = q.filter(AuditLog.action == action)
         if user_id:
             q = q.filter(AuditLog.user_id == user_id)
+        if resource_id:
+            q = q.filter(AuditLog.resource_id == resource_id)
         if resource_type:
             q = q.filter(AuditLog.resource_type == resource_type)
         if start_time:

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams, useNavigate } from 'react-router-dom'
 import { apiClient } from '@/core/api-client'
-import type { Incident } from '@/shared/types/common'
+import type { AuditLogEntry, Incident } from '@/shared/types/common'
 
 const STATUS_OPTIONS = ['open', 'triaged', 'investigating', 'resolved', 'dismissed']
 
@@ -17,6 +17,8 @@ export default function IncidentDetailPage() {
   const [titleDraft, setTitleDraft] = useState('')
   const [statusDraft, setStatusDraft] = useState('open')
   const [saving, setSaving] = useState(false)
+  const [timeline, setTimeline] = useState<AuditLogEntry[]>([])
+  const [timelineLoading, setTimelineLoading] = useState(false)
 
   useEffect(() => {
     if (!Number.isFinite(id)) return
@@ -49,6 +51,29 @@ export default function IncidentDetailPage() {
       cancelled = true
     }
   }, [id])
+
+  useEffect(() => {
+    if (!Number.isFinite(id)) return
+    let cancelled = false
+    ;(async () => {
+      setTimelineLoading(true)
+      try {
+        const rows = await apiClient.getAuditLogs({
+          resource_type: 'incident',
+          resource_id: String(id),
+          limit: 100,
+        })
+        if (!cancelled) setTimeline(rows)
+      } catch {
+        if (!cancelled) setTimeline([])
+      } finally {
+        if (!cancelled) setTimelineLoading(false)
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [id, incident?.status, incident?.title])
 
   const handleSave = async () => {
     if (!incident) return
@@ -137,6 +162,22 @@ export default function IncidentDetailPage() {
         <section style={{ border: '1px solid var(--border-default)', borderRadius: 8, padding: '1rem', background: 'var(--bg-surface)' }}>
           <h3 style={{ marginTop: 0 }}>Evidence bundle</h3>
           <pre style={{ margin: 0, maxHeight: '50vh', overflow: 'auto' }}>{JSON.stringify(incident.evidence_bundle, null, 2)}</pre>
+        </section>
+
+        <section style={{ border: '1px solid var(--border-default)', borderRadius: 8, padding: '1rem', background: 'var(--bg-surface)' }}>
+          <h3 style={{ marginTop: 0 }}>Activity timeline</h3>
+          {timelineLoading ? <p>Loading activity...</p> : null}
+          {!timelineLoading && timeline.length === 0 ? <p>No activity rows found.</p> : null}
+          {!timelineLoading && timeline.length > 0 ? (
+            <ul style={{ margin: 0, paddingLeft: '1.1rem' }}>
+              {timeline.map((row) => (
+                <li key={row.id} style={{ marginBottom: '0.45rem' }}>
+                  <strong>{row.action}</strong> - {new Date(row.timestamp).toLocaleString()}
+                  <div style={{ color: 'var(--text-secondary)' }}>{row.change_summary}</div>
+                </li>
+              ))}
+            </ul>
+          ) : null}
         </section>
       </div>
     </div>

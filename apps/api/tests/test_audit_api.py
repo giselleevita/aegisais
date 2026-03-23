@@ -217,3 +217,33 @@ def test_audit_logs_export_csv_forbidden_viewer(client: TestClient):
         headers={"Authorization": f"Bearer {token}"},
     )
     assert r.status_code == 403
+
+
+def test_audit_logs_filter_by_resource_id(client: TestClient):
+    token = register_and_login_as_admin(client)
+    db = TestingSessionLocal()
+    try:
+        row = AuditLog(
+            organisation_id=1,
+            timestamp=datetime.now(timezone.utc),
+            user_id="tester",
+            action="incident.update",
+            resource_id="4242",
+            resource_type="incident",
+            change_summary="updated",
+            details={"k": "v"},
+        )
+        db.add(row)
+        db.commit()
+    finally:
+        db.close()
+
+    r = client.get(
+        "/v1/audit/logs",
+        headers={"Authorization": f"Bearer {token}"},
+        params={"resource_id": "4242", "resource_type": "incident"},
+    )
+    assert r.status_code == 200
+    body = r.json()
+    assert len(body) >= 1
+    assert all(x["resource_id"] == "4242" for x in body)
