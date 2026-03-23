@@ -1,5 +1,5 @@
 import json
-from typing import List, Optional
+from typing import List
 from datetime import datetime, timezone
 from app.infrastructure.ingest.loaders import AisPoint
 from app.infrastructure.cache.redis_client import get_redis_client

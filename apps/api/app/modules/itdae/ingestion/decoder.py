@@ -1,4 +1,3 @@
-from app.core.logging import logger
 
 def decode_itdae_message(raw_msg: dict) -> dict:
     """
