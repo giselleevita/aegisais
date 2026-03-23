@@ -3,7 +3,6 @@ import logging
 from datetime import datetime, timedelta
 from sqlalchemy.orm import Session
 from app.modules.alerts.models import AlertCooldown
-from app.core.config import settings
 
 log = logging.getLogger("aegisais.cleanup")
 
