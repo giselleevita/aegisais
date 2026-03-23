@@ -53,28 +53,28 @@ def process_itdae_point(point: ItdaePoint, db: Session) -> list[dict[str, Any]]:
     p2 = points_list[-1]
 
     # ── Point-pair rules ──────────────────────────────────────────────────
-    for rule_fn in POINT_PAIR_RULES:
+    for point_pair_rule in POINT_PAIR_RULES:
         try:
-            result = rule_fn(p1, p2)
+            result = point_pair_rule(p1, p2)
             if result:
                 _persist_alert(result, db)
                 alerts_generated.append(result)
                 log.info("ITDAE alert: type=%s severity=%d mmsi=%s",
                          result["type"], result["severity"], p2.mmsi)
         except Exception as exc:
-            log.exception("Rule %s raised: %s", rule_fn.__name__, exc)
+            log.exception("Rule %s raised: %s", point_pair_rule.__name__, exc)
 
     # ── Window rules ──────────────────────────────────────────────────────
-    for rule_fn in WINDOW_RULES:
+    for window_rule in WINDOW_RULES:
         try:
-            result = rule_fn(points_list)
+            result = window_rule(points_list)
             if result:
                 _persist_alert(result, db)
                 alerts_generated.append(result)
                 log.info("ITDAE window alert: type=%s severity=%d mmsi=%s",
                          result["type"], result["severity"], p2.mmsi)
         except Exception as exc:
-            log.exception("Window rule %s raised: %s", rule_fn.__name__, exc)
+            log.exception("Window rule %s raised: %s", window_rule.__name__, exc)
 
     return alerts_generated
 

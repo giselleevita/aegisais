@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import json
 import logging
-from typing import Any, Optional
+from typing import Any, Optional, cast
 
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import Session
@@ -59,7 +59,7 @@ def polygon_ring_from_geojson(polygon_geojson: dict[str, Any]) -> list[list[floa
 
 def row_to_checker_zone(row: ItdaeGeofenceZone) -> dict[str, Any]:
     """Shape expected by checker.get_zone_for_position (includes polygon ring)."""
-    ring = polygon_ring_from_geojson(row.polygon_geojson)
+    ring = polygon_ring_from_geojson(cast(dict[str, Any], row.polygon_geojson))
     return {
         "id": row.id,
         "name": row.name,
@@ -108,7 +108,11 @@ def get_active_zones_for_checker(db: Optional[Session] = None) -> list[dict[str,
 
         r = get_redis_client()
         raw = r.get(CACHE_KEY)
-        if raw:
+        if isinstance(raw, bytes):
+            data = json.loads(raw.decode("utf-8"))
+            if isinstance(data, list):
+                return data
+        elif isinstance(raw, str):
             data = json.loads(raw)
             if isinstance(data, list):
                 return data
