@@ -12,6 +12,8 @@ import type {
     ReplayStartResponse,
     ReplayStopResponse,
     WatchlistEntry,
+    IntegrationFeedsResponse,
+    LayerDefinition,
 } from '@/shared/types/common'
 import type { ItdaeGeofenceZone } from '@/features/itdae/types'
 
@@ -120,6 +122,16 @@ class ApiClient {
 
     async getReplayStatus(): Promise<ReplayStatus> {
         return this.request<ReplayStatus>(`/v1/replay/status`)
+    }
+
+    /** Optional feed integrations (S-AIS, SAR, RF); requires authenticated viewer+. */
+    async getIntegrationFeeds(): Promise<IntegrationFeedsResponse> {
+        return this.request<IntegrationFeedsResponse>(`/v1/integrations/feeds`)
+    }
+
+    /** Globe layer catalogue (analyst workbench). */
+    async getLayers(): Promise<LayerDefinition[]> {
+        return this.request<LayerDefinition[]>(`/v1/layers`)
     }
 
     async uploadFile(file: File): Promise<UploadResponse> {

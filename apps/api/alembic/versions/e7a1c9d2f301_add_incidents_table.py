@@ -1,0 +1,62 @@
+"""add_incidents_table
+
+Revision ID: e7a1c9d2f301
+Revises: c32b98a46d40
+Create Date: 2026-03-23 12:00:00.000000
+"""
+
+from typing import Sequence, Union
+
+from alembic import op
+import sqlalchemy as sa
+
+# revision identifiers, used by Alembic.
+revision: str = "e7a1c9d2f301"
+down_revision: Union[str, None] = "c32b98a46d40"
+branch_labels: Union[str, Sequence[str], None] = None
+depends_on: Union[str, Sequence[str], None] = None
+
+
+def upgrade() -> None:
+    op.create_table(
+        "incidents",
+        sa.Column("id", sa.Integer(), nullable=False),
+        sa.Column("organisation_id", sa.Integer(), nullable=False),
+        sa.Column("alert_id", sa.Integer(), nullable=False),
+        sa.Column("created_at", sa.DateTime(), nullable=False),
+        sa.Column("status", sa.String(), nullable=False),
+        sa.Column("title", sa.String(), nullable=False),
+        sa.Column("evidence_bundle", sa.JSON(), nullable=False),
+        sa.ForeignKeyConstraint(["alert_id"], ["alerts.id"], ondelete="RESTRICT"),
+        sa.ForeignKeyConstraint(
+            ["organisation_id"], ["organisations.id"], ondelete="RESTRICT"
+        ),
+        sa.PrimaryKeyConstraint("id"),
+        sa.UniqueConstraint("alert_id"),
+    )
+    op.create_index(op.f("ix_incidents_alert_id"), "incidents", ["alert_id"], unique=True)
+    op.create_index(
+        op.f("ix_incidents_created_at"), "incidents", ["created_at"], unique=False
+    )
+    op.create_index(
+        op.f("ix_incidents_organisation_id"),
+        "incidents",
+        ["organisation_id"],
+        unique=False,
+    )
+    op.create_index(op.f("ix_incidents_status"), "incidents", ["status"], unique=False)
+    op.create_index(
+        "idx_incidents_org_created",
+        "incidents",
+        ["organisation_id", "created_at"],
+        unique=False,
+    )
+
+
+def downgrade() -> None:
+    op.drop_index("idx_incidents_org_created", table_name="incidents")
+    op.drop_index(op.f("ix_incidents_status"), table_name="incidents")
+    op.drop_index(op.f("ix_incidents_organisation_id"), table_name="incidents")
+    op.drop_index(op.f("ix_incidents_created_at"), table_name="incidents")
+    op.drop_index(op.f("ix_incidents_alert_id"), table_name="incidents")
+    op.drop_table("incidents")

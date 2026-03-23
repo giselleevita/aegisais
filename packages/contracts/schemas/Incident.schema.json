@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aegisais.dev/contracts/Incident.schema.json",
+  "title": "Incident",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "title",
+    "status",
+    "entityIds",
+    "eventIds",
+    "alertIds",
+    "createdAt",
+    "updatedAt",
+    "confidence",
+    "provenance",
+    "access"
+  ],
+  "properties": {
+    "id": { "type": "string" },
+    "title": { "type": "string" },
+    "status": {
+      "type": "string",
+      "enum": ["open", "monitoring", "contained", "closed"]
+    },
+    "entityIds": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "eventIds": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "alertIds": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "summary": { "type": "string" },
+    "createdAt": { "type": "string", "format": "date-time" },
+    "updatedAt": { "type": "string", "format": "date-time" },
+    "closedAt": { "type": "string", "format": "date-time" },
+    "confidence": { "$ref": "./Confidence.schema.json" },
+    "provenance": { "$ref": "./Provenance.schema.json" },
+    "access": { "$ref": "_common.json#/$defs/AccessMetadata" }
+  }
+}

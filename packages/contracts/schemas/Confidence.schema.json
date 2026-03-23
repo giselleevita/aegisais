@@ -1,0 +1,6 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aegisais.dev/contracts/Confidence.schema.json",
+  "title": "Confidence",
+  "$ref": "_common.json#/$defs/Confidence"
+}

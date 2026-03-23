@@ -3,9 +3,66 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 from datetime import datetime, timezone
+
+from app.core.config import settings
 from app.core.database import get_db
+from app.modules.auth.dependencies import require_viewer_or_above
+from app.modules.auth.models import User
 
 router = APIRouter()
+
+
+def _satellite_ais_feed() -> dict:
+    """Derive S-AIS row from env (no secrets returned)."""
+    prov = (settings.SAIS_PROVIDER or "none").strip().lower()
+    has_key = bool(settings.SAIS_API_KEY)
+    has_url = bool((settings.SAIS_API_BASE_URL or "").strip())
+    if prov != "none" and has_key and has_url:
+        return {
+            "id": "satellite_ais",
+            "label": "Satellite AIS",
+            "status": "ready",
+            "detail": prov,
+        }
+    if prov != "none" or has_key or has_url:
+        return {
+            "id": "satellite_ais",
+            "label": "Satellite AIS",
+            "status": "partial",
+            "detail": "adapter not fully configured",
+        }
+    return {
+        "id": "satellite_ais",
+        "label": "Satellite AIS",
+        "status": "disconnected",
+        "detail": None,
+    }
+
+
+@router.get("/integrations/feeds")
+async def integration_feeds_status(_user: User = Depends(require_viewer_or_above)):
+    """
+    Catalog of optional external feeds (S-AIS, SAR, RF) for the analyst admin UI.
+    Authenticated viewers and above; no secrets in the response.
+    """
+    return {
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "feeds": [
+            _satellite_ais_feed(),
+            {
+                "id": "sar_eo",
+                "label": "SAR / EO",
+                "status": "disconnected",
+                "detail": None,
+            },
+            {
+                "id": "rf_sigint",
+                "label": "RF (SIGINT)",
+                "status": "disconnected",
+                "detail": None,
+            },
+        ],
+    }
 
 @router.get("/health")
 async def health_check():

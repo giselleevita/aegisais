@@ -13,6 +13,7 @@ from app.detection.rules import (
     rule_heading_cog_consistency,
 )
 from app.infrastructure.messaging import publisher
+from app.modules.fusion.fused_rules import rule_surface_activity_near_cable_segment
 
 log = logging.getLogger("aegisais.pipeline")
 
@@ -67,6 +68,7 @@ def process_point(p: AisPoint) -> dict:
                 rule_turn_rate_t2,
                 rule_acceleration,
                 rule_heading_cog_consistency,
+                rule_surface_activity_near_cable_segment,
             ):
                 try:
                     res = rule(p1, p2)

@@ -144,3 +144,37 @@ export interface WatchlistEntry {
     created_at: string
     is_active: boolean
 }
+
+/** GET /v1/integrations/feeds — optional external sensor feeds (AML admin UI). */
+export type IntegrationFeedStatus = 'ready' | 'partial' | 'disconnected' | 'error'
+
+export interface IntegrationFeed {
+    id: string
+    label: string
+    status: IntegrationFeedStatus
+    detail: string | null
+}
+
+export interface IntegrationFeedsResponse {
+    timestamp: string
+    feeds: IntegrationFeed[]
+}
+
+export interface LayerMetadata {
+    provenance: string
+    confidence: number
+    source: string
+    access: string
+    licence: string
+}
+
+export interface LayerDefinition {
+    id: string
+    name: string
+    description?: string
+    category: 'live' | 'reference' | 'infrastructure' | 'intel'
+    enabledByDefault?: boolean
+    restricted?: boolean
+    nonCommercial?: boolean
+    metadata: LayerMetadata
+}
