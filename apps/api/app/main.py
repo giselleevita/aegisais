@@ -18,6 +18,8 @@ from app.api.v1.audit import router as audit_router
 from app.api.v1.watchlist import router as watchlist_router
 from app.api.v1.reports import router as reports_router
 from app.api.v1.incidents import router as incidents_router
+from app.modules.itdae.api.routes_itdae import router as itdae_router
+from app.modules.sais.api.routes_sais import router as sais_router
 
 # ITDAE integration
 from app.modules.auth.api.routes_auth import router as auth_router
@@ -64,9 +66,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-from app.modules.itdae.api.routes_itdae import router as itdae_router
-from app.modules.sais.api.routes_sais import router as sais_router
 
 app.include_router(auth_router, prefix="/v1/auth", tags=["auth"])
 app.include_router(vessels_router, prefix="/v1", tags=["vessels"])
