@@ -14,6 +14,8 @@ import type {
     WatchlistEntry,
     IntegrationFeedsResponse,
     LayerDefinition,
+    Incident,
+    AuditLogEntry,
 } from '@/shared/types/common'
 import type { ItdaeGeofenceZone } from '@/features/itdae/types'
 
@@ -263,6 +265,81 @@ class ApiClient {
 
     async getWatchlist(): Promise<WatchlistEntry[]> {
         return this.request<WatchlistEntry[]>(`/v1/watchlist`)
+    }
+
+    async getIncidents(params: { status?: string; limit?: number; offset?: number } = {}): Promise<Incident[]> {
+        const queryParams = new URLSearchParams()
+        if (params.status) queryParams.append('status', params.status)
+        if (params.limit !== undefined) queryParams.append('limit', String(params.limit))
+        if (params.offset !== undefined) queryParams.append('offset', String(params.offset))
+        const query = queryParams.toString()
+        return this.request<Incident[]>(`/v1/incidents${query ? `?${query}` : ''}`)
+    }
+
+    async getIncident(id: number): Promise<Incident> {
+        return this.request<Incident>(`/v1/incidents/${id}`)
+    }
+
+    async updateIncident(id: number, payload: { status?: string; title?: string }): Promise<Incident> {
+        return this.request<Incident>(`/v1/incidents/${id}`, {
+            method: 'PATCH',
+            body: JSON.stringify(payload),
+        })
+    }
+
+    async getAuditLogs(params: {
+        action?: string
+        user_id?: string
+        resource_type?: string
+        start_time?: string
+        end_time?: string
+        limit?: number
+        offset?: number
+    } = {}): Promise<AuditLogEntry[]> {
+        const q = new URLSearchParams()
+        Object.entries(params).forEach(([k, v]) => {
+            if (v !== undefined && v !== null && v !== '') q.append(k, String(v))
+        })
+        const query = q.toString()
+        return this.request<AuditLogEntry[]>(`/v1/audit/logs${query ? `?${query}` : ''}`)
+    }
+
+    async downloadAuditLogsCsv(params: {
+        action?: string
+        user_id?: string
+        resource_type?: string
+        start_time?: string
+        end_time?: string
+        max_rows?: number
+    } = {}): Promise<void> {
+        const q = new URLSearchParams()
+        Object.entries(params).forEach(([k, v]) => {
+            if (v !== undefined && v !== null && v !== '') q.append(k, String(v))
+        })
+        const query = q.toString()
+        const url = `${this.baseUrl}/v1/audit/logs/export/csv${query ? `?${query}` : ''}`
+        const response = await fetch(url, { headers: this.authHeaders() })
+        if (!response.ok) {
+            let message = `Export failed: ${response.statusText}`
+            try {
+                const err = await response.json()
+                message = err.detail || message
+            } catch {
+                /* ignore */
+            }
+            throw new Error(message)
+        }
+        const blob = await response.blob()
+        const cd = response.headers.get('Content-Disposition')
+        let filename = 'audit_logs_export.csv'
+        const m = cd?.match(/filename="?([^";]+)"?/i)
+        if (m?.[1]) filename = m[1].trim()
+        const objectUrl = URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = objectUrl
+        a.download = filename
+        a.click()
+        URL.revokeObjectURL(objectUrl)
     }
 
     async addWatchlistEntry(payload: {

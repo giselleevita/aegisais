@@ -17,6 +17,7 @@ from app.api.v1.health import router as health_router
 from app.api.v1.audit import router as audit_router
 from app.api.v1.watchlist import router as watchlist_router
 from app.api.v1.reports import router as reports_router
+from app.api.v1.incidents import router as incidents_router
 
 # ITDAE integration
 from app.modules.auth.api.routes_auth import router as auth_router
@@ -77,6 +78,7 @@ app.include_router(health_router, prefix="/v1", tags=["health"])
 app.include_router(audit_router, prefix="/v1", tags=["audit"])
 app.include_router(watchlist_router, prefix="/v1", tags=["watchlist"])
 app.include_router(reports_router, prefix="/v1", tags=["reports"])
+app.include_router(incidents_router, prefix="/v1", tags=["incidents"])
 app.include_router(itdae_router, prefix="/api/v1/itdae", tags=["itdae"])
 app.include_router(sais_router, prefix="/v1/sais", tags=["sais"])
 
