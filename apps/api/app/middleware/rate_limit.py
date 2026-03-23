@@ -2,7 +2,7 @@
 import logging
 import time
 from collections import defaultdict
-from typing import Callable
+from typing import Callable, cast
 
 from fastapi import HTTPException, Request, status
 
@@ -41,7 +41,7 @@ def _sliding_window_allow_redis(
         now = time.time()
         bucket = int(now // window_seconds)
         key = f"{redis_key}:w{bucket}"
-        n = r.incr(key)
+        n = cast(int, r.incr(key))
         if n == 1:
             r.expire(key, window_seconds)
         if n > max_requests:

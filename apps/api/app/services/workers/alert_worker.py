@@ -25,7 +25,7 @@ INCIDENTS_CREATED = Counter('aegisais_incidents_created_total', 'Total incidents
 INCIDENT_CREATE_ERRORS = Counter('aegisais_incident_create_errors_total', 'Total incident creation errors')
 
 try:
-    from opentelemetry import trace
+    from opentelemetry import trace  # type: ignore[import-not-found]
     _tracer = trace.get_tracer("aegisais.worker.alerts")
 except Exception:  # pragma: no cover - optional dependency
     _tracer = None

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
-from typing import Any
+from typing import Any, cast
 
 from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy.orm import Session
@@ -82,13 +82,13 @@ def create_incident_from_alert_with_flag(db: Session, alert: Alert) -> tuple[Inc
 
 def incident_to_out(incident: Incident) -> IncidentOut:
     return IncidentOut(
-        id=incident.id,
-        organisation_id=incident.organisation_id,
-        alert_id=incident.alert_id,
-        created_at=incident.created_at,
-        status=incident.status,
-        title=incident.title,
-        evidence_bundle=incident.evidence_bundle or {},
+        id=cast(int, incident.id),
+        organisation_id=cast(int, incident.organisation_id),
+        alert_id=cast(int, incident.alert_id),
+        created_at=cast(datetime, incident.created_at),
+        status=cast(str, incident.status),
+        title=cast(str, incident.title),
+        evidence_bundle=cast(dict[str, Any], incident.evidence_bundle or {}),
     )
 
 
@@ -138,18 +138,18 @@ def update_incident(
     changed: dict[str, dict[str, str]] = {}
     if update.status is not None and update.status != row.status:
         changed["status"] = {"from": row.status, "to": update.status}
-        row.status = update.status
+        setattr(row, "status", update.status)
     if update.title is not None and update.title != row.title:
         changed["title"] = {"from": row.title, "to": update.title}
-        row.title = update.title
+        setattr(row, "title", update.title)
 
     if changed:
         AuditService.log_event(
             db,
             action="incident.update",
             change_summary=f"Incident {incident_id} updated",
-            organisation_id=row.organisation_id,
-            user_id=actor.username,
+            organisation_id=cast(int, row.organisation_id),
+            user_id=cast(str, actor.username),
             resource_type="incident",
             resource_id=str(incident_id),
             details={"changes": changed},

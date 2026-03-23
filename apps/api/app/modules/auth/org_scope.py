@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Type
+from typing import Any, Type, cast
 
 from sqlalchemy.orm import Query
 
@@ -10,7 +10,7 @@ from app.modules.auth.models import User
 
 
 def is_super_admin(user: User) -> bool:
-    return user.role == "super_admin"
+    return cast(str, user.role) == "super_admin"
 
 
 def apply_org_filter(query: Query, model: Type[Any], user: User) -> Query:

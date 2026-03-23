@@ -3,12 +3,11 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime, timezone
-from typing import Any, Optional
+from typing import Any, Optional, cast
 
 from sqlalchemy.orm import Session
 
 from app.modules.auth.models import User
-from app.modules.auth.org_scope import apply_org_filter
 from app.modules.itdae.models import ItdaeGeofenceZone
 from app.modules.itdae.geofences.zones_service import (
     invalidate_itdae_zones_cache,
@@ -34,13 +33,15 @@ def list_active_zones(db: Session, *, user: User) -> list[ItdaeGeofenceZone]:
         db.query(ItdaeGeofenceZone)
         .filter(ItdaeGeofenceZone.is_active.is_(True))
     )
-    q = apply_org_filter(q, ItdaeGeofenceZone, user)
+    if cast(str, user.role) != "super_admin":
+        q = q.filter(ItdaeGeofenceZone.organisation_id == user.organisation_id)
     return q.order_by(ItdaeGeofenceZone.name).all()
 
 
 def get_zone_by_id(db: Session, zone_id: str, *, user: User) -> Optional[ItdaeGeofenceZone]:
     q = db.query(ItdaeGeofenceZone).filter(ItdaeGeofenceZone.id == zone_id)
-    q = apply_org_filter(q, ItdaeGeofenceZone, user)
+    if cast(str, user.role) != "super_admin":
+        q = q.filter(ItdaeGeofenceZone.organisation_id == user.organisation_id)
     return q.first()
 
 
@@ -91,17 +92,18 @@ def update_zone(
     row = get_zone_by_id(db, zone_id, user=user)
     if row is None:
         return None
+    row_any = cast(Any, row)
     if name is not None:
-        row.name = name.strip()
+        row_any.name = name.strip()
     if description is not None:
-        row.description = description
+        row_any.description = description
     if risk_level is not None:
-        row.risk_level = validate_risk_level(risk_level)
+        row_any.risk_level = validate_risk_level(risk_level)
     if polygon_geojson is not None:
-        row.polygon_geojson = validate_polygon_geojson(polygon_geojson)
+        row_any.polygon_geojson = validate_polygon_geojson(polygon_geojson)
     if is_active is not None:
-        row.is_active = is_active
-    row.updated_at = datetime.now(timezone.utc)
+        row_any.is_active = is_active
+    row_any.updated_at = datetime.now(timezone.utc)
     db.commit()
     db.refresh(row)
     invalidate_itdae_zones_cache()

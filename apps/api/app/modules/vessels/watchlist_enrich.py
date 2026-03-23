@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, cast
 
 from sqlalchemy.orm import Session
 
@@ -35,4 +35,7 @@ def priority_map_for_mmsis(db: Session, mmsis: set[str]) -> dict[str, str]:
         )
         .all()
     )
-    return {r.mmsi: r.priority for r in rows}
+    return {
+        cast(str, r.mmsi): cast(str, r.priority)
+        for r in rows
+    }

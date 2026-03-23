@@ -212,7 +212,7 @@ async def upload_file(
 async def list_uploaded_files(_viewer: Any = Depends(require_viewer_or_above)):
     """List all files in the data/raw directory."""
     try:
-        files = []
+        files: list[dict[str, Any]] = []
         for file_path in DATA_RAW_DIR.iterdir():
             if file_path.is_file():
                 file_size = file_path.stat().st_size
@@ -224,7 +224,7 @@ async def list_uploaded_files(_viewer: Any = Depends(require_viewer_or_above)):
                 })
         
         # Sort by filename
-        files.sort(key=lambda x: x["filename"])
+        files.sort(key=lambda x: str(x["filename"]))
         return {"files": files}
     except Exception as e:
         log.error("list_files_failed", error=str(e), exc_info=True)

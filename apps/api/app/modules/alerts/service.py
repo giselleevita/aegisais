@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
-from typing import Annotated, Optional
+from typing import Annotated, Optional, cast
 
 from fastapi import Depends, HTTPException
 from sqlalchemy import func
@@ -144,16 +144,16 @@ class AlertService:
 
         validate_alert_status(update.status)
 
-        alert.status = update.status
+        setattr(alert, "status", update.status)
         if update.notes is not None:
-            alert.notes = update.notes
+            setattr(alert, "notes", update.notes)
 
         if settings.enable_audit_logging and actor_username:
             AuditService.log_event(
                 self._db,
                 action="alert.status.update",
                 change_summary=f"Alert {alert_id} status set to {update.status}",
-                organisation_id=alert.organisation_id,
+                organisation_id=cast(int, alert.organisation_id),
                 user_id=actor_username,
                 resource_type="alert",
                 resource_id=str(alert_id),

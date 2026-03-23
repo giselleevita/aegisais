@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import logging
 from datetime import datetime, timezone
+from typing import Any, cast
 
 from sqlalchemy.orm import Session
 
@@ -26,12 +27,13 @@ def seed_baltic_geofence_zones(db: Session) -> None:
         poly_geojson = {"type": "Polygon", "coordinates": [z["polygon"]]}
         existing = db.query(ItdaeGeofenceZone).filter(ItdaeGeofenceZone.name == z["name"]).first()
         if existing:
-            existing.description = z.get("description")
-            existing.risk_level = z["risk_level"]
-            existing.polygon_geojson = poly_geojson
-            existing.is_active = True
-            existing.updated_at = now
-            existing.organisation_id = oid
+            existing_any = cast(Any, existing)
+            existing_any.description = z.get("description")
+            existing_any.risk_level = z["risk_level"]
+            existing_any.polygon_geojson = poly_geojson
+            existing_any.is_active = True
+            existing_any.updated_at = now
+            existing_any.organisation_id = oid
         else:
             db.add(
                 ItdaeGeofenceZone(

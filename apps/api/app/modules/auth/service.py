@@ -3,11 +3,11 @@ import secrets
 import smtplib
 from datetime import datetime, timedelta, timezone
 from email.message import EmailMessage
-from typing import Optional
+from typing import Optional, cast
 
 import bcrypt
 import structlog
-from jose import jwt
+from jose import jwt  # type: ignore[import-untyped]
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
@@ -136,9 +136,9 @@ def verify_refresh_token(raw_token: str, db: Session) -> Optional[User]:
     row = db.query(RefreshToken).filter(RefreshToken.token_hash == token_hash).first()
     if row is None or row.revoked:
         return None
-    if _as_utc_aware(row.expires_at) <= datetime.now(timezone.utc):
+    if _as_utc_aware(cast(datetime, row.expires_at)) <= datetime.now(timezone.utc):
         return None
-    return db.query(User).filter(User.id == row.user_id).first()
+    return db.query(User).filter(User.id == cast(int, row.user_id)).first()
 
 
 def revoke_refresh_token(raw_token: str, db: Session) -> bool:
@@ -146,7 +146,7 @@ def revoke_refresh_token(raw_token: str, db: Session) -> bool:
     row = db.query(RefreshToken).filter(RefreshToken.token_hash == token_hash).first()
     if row is None:
         return False
-    row.revoked = True
+    setattr(row, "revoked", True)
     db.flush()
     return True
 
@@ -203,13 +203,13 @@ def issue_password_reset_token_for_email(email: str, db: Session) -> Optional[tu
     )
     row = PasswordResetToken(
         token_hash=token_hash,
-        user_id=user.id,
+        user_id=cast(int, user.id),
         expires_at=expires_at,
         used=False,
     )
     db.add(row)
     db.flush()
-    return (user.email, raw)
+    return (cast(str, user.email), raw)
 
 
 def verify_password_reset_token(raw_token: str, db: Session) -> Optional[PasswordResetToken]:
@@ -221,7 +221,7 @@ def verify_password_reset_token(raw_token: str, db: Session) -> Optional[Passwor
     )
     if row is None or row.used:
         return None
-    if _as_utc_aware(row.expires_at) <= datetime.now(timezone.utc):
+    if _as_utc_aware(cast(datetime, row.expires_at)) <= datetime.now(timezone.utc):
         return None
     return row
 
@@ -230,11 +230,11 @@ def reset_password_with_token(raw_token: str, new_password: str, db: Session) ->
     row = verify_password_reset_token(raw_token, db)
     if row is None:
         return False
-    user = db.query(User).filter(User.id == row.user_id).first()
+    user = db.query(User).filter(User.id == cast(int, row.user_id)).first()
     if user is None or not user.is_active:
         return False
-    user.hashed_password = get_password_hash(new_password)
-    row.used = True
+    setattr(user, "hashed_password", get_password_hash(new_password))
+    setattr(row, "used", True)
     db.flush()
     db.commit()
     return True
