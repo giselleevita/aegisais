@@ -75,7 +75,7 @@ export default function AlertInvestigationPage() {
     return (
       <div className="aml-page-pad">
         <p>Invalid alert id.</p>
-        <Link to={AML_OPERATIONS_PATH}>Back to operations</Link>
+        <Link to={AML_OPERATIONS_PATH}>Back to triage</Link>
       </div>
     )
   }
@@ -104,7 +104,7 @@ export default function AlertInvestigationPage() {
           ← Back
         </button>
         <Link to={AML_OPERATIONS_PATH} className="aml-inv__link">
-          Operations
+          Triage
         </Link>
         <Link
           to={`${AML_OPERATIONS_PATH}?mmsi=${encodeURIComponent(alertRecord.mmsi)}`}

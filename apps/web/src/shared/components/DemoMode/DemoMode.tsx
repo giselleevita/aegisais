@@ -105,7 +105,7 @@ export default function DemoMode({ onStartDemo }: DemoModeProps) {
                 <h4>Run Guidance</h4>
                 <ul>
                     <li>Monitor processed-point count in the header demo status banner.</li>
-                    <li>Use Operations and Alerts to validate rule firings and severity distribution.</li>
+                    <li>Use Triage and alert investigation to validate rule firings and severity distribution.</li>
                     <li>Compare Globe and Map views to inspect geographic context and movement traces.</li>
                     <li>Run a baseline dataset after anomaly datasets for contrast.</li>
                 </ul>
