@@ -24,7 +24,6 @@ const DOC_TITLE_BY_PATH: Array<{ match: (p: string) => boolean; title: string }>
   { match: (p) => p === '/watchlist', title: 'Watchlist' },
   { match: (p) => p === '/globe', title: 'Globe' },
   { match: (p) => p === '/itdae', title: 'ITDAE' },
-  { match: (p) => p === '/lab', title: 'Lab' },
   { match: (p) => p === '/audit', title: 'Audit' },
   { match: (p) => p === '/admin', title: 'Admin' },
 ]
@@ -125,9 +124,6 @@ export default function AmlShell({ streamConnected, lastMessage }: AmlShellProps
             </NavLink>
             <NavLink to="/itdae" className={navLinkClass} title="Infrastructure threat detection">
               ITDAE
-            </NavLink>
-            <NavLink to="/lab" className={navLinkClass} title="Uploads, replay, and experiments">
-              Lab
             </NavLink>
           </div>
         </div>

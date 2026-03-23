@@ -117,7 +117,7 @@ export default function ReplayControls({ lastMessage }: ReplayControlsProps) {
 
     return (
         <div className="replay-controls">
-            <h3>Replay Controls</h3>
+            <p className="replay-controls__title">Replay</p>
 
             <div className="replay-status">
                 <div className={`status-indicator ${status?.running ? 'running' : 'stopped'}`} aria-live="polite">

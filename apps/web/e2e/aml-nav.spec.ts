@@ -65,15 +65,15 @@ test.describe('AML shell navigation', () => {
     await expect(page.locator('.alerts-panel')).toBeVisible()
   })
 
-  test('navigates between Triage, Map, Lab, and Admin', async ({ page }) => {
+  test('navigates between Triage, Map, Globe, and Admin', async ({ page }) => {
     await page.goto('/triage')
 
     const nav = page.getByRole('navigation', { name: 'Main navigation' })
     await nav.getByRole('link', { name: 'Map' }).click()
     await expect(page).toHaveURL(/\/map$/)
 
-    await nav.getByRole('link', { name: 'Lab' }).click()
-    await expect(page).toHaveURL(/\/lab$/)
+    await nav.getByRole('link', { name: 'Globe' }).click()
+    await expect(page).toHaveURL(/\/globe$/)
 
     await nav.getByRole('link', { name: 'Admin' }).click()
     await expect(page).toHaveURL(/\/admin$/)

@@ -8,7 +8,6 @@ import AmlShell from '@/aml/AmlShell'
 import OperationsPage from '@/aml/pages/OperationsPage'
 import AlertInvestigationPage from '@/aml/pages/AlertInvestigationPage'
 import MapPage from '@/aml/pages/MapPage'
-import LabPage from '@/aml/pages/LabPage'
 import ItdaePage from '@/aml/pages/ItdaePage'
 import WatchlistPage from '@/aml/pages/WatchlistPage'
 import AdminPage from '@/aml/pages/AdminPage'
@@ -30,7 +29,7 @@ export default function AmlApp() {
         <Route path={AML_OPERATIONS_PATH} element={<OperationsPage />} />
         <Route path="/alerts/:alertId" element={<AlertInvestigationPage />} />
         <Route path="/map" element={<MapPage />} />
-        <Route path="/lab" element={<LabPage />} />
+        <Route path="/lab" element={<Navigate to={AML_OPERATIONS_PATH} replace />} />
         <Route path="/itdae" element={<ItdaePage />} />
         <Route path="/globe" element={<GlobeWorkbenchPage />} />
         <Route path="/watchlist" element={<WatchlistPage />} />
