@@ -2,7 +2,7 @@ from dataclasses import asdict
 from typing import Optional, Any
 from app.core.config import settings
 from app.infrastructure.ingest.loaders import AisPoint
-from app.tracking.features import implied_speed_knots, heading_delta_deg, haversine_m, mps_to_knots
+from app.tracking.features import implied_speed_knots, heading_delta_deg, haversine_m
 
 def rule_teleport(p1: AisPoint, p2: AisPoint) ->Optional[ dict[str, Any]]:
     """

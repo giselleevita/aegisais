@@ -5,7 +5,6 @@ infrastructure threat detection (loitering, proximity to cable zones, etc.)
 
 Reuses haversine_m, mps_to_knots, heading_delta_deg from the base module.
 """
-import math
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Optional

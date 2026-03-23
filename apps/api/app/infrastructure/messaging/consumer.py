@@ -1,6 +1,6 @@
 import json
 import logging
-from typing import Callable, Any, Dict, List
+from typing import Callable, Any, Dict
 from app.infrastructure.cache.redis_client import get_redis_client
 from app.core.config import settings
 

@@ -150,10 +150,10 @@ def _read_dataframe(path: str, path_obj: Path, delimiter: str = ",") -> pd.DataF
                 # Try tab first, fall back to comma or space
                 try:
                     df = pd.read_csv(io.BytesIO(decompressed), sep="\t", engine="python")
-                except:
+                except Exception:
                     try:
                         df = pd.read_csv(io.BytesIO(decompressed), sep=",", engine="python")
-                    except:
+                    except Exception:
                         df = pd.read_csv(io.BytesIO(decompressed), sep=r"\s+", engine="python")
             else:
                 df = pd.read_csv(io.BytesIO(decompressed), sep=delimiter, engine="python")
@@ -166,10 +166,10 @@ def _read_dataframe(path: str, path_obj: Path, delimiter: str = ",") -> pd.DataF
                 # Try tab first, fall back to comma or space
                 try:
                     df = pd.read_csv(path, sep="\t", engine="python")
-                except:
+                except Exception:
                     try:
                         df = pd.read_csv(path, sep=",", engine="python")
-                    except:
+                    except Exception:
                         df = pd.read_csv(path, sep=r"\s+", engine="python")
             else:
                 df = pd.read_csv(path, sep=delimiter, engine="python")
@@ -347,7 +347,7 @@ def load_csv_points_streaming(path: str, chunk_size: int = 10000) -> Iterator[li
                     sep="\t",
                     engine="python"
                 )
-            except:
+            except Exception:
                 try:
                     file_handle.seek(0)
                     chunk_iterator = pd.read_csv(
@@ -357,7 +357,7 @@ def load_csv_points_streaming(path: str, chunk_size: int = 10000) -> Iterator[li
                         sep=",",
                         engine="python"
                     )
-                except:
+                except Exception:
                     file_handle.seek(0)
                     chunk_iterator = pd.read_csv(
                         file_handle,

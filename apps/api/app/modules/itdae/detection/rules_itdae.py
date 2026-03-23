@@ -23,11 +23,9 @@ import logging
 from typing import Optional, Any
 
 from app.modules.itdae.tracking.features_itdae import (
-    TrajectoryFeatures,
     ItdaePoint,
     is_loitering,
     compute_trajectory_features,
-    LOITER_MIN_DURATION_S,
     SLOW_TRANSIT_MAX_KN,
 )
 from app.modules.itdae.geofences.checker import get_zone_for_position

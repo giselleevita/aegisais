@@ -75,7 +75,6 @@ async def upload_file(
         )
     
     # Check if file extension is supported
-    allowed_extensions = {".csv", ".dat", ".zst", ".csv.zst", ".dat.zst"}
     file_ext = Path(filename).suffix.lower()
     file_stem_ext = Path(filename).stem.lower()
     
@@ -85,12 +84,12 @@ async def upload_file(
         if base_ext not in {".csv", ".dat"}:
             raise HTTPException(
                 status_code=400,
-                detail=f"Unsupported file type. Allowed: .csv, .dat, .csv.zst, .dat.zst"
+                detail="Unsupported file type. Allowed: .csv, .dat, .csv.zst, .dat.zst"
             )
     elif file_ext not in {".csv", ".dat"}:
         raise HTTPException(
             status_code=400,
-            detail=f"Unsupported file type. Allowed: .csv, .dat, .csv.zst, .dat.zst"
+            detail="Unsupported file type. Allowed: .csv, .dat, .csv.zst, .dat.zst"
         )
     
     # Check file size (if available from headers)

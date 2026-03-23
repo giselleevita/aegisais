@@ -1,6 +1,5 @@
 """Input validation utilities for API endpoints."""
 import re
-from typing import Optional
 from fastapi import HTTPException, status
 
 # MMSI validation: 9 digits

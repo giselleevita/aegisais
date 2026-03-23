@@ -12,7 +12,6 @@ from app.core.logging import configure_logging
 from app.infrastructure.messaging.consumer import RedisConsumer
 from app.modules.vessels.models import VesselLatest, VesselPosition
 from app.services.workers.heartbeat import WorkerHeartbeat
-import sqlalchemy as sa
 
 log = structlog.get_logger("aegisais.worker.persistence")
 

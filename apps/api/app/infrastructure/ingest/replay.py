@@ -4,9 +4,7 @@ from datetime import datetime
 import asyncio
 import logging
 from pathlib import Path
-from sqlalchemy.orm import Session
 
-from app.core.database import SessionLocal
 from app.infrastructure.ingest.loaders import load_csv_points, load_csv_points_streaming
 from app.services.pipeline import enqueue_point
 from app.infrastructure.ws.manager import broadcast
@@ -70,7 +68,7 @@ async def start_replay_task(path: str, speedup: float = 100.0, use_streaming: bo
         log.error(error_msg, exc_info=True)
         try:
             await broadcast({"kind": "error", "message": error_msg})
-        except:
+        except Exception:
             pass
         return
     
@@ -99,7 +97,7 @@ async def start_replay_task(path: str, speedup: float = 100.0, use_streaming: bo
         # Broadcast error to frontend
         try:
             await broadcast({"kind": "error", "message": error_msg})
-        except:
+        except Exception:
             pass
         replay_state.running = False
     finally:

@@ -15,7 +15,7 @@ Usage:
     from app.modules.itdae.detection.scoring_itdae import compute_vessel_risk
     risk = compute_vessel_risk(alerts_for_vessel)
 """
-from typing import Optional, Any
+from typing import Any
 
 # Weights for each alert type — must sum conceptually to 100 at max
 _ALERT_WEIGHTS: dict[str, float] = {
