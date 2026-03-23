@@ -18,8 +18,9 @@ class Settings(BaseSettings):
     db_pool_recycle: int = 1800
     allow_replay: bool = True
     
-    # Security settings
-    secret_key: str = "supersecretkey"  # Change in production!
+    # Security settings — SECRET_KEY must be set via environment variable.
+    # No default is provided; startup will raise ValueError if unset or too short in non-dev environments.
+    secret_key: str = ""
     # Comma-separated origins; env CORS_ALLOWED_ORIGINS
     cors_allowed_origins: str = (
         "http://localhost:5174,http://127.0.0.1:5174,"
@@ -67,7 +68,7 @@ class Settings(BaseSettings):
 
     # Upload / ingest hardening (Sprint 3)
     max_decompressed_size_gb: float = 50.0
-    scan_uploads_for_malware: bool = False  # TODO: integrate AV / malware scanning when True
+    scan_uploads_for_malware: bool = False  # See: https://github.com/giselleevita/aegisais/issues/2
 
     # Satellite AIS (S-AIS) — Sprint 4 stub; real HTTP when keys are configured (see app.modules.sais)
     SAIS_PROVIDER: str = "none"  # spire | orbcomm | exactearth | none
@@ -134,11 +135,12 @@ class Settings(BaseSettings):
     @classmethod
     def validate_secret_key(cls, v: str, info: ValidationInfo) -> str:
         env = (info.data or {}).get("app_env") or "development"
-        if env == "production":
-            if v == "supersecretkey" or len(v) < 32:
-                raise ValueError(
-                    "SECRET_KEY must be at least 32 characters and not the default when APP_ENV=production"
-                )
+        insecure = not v or v in {"supersecretkey", "changeme", "secret"} or len(v) < 32
+        if env not in ("development", "test") and insecure:
+            raise ValueError(
+                "SECRET_KEY must be set to a strong value (>=32 chars) via environment variable. "
+                "Set APP_ENV=development only for local development."
+            )
         return v
 
     def cors_origins_list(self) -> list[str]:
@@ -225,7 +227,7 @@ def validate_production_config() -> None:
     """Fail fast on insecure defaults when APP_ENV=production (Sprint 1)."""
     if settings.app_env != "production":
         return
-    if settings.secret_key == "supersecretkey" or len(settings.secret_key) < 32:
+    if not settings.secret_key or len(settings.secret_key) < 32:
         raise RuntimeError(
             "SECRET_KEY must be set to a strong value (>=32 chars, not the default) when APP_ENV=production"
         )

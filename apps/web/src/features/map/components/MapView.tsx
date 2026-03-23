@@ -25,6 +25,7 @@ export default function MapView({ selectedVessel, onVesselClick, showInfrastruct
     const [showTracks, setShowTracks] = useState(false)
     const [infraVisible, setInfraVisible] = useState(showInfrastructure)
     const [watchMmsi, setWatchMmsi] = useState<Set<string>>(new Set())
+    const [controlsOpen, setControlsOpen] = useState(true)
 
     useEffect(() => {
         loadData()
@@ -39,6 +40,12 @@ export default function MapView({ selectedVessel, onVesselClick, showInfrastruct
             setVesselTrack([])
         }
     }, [selectedVessel])
+
+    useEffect(() => {
+        if (typeof window === 'undefined') return
+        const compact = window.matchMedia('(max-width: 900px)')
+        setControlsOpen(!compact.matches)
+    }, [])
 
     const loadData = async () => {
         try {
@@ -99,36 +106,48 @@ export default function MapView({ selectedVessel, onVesselClick, showInfrastruct
         ? bounds[0]
         : [40.7128, -74.0060] // Default to NYC
 
+    const statusSummary = `${vessels.length} vessels, ${alertPositions.length} alerts, ${selectedVessel ? 'selected vessel active' : 'no vessel selected'}`
+
     return (
         <div className="map-view">
-            <div className="map-controls">
-                <label>
-                    <input
-                        type="checkbox"
-                        checked={showAlerts}
-                        onChange={(e) => setShowAlerts(e.target.checked)}
-                    />
-                    Show Alerts
-                </label>
-                <label>
-                    <input
-                        type="checkbox"
-                        checked={infraVisible}
-                        onChange={(e) => setInfraVisible(e.target.checked)}
-                    />
-                    Cable Zones
-                </label>
-                {selectedVessel && (
-                    <label>
+            <p className="sr-only" role="status" aria-live="polite">
+                {statusSummary}
+            </p>
+            <details className="map-controls" open={controlsOpen} onToggle={(e) => setControlsOpen(e.currentTarget.open)}>
+                <summary className="map-controls__summary">Map Layers</summary>
+                <fieldset className="map-controls__fieldset" aria-label="Map display controls">
+                    <legend className="sr-only">Map display controls</legend>
+                    <label htmlFor="map-show-alerts">
                         <input
+                            id="map-show-alerts"
                             type="checkbox"
-                            checked={showTracks}
-                            onChange={(e) => setShowTracks(e.target.checked)}
+                            checked={showAlerts}
+                            onChange={(e) => setShowAlerts(e.target.checked)}
                         />
-                        Show Track
+                        Show Alerts
                     </label>
-                )}
-            </div>
+                    <label htmlFor="map-show-cables">
+                        <input
+                            id="map-show-cables"
+                            type="checkbox"
+                            checked={infraVisible}
+                            onChange={(e) => setInfraVisible(e.target.checked)}
+                        />
+                        Cable Zones
+                    </label>
+                    {selectedVessel && (
+                        <label htmlFor="map-show-track">
+                            <input
+                                id="map-show-track"
+                                type="checkbox"
+                                checked={showTracks}
+                                onChange={(e) => setShowTracks(e.target.checked)}
+                            />
+                            Show Track
+                        </label>
+                    )}
+                </fieldset>
+            </details>
             <MapContainer
                 center={defaultCenter}
                 zoom={bounds.length > 0 ? 8 : 2}
