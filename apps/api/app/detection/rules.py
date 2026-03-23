@@ -167,6 +167,8 @@ def rule_turn_rate(p1: AisPoint, p2: AisPoint) ->Optional[ dict[str, Any]]:
 
     if heading_valid and cog_available:
         # If both available, prefer heading if it's changing (not stuck)
+        assert p1.heading is not None and p2.heading is not None
+        assert p1.cog is not None and p2.cog is not None
         heading_change = heading_delta_deg(p1.heading, p2.heading)
         cog_change = heading_delta_deg(p1.cog, p2.cog)
         if heading_change > 0.1 or cog_change < 0.1:
@@ -176,8 +178,10 @@ def rule_turn_rate(p1: AisPoint, p2: AisPoint) ->Optional[ dict[str, Any]]:
             angle_change = cog_change
     elif heading_valid:
         use_heading = True
+        assert p1.heading is not None and p2.heading is not None
         angle_change = heading_delta_deg(p1.heading, p2.heading)
     elif cog_available:
+        assert p1.cog is not None and p2.cog is not None
         angle_change = heading_delta_deg(p1.cog, p2.cog)
     else:
         log.debug("TURN_RATE: No heading or COG data")
@@ -269,6 +273,8 @@ def rule_turn_rate_t2(p1: AisPoint, p2: AisPoint) ->Optional[ dict[str, Any]]:
     cog_available = p1.cog is not None and p2.cog is not None
 
     if heading_valid and cog_available:
+        assert p1.heading is not None and p2.heading is not None
+        assert p1.cog is not None and p2.cog is not None
         heading_change = heading_delta_deg(p1.heading, p2.heading)
         cog_change = heading_delta_deg(p1.cog, p2.cog)
         if heading_change > 0.1 or cog_change < 0.1:
@@ -278,8 +284,10 @@ def rule_turn_rate_t2(p1: AisPoint, p2: AisPoint) ->Optional[ dict[str, Any]]:
             angle_change = cog_change
     elif heading_valid:
         use_heading = True
+        assert p1.heading is not None and p2.heading is not None
         angle_change = heading_delta_deg(p1.heading, p2.heading)
     elif cog_available:
+        assert p1.cog is not None and p2.cog is not None
         angle_change = heading_delta_deg(p1.cog, p2.cog)
     else:
         return None

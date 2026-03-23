@@ -1,9 +1,10 @@
 import logging
 import io
+from io import BytesIO
 from dataclasses import dataclass, asdict
 from datetime import datetime, timezone
 from typing import Optional, Iterator
-import pandas as pd
+import pandas as pd  # type: ignore[import-untyped]
 from pathlib import Path
 from app.core.events import SensorObservation, SensorType
 
@@ -331,7 +332,7 @@ def load_csv_points_streaming(path: str, chunk_size: int = 10000) -> Iterator[li
             dctx = zstd.ZstdDecompressor()
             with dctx.stream_reader(f) as reader:
                 decompressed = reader.read()
-        file_handle = io.BytesIO(decompressed)
+        file_handle: BytesIO | io.BufferedReader = io.BytesIO(decompressed)
     else:
         file_handle = open(path, "rb")
     

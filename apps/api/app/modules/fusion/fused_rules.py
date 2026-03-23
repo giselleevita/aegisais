@@ -85,13 +85,23 @@ def _distance_point_to_segment_m(
 
 
 def _nearest_cable_segment(lat: float, lon: float) -> tuple[dict[str, Any], float]:
+    def _as_float(value: Any) -> float:
+        try:
+            return float(value)
+        except (TypeError, ValueError) as exc:
+            raise ValueError(f"Invalid cable geometry coordinate: {value!r}") from exc
+
     best: Optional[dict[str, Any]] = None
     best_dist = float("inf")
     for zone in BALTIC_CABLE_ZONES:
         polygon = zone.get("polygon") or []
         for i in range(len(polygon) - 1):
-            lon1, lat1 = polygon[i]
-            lon2, lat2 = polygon[i + 1]
+            lon1_obj, lat1_obj = polygon[i]
+            lon2_obj, lat2_obj = polygon[i + 1]
+            lon1 = _as_float(lon1_obj)
+            lat1 = _as_float(lat1_obj)
+            lon2 = _as_float(lon2_obj)
+            lat2 = _as_float(lat2_obj)
             dist = _distance_point_to_segment_m(lat, lon, lat1, lon1, lat2, lon2)
             if dist < best_dist:
                 best_dist = dist
