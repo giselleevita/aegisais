@@ -10,7 +10,7 @@ from app.core.database import SessionLocal
 from app.core.logging import configure_logging
 from app.infrastructure.messaging.consumer import RedisConsumer
 from app.modules.alerts.models import Alert
-from app.modules.incidents.service import create_incident_from_alert
+from app.modules.incidents.service import create_incident_from_alert_with_flag
 from app.services.workers.heartbeat import WorkerHeartbeat
 
 log = structlog.get_logger("aegisais.worker.alerts")
@@ -52,17 +52,22 @@ def handle_alert(msg_id: str, data: Dict[str, Any]):
                 )
                 db.add(a)
                 db.flush()
-                create_incident_from_alert(db, a)
+                incident_created = False
+                try:
+                    _, incident_created = create_incident_from_alert_with_flag(db, a)
+                except Exception:
+                    INCIDENT_CREATE_ERRORS.inc()
+                    raise
                 db.commit()
                 ALERTS_PERSISTED.inc()
-                INCIDENTS_CREATED.inc()
+                if incident_created:
+                    INCIDENTS_CREATED.inc()
                 log.info("alert_persisted",
                          mmsi=data["mmsi"],
                          alert_type=data["type"],
                          msg_id=msg_id)
         except Exception as e:
             ALERT_ERROR.inc()
-            INCIDENT_CREATE_ERRORS.inc()
             raise e
     except Exception as e:
         log.error("alert_processing_error", msg_id=msg_id, error=str(e), exc_info=True)

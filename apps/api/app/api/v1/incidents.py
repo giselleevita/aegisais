@@ -38,7 +38,7 @@ def api_get_incident(
 def api_patch_incident(
     incident_id: int,
     _: Annotated[None, Depends(api_write_rate_limit)],
-    payload: IncidentUpdate = ...,
+    payload: IncidentUpdate,
     db: Session = Depends(get_db),
     actor: Any = Depends(require_analyst),
 ):

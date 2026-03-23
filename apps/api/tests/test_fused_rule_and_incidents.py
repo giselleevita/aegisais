@@ -18,6 +18,7 @@ from app.modules.incidents.service import (
     INCIDENT_SCHEMA_VERSION,
     build_incident_evidence_bundle,
     create_incident_from_alert,
+    create_incident_from_alert_with_flag,
 )
 from tests.conftest import TestingSessionLocal
 
@@ -111,5 +112,31 @@ def test_create_incident_from_alert_builds_bundle(client):
         assert incident.evidence_bundle["provenance_version"] == INCIDENT_PROVENANCE_VERSION
         assert bundle["source_alert"]["alert_id"] == alert.id
         assert bundle["legal"]["subsurface_tracking"] == "not_performed"
+    finally:
+        db.close()
+
+
+def test_create_incident_from_alert_with_flag_reports_existing(client):
+    db = TestingSessionLocal()
+    try:
+        alert = Alert(
+            organisation_id=1,
+            timestamp=datetime.now(timezone.utc),
+            mmsi="265503691",
+            type="FUSED_ACTIVITY_NEAR_CABLE",
+            severity=75,
+            summary="Near cable activity",
+            evidence={"schema_version": FUSED_RULE_SCHEMA_VERSION},
+        )
+        db.add(alert)
+        db.flush()
+
+        first, first_created = create_incident_from_alert_with_flag(db, alert)
+        second, second_created = create_incident_from_alert_with_flag(db, alert)
+        db.commit()
+
+        assert first_created is True
+        assert second_created is False
+        assert first.id == second.id
     finally:
         db.close()
