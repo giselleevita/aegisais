@@ -1,7 +1,6 @@
 import logging
 from pydantic_settings import BaseSettings
 from pydantic import field_validator, ValidationInfo
-from typing import Any
 
 _log = logging.getLogger("aegisais.config")
 
