@@ -25,6 +25,7 @@ def export_audit_logs_csv(
     admin: Any = Depends(require_admin),
     action: Optional[str] = Query(None, description="Filter by exact action string"),
     user_id: Optional[str] = Query(None, description="Filter by user_id (often username)"),
+    resource_id: Optional[str] = Query(None, description="Filter by resource_id"),
     resource_type: Optional[str] = Query(None, description="Filter by resource_type"),
     start_time: Optional[datetime] = Query(
         None, description="Include rows with timestamp >= start (ISO)"
@@ -47,6 +48,7 @@ def export_audit_logs_csv(
         scope_user=admin,
         action=action,
         user_id=user_id,
+        resource_id=resource_id,
         resource_type=resource_type,
         start_time=start_time,
         end_time=end_time,
@@ -93,6 +95,7 @@ def list_audit_logs(
     admin: Any = Depends(require_admin),
     action: Optional[str] = Query(None, description="Filter by exact action string"),
     user_id: Optional[str] = Query(None, description="Filter by user_id (often username)"),
+    resource_id: Optional[str] = Query(None, description="Filter by resource_id"),
     resource_type: Optional[str] = Query(None, description="Filter by resource_type"),
     start_time: Optional[datetime] = Query(
         None, description="Include rows with timestamp >= start (ISO)"
@@ -111,6 +114,7 @@ def list_audit_logs(
         scope_user=admin,
         action=action,
         user_id=user_id,
+        resource_id=resource_id,
         resource_type=resource_type,
         start_time=start_time,
         end_time=end_time,
