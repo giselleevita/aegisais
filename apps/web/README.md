@@ -72,7 +72,7 @@ VITE_API_BASE_URL=http://localhost:8001
 
 ### UI mode
 
-By default the app loads the **AML analyst console** (mission-oriented routes: operations split view, investigation, lab, etc.). The root path **`/`** redirects to **`/triage`** (canonical operations / alert queue + map split).
+By default the app loads the **AML analyst console** (triage split view, investigation, globe, etc.). Upload and replay live under **Triage** → “Data upload & replay”. The root path **`/`** redirects to **`/triage`** (alert queue + map). Legacy **`/lab`** redirects to **`/triage`**.
 
 The API exposes optional **integration feed status** for the Admin screen:
 

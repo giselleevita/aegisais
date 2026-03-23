@@ -8,13 +8,13 @@
   margin-bottom: 16px;
 }
 
-.replay-controls h3 {
+.replay-controls__title {
   font-size: 0.6875rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.1em;
   color: var(--text-secondary);
-  margin-bottom: 4px;
+  margin: 0 0 4px;
 }
 
 /* ── Status block ──────────────────────────────────────────────────── */

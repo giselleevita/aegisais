@@ -4,7 +4,7 @@
  * Wireframe (desktop):
  * - Triage `/triage`: left column = triage queue (filters + ranked alerts); right = map with ?mmsi= sync.
  * - Investigation `/alerts/:id`: evidence-first detail, status actions, link to vessel on map.
- * - Lab `/lab`: replay + file upload only (no global sidebar).
+ * - Triage includes collapsible upload/replay (formerly a separate Lab route).
  * - ITDAE `/itdae`, Watchlist `/watchlist`: feature panels in main column.
  * - Admin `/admin`: control-plane stub (analyst vs admin entry via route; roles enforced server-side later).
  */
@@ -303,10 +303,54 @@
   border-right: 1px solid var(--border-default);
   overflow: auto;
   background: var(--bg-base);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.aml-operations__ingest {
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--border-default);
+  background: var(--bg-surface);
+}
+
+.aml-operations__ingest summary {
+  cursor: pointer;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  list-style: none;
+}
+
+.aml-operations__ingest summary::-webkit-details-marker {
+  display: none;
+}
+
+.aml-operations__ingest summary::after {
+  content: ' ▾';
+  font-size: 0.65rem;
+  color: var(--text-muted);
+}
+
+.aml-operations__ingest:not([open]) summary::after {
+  content: ' ▸';
+}
+
+.aml-operations__ingest-body {
+  padding: 0 0.5rem 0.65rem;
+  max-height: min(55vh, 520px);
+  overflow: auto;
+}
+
+.aml-operations__ingest-body .replay-controls__title {
+  font-size: 0.72rem;
+  margin: 0.25rem 0 0.35rem;
 }
 
 .aml-operations__queue .alerts-panel {
-  min-height: 100%;
+  flex: 1;
+  min-height: 0;
 }
 
 .aml-operations__right {
