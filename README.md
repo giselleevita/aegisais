@@ -1,6 +1,7 @@
 # AegisAIS
 
 [![CI](https://github.com/giselleevita/aegisais/actions/workflows/ci.yml/badge.svg)](https://github.com/giselleevita/aegisais/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/giselleevita/aegisais/branch/main/graph/badge.svg)](https://codecov.io/gh/giselleevita/aegisais)
 
 **AIS Data Integrity and Anomaly Detection — Maritime Intelligence Platform**
 
@@ -274,17 +275,20 @@ apps/api/app/
 
 ### BFF — Geospatial API Gateway (`apps/bff`)
 
-A contract-first [Fastify](https://fastify.dev/) Backend-for-Frontend that exposes a geospatial query layer between the React client and the core Python API. Defined via OpenAPI 3.0 before implementation, it serves as a typed, stable contract surface for map and entity queries.
+A contract-first [Fastify](https://fastify.dev/) Backend-for-Frontend, designed via OpenAPI 3.0, that sits between the React client and the core Python API. It provides JWT-authenticated, rate-limited, license-gated geospatial endpoints with in-memory response caching.
 
-| Route group | Description |
-|---|---|
-| `GET /v1/layers` | Discover available geospatial layers |
-| `GET /v1/search` | Geospatial entity search |
-| `GET /v1/query` | Spatial filter queries |
-| `GET /v1/entities` | Entity lookup by MMSI or ID |
-| `GET /v1/tracks` | Per-vessel track data |
-| `GET /v1/events` | Temporal event stream |
-| `WS /v1/stream` | Real-time streaming metadata |
+| Endpoint | Auth | Description |
+|---|---|---|
+| `GET /health` | — | Liveness probe — returns env and status |
+| `GET /v1/storage/status` | — | Object storage provider configuration check |
+| `GET /v1/layers/manifest` | JWT + licence | License-filtered layer catalogue; Redis-backed cache |
+| `WS /v1/stream` | JWT + `ports:read` licence | Real-time heartbeat stream with ping/pong protocol |
+
+**Key design properties:**
+- **OpenAPI-first** — full contract in `openapi.yaml` before any implementation
+- **License-gated** — per-feature licence flags enforced at the route layer
+- **Rate limited** — sliding-window per-identity limiter on all read endpoints
+- **In-process cache** — configurable TTL cache on the layer manifest to reduce upstream load
 
 ### Frontend — Feature-Based (`apps/web`)
 
