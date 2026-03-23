@@ -11,7 +11,6 @@ import MapPage from '@/aml/pages/MapPage'
 import LabPage from '@/aml/pages/LabPage'
 import ItdaePage from '@/aml/pages/ItdaePage'
 import WatchlistPage from '@/aml/pages/WatchlistPage'
-import AboutPage from '@/aml/pages/AboutPage'
 import AdminPage from '@/aml/pages/AdminPage'
 import GlobeWorkbenchPage from '@/aml/pages/GlobeWorkbenchPage'
 import IncidentsPage from '@/aml/pages/IncidentsPage'
@@ -38,7 +37,7 @@ export default function AmlApp() {
         <Route path="/incidents" element={<IncidentsPage />} />
         <Route path="/incidents/:incidentId" element={<IncidentDetailPage />} />
         <Route path="/audit" element={<AuditPage />} />
-        <Route path="/about" element={<AboutPage />} />
+        <Route path="/about" element={<Navigate to={AML_OPERATIONS_PATH} replace />} />
         <Route path="/admin" element={<AdminPage />} />
       </Route>
     </Routes>

@@ -5,6 +5,7 @@ import logging
 from datetime import datetime, timezone
 from typing import Any, cast
 
+from sqlalchemy import inspect
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
@@ -21,6 +22,18 @@ def seed_baltic_geofence_zones(db: Session) -> None:
     When a row exists with the same name, updates polygon/description/risk_level from seed.
     Primary key id is not changed on existing rows.
     """
+    bind = db.get_bind()
+    if bind is not None:
+        try:
+            if not inspect(bind).has_table("itdae_geofence_zones"):
+                _log.info(
+                    "Skipping ITDAE Baltic geofence seed: table itdae_geofence_zones is missing "
+                    "(run `alembic upgrade head` in apps/api)."
+                )
+                return
+        except Exception as exc:
+            _log.debug("Could not inspect itdae_geofence_zones: %s", exc)
+
     now = datetime.now(timezone.utc)
     oid = settings.default_organisation_id
     for z in BALTIC_CABLE_ZONES:

@@ -86,8 +86,8 @@ test.describe('AML shell navigation', () => {
     await nav.getByRole('link', { name: 'Operations' }).click()
     await expect(page).toHaveURL(/\/triage$/)
 
-    await nav.getByRole('link', { name: 'About' }).click()
-    await expect(page).toHaveURL(/\/about$/)
+    await nav.getByRole('link', { name: 'Audit' }).click()
+    await expect(page).toHaveURL(/\/audit$/)
   })
 
   test('Admin shows feed rows from integrations API (mocked)', async ({ page }) => {

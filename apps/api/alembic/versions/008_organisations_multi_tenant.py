@@ -79,59 +79,74 @@ def upgrade() -> None:
     else:
         op.drop_constraint("uq_watchlist_entries_mmsi", "watchlist_entries", type_="unique")
 
-    op.alter_column("users", "organisation_id", existing_type=sa.Integer(), nullable=False)
-    op.alter_column("alerts", "organisation_id", existing_type=sa.Integer(), nullable=False)
-    op.alter_column(
-        "watchlist_entries", "organisation_id", existing_type=sa.Integer(), nullable=False
-    )
-    op.alter_column("audit_logs", "organisation_id", existing_type=sa.Integer(), nullable=False)
-    op.alter_column(
-        "itdae_geofence_zones",
-        "organisation_id",
-        existing_type=sa.Integer(),
-        nullable=False,
-    )
+    # SQLite requires batch mode for NOT NULL alters; PostgreSQL can use plain ALTER.
+    if is_sqlite:
+        with op.batch_alter_table("users") as batch_op:
+            batch_op.alter_column("organisation_id", existing_type=sa.Integer(), nullable=False)
+        with op.batch_alter_table("alerts") as batch_op:
+            batch_op.alter_column("organisation_id", existing_type=sa.Integer(), nullable=False)
+        with op.batch_alter_table("watchlist_entries") as batch_op:
+            batch_op.alter_column("organisation_id", existing_type=sa.Integer(), nullable=False)
+        with op.batch_alter_table("audit_logs") as batch_op:
+            batch_op.alter_column("organisation_id", existing_type=sa.Integer(), nullable=False)
+        with op.batch_alter_table("itdae_geofence_zones") as batch_op:
+            batch_op.alter_column("organisation_id", existing_type=sa.Integer(), nullable=False)
+    else:
+        op.alter_column("users", "organisation_id", existing_type=sa.Integer(), nullable=False)
+        op.alter_column("alerts", "organisation_id", existing_type=sa.Integer(), nullable=False)
+        op.alter_column(
+            "watchlist_entries", "organisation_id", existing_type=sa.Integer(), nullable=False
+        )
+        op.alter_column("audit_logs", "organisation_id", existing_type=sa.Integer(), nullable=False)
+        op.alter_column(
+            "itdae_geofence_zones",
+            "organisation_id",
+            existing_type=sa.Integer(),
+            nullable=False,
+        )
 
-    op.create_foreign_key(
-        "fk_users_organisation_id",
-        "users",
-        "organisations",
-        ["organisation_id"],
-        ["id"],
-        ondelete="RESTRICT",
-    )
-    op.create_foreign_key(
-        "fk_alerts_organisation_id",
-        "alerts",
-        "organisations",
-        ["organisation_id"],
-        ["id"],
-        ondelete="RESTRICT",
-    )
-    op.create_foreign_key(
-        "fk_watchlist_entries_organisation_id",
-        "watchlist_entries",
-        "organisations",
-        ["organisation_id"],
-        ["id"],
-        ondelete="RESTRICT",
-    )
-    op.create_foreign_key(
-        "fk_audit_logs_organisation_id",
-        "audit_logs",
-        "organisations",
-        ["organisation_id"],
-        ["id"],
-        ondelete="RESTRICT",
-    )
-    op.create_foreign_key(
-        "fk_itdae_geofence_zones_organisation_id",
-        "itdae_geofence_zones",
-        "organisations",
-        ["organisation_id"],
-        ["id"],
-        ondelete="RESTRICT",
-    )
+    # SQLite cannot ALTER ADD CONSTRAINT; skip FK DDL on SQLite (dev-only default DB).
+    if not is_sqlite:
+        op.create_foreign_key(
+            "fk_users_organisation_id",
+            "users",
+            "organisations",
+            ["organisation_id"],
+            ["id"],
+            ondelete="RESTRICT",
+        )
+        op.create_foreign_key(
+            "fk_alerts_organisation_id",
+            "alerts",
+            "organisations",
+            ["organisation_id"],
+            ["id"],
+            ondelete="RESTRICT",
+        )
+        op.create_foreign_key(
+            "fk_watchlist_entries_organisation_id",
+            "watchlist_entries",
+            "organisations",
+            ["organisation_id"],
+            ["id"],
+            ondelete="RESTRICT",
+        )
+        op.create_foreign_key(
+            "fk_audit_logs_organisation_id",
+            "audit_logs",
+            "organisations",
+            ["organisation_id"],
+            ["id"],
+            ondelete="RESTRICT",
+        )
+        op.create_foreign_key(
+            "fk_itdae_geofence_zones_organisation_id",
+            "itdae_geofence_zones",
+            "organisations",
+            ["organisation_id"],
+            ["id"],
+            ondelete="RESTRICT",
+        )
 
     op.create_index("ix_users_organisation_id", "users", ["organisation_id"], unique=False)
     op.create_index("ix_alerts_organisation_id", "alerts", ["organisation_id"], unique=False)
@@ -151,11 +166,18 @@ def upgrade() -> None:
         unique=False,
     )
 
-    op.create_unique_constraint(
-        "uq_watchlist_entries_org_mmsi",
-        "watchlist_entries",
-        ["organisation_id", "mmsi"],
-    )
+    if is_sqlite:
+        with op.batch_alter_table("watchlist_entries") as batch_op:
+            batch_op.create_unique_constraint(
+                "uq_watchlist_entries_org_mmsi",
+                ["organisation_id", "mmsi"],
+            )
+    else:
+        op.create_unique_constraint(
+            "uq_watchlist_entries_org_mmsi",
+            "watchlist_entries",
+            ["organisation_id", "mmsi"],
+        )
 
 
 def downgrade() -> None:
@@ -170,9 +192,13 @@ def downgrade() -> None:
             "uq_watchlist_entries_org_mmsi", "watchlist_entries", type_="unique"
         )
 
-    op.create_unique_constraint(
-        "uq_watchlist_entries_mmsi", "watchlist_entries", ["mmsi"]
-    )
+    if is_sqlite:
+        with op.batch_alter_table("watchlist_entries") as batch_op:
+            batch_op.create_unique_constraint("uq_watchlist_entries_mmsi", ["mmsi"])
+    else:
+        op.create_unique_constraint(
+            "uq_watchlist_entries_mmsi", "watchlist_entries", ["mmsi"]
+        )
 
     op.drop_index("ix_itdae_geofence_zones_organisation_id", table_name="itdae_geofence_zones")
     op.drop_index("ix_audit_logs_organisation_id", table_name="audit_logs")
@@ -180,11 +206,12 @@ def downgrade() -> None:
     op.drop_index("ix_alerts_organisation_id", table_name="alerts")
     op.drop_index("ix_users_organisation_id", table_name="users")
 
-    op.drop_constraint("fk_itdae_geofence_zones_organisation_id", "itdae_geofence_zones", type_="foreignkey")
-    op.drop_constraint("fk_audit_logs_organisation_id", "audit_logs", type_="foreignkey")
-    op.drop_constraint("fk_watchlist_entries_organisation_id", "watchlist_entries", type_="foreignkey")
-    op.drop_constraint("fk_alerts_organisation_id", "alerts", type_="foreignkey")
-    op.drop_constraint("fk_users_organisation_id", "users", type_="foreignkey")
+    if not is_sqlite:
+        op.drop_constraint("fk_itdae_geofence_zones_organisation_id", "itdae_geofence_zones", type_="foreignkey")
+        op.drop_constraint("fk_audit_logs_organisation_id", "audit_logs", type_="foreignkey")
+        op.drop_constraint("fk_watchlist_entries_organisation_id", "watchlist_entries", type_="foreignkey")
+        op.drop_constraint("fk_alerts_organisation_id", "alerts", type_="foreignkey")
+        op.drop_constraint("fk_users_organisation_id", "users", type_="foreignkey")
 
     op.drop_column("itdae_geofence_zones", "organisation_id")
     op.drop_column("audit_logs", "organisation_id")
