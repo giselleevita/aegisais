@@ -60,6 +60,14 @@ jobs:
         run: |
           python -m pytest -q
 
+      - name: Upload coverage to Codecov
+        if: matrix.python-version == '3.11'
+        uses: codecov/codecov-action@v4
+        with:
+          files: apps/api/coverage.xml
+          flags: backend
+          fail_ci_if_error: false
+
   frontend:
     runs-on: ubuntu-latest
 

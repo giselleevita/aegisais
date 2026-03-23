@@ -1,0 +1,23 @@
+coverage:
+  status:
+    project:
+      default:
+        target: 70%          # fail PR if overall coverage drops below 70%
+        threshold: 2%        # allow up to 2% drop before failing
+    patch:
+      default:
+        target: 60%          # new code in a PR must be at least 60% covered
+
+ignore:
+  - "apps/api/alembic/**"
+  - "apps/api/app/core/config.py"   # settings-only, no logic to test
+  - "apps/web/**"                   # frontend covered by Playwright e2e
+  - "apps/bff/dist/**"
+  - "**/node_modules/**"
+  - "**/__pycache__/**"
+  - "data/**"
+
+comment:
+  layout: "reach,diff,flags,tree"
+  behavior: default
+  require_changes: true

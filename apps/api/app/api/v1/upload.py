@@ -148,7 +148,7 @@ async def upload_file(
         file_size_mb = file_size / (1024 * 1024)
 
         if settings.scan_uploads_for_malware:
-            # TODO: integrate antivirus / malware scanning pipeline when enabled
+            # AV scanning pipeline tracked in: https://github.com/giselleevita/aegisais/issues/2
             pass
 
         max_dec = int(settings.max_decompressed_size_gb * (1024**3))
