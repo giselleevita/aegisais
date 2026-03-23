@@ -43,7 +43,13 @@ export default function IncidentsPage() {
       <aside className="aml-incidents__list">
         <div className="aml-incidents__header">
           <h2 className="aml-page-title">Incidents</h2>
-          <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
+          <label className="sr-only" htmlFor="incidents-status-filter">Filter incidents by status</label>
+          <select
+            id="incidents-status-filter"
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            aria-label="Filter incidents by status"
+          >
             <option value="">All statuses</option>
             {STATUS_OPTIONS.map((status) => (
               <option key={status} value={status}>
@@ -53,9 +59,9 @@ export default function IncidentsPage() {
           </select>
         </div>
 
-        {loading ? <p>Loading incidents...</p> : null}
+        {loading ? <p className="aml-incidents__message">Loading incidents...</p> : null}
 
-        {!loading && error ? <p>{error}</p> : null}
+        {!loading && error ? <p className="aml-incidents__message aml-incidents__message--error" role="alert">{error}</p> : null}
 
         {!loading && !error ? (
           <ul>
@@ -63,22 +69,19 @@ export default function IncidentsPage() {
               <li key={incident.id}>
                 <Link
                   to={`/incidents/${incident.id}`}
-                  style={{
-                    display: 'block',
-                    padding: '0.65rem 0.75rem',
-                    textDecoration: 'none',
-                    color: 'inherit',
-                  }}
+                  className="aml-incidents__link"
                 >
                   <strong>#{incident.id}</strong> {incident.title}
-                  <div style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>{incident.status}</div>
+                  <div className="aml-incidents__status">{incident.status}</div>
                 </Link>
               </li>
             ))}
           </ul>
         ) : null}
 
-        {!loading && !error && incidents.length === 0 ? <p>No incidents found.</p> : null}
+        {!loading && !error && incidents.length === 0 ? (
+          <p className="aml-incidents__message">No incidents found.</p>
+        ) : null}
       </aside>
 
       <section className="aml-incidents__detail">

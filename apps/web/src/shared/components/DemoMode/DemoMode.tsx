@@ -6,6 +6,18 @@ interface DemoModeProps {
     onStartDemo: () => void
 }
 
+const DEMO_DATASET_GUIDE: Array<{ filename: string; description: string }> = [
+    { filename: 'demo_comprehensive.csv', description: 'Full scenario set spanning all major alert classes.' },
+    { filename: 'demo_teleport_t1.csv', description: 'Tier 1 teleport events with impossible implied speed.' },
+    { filename: 'demo_teleport_t2.csv', description: 'Tier 2 teleport events for suspicious movement.' },
+    { filename: 'demo_turn_rate_t1.csv', description: 'Tier 1 turn-rate violations.' },
+    { filename: 'demo_turn_rate_t2.csv', description: 'Tier 2 turn-rate anomalies.' },
+    { filename: 'demo_position_invalid.csv', description: 'Invalid coordinate and position-quality events.' },
+    { filename: 'demo_acceleration.csv', description: 'Acceleration and deceleration integrity violations.' },
+    { filename: 'demo_heading_cog.csv', description: 'Heading and COG consistency mismatch cases.' },
+    { filename: 'demo_normal.csv', description: 'Benign baseline track for control comparison.' },
+]
+
 export default function DemoMode({ onStartDemo }: DemoModeProps) {
     const [demoFiles, setDemoFiles] = useState<Array<{ filename: string; path: string; size_mb: number }>>([])
     const [loading, setLoading] = useState(true)
@@ -17,7 +29,7 @@ export default function DemoMode({ onStartDemo }: DemoModeProps) {
     const loadDemoFiles = async () => {
         try {
             const result = await apiClient.listUploadedFiles()
-            setDemoFiles(result.files)
+            setDemoFiles(result.files.sort((a, b) => b.size_mb - a.size_mb))
         } catch (error) {
             if (import.meta.env.DEV) {
                 // eslint-disable-next-line no-console
@@ -44,20 +56,16 @@ export default function DemoMode({ onStartDemo }: DemoModeProps) {
     return (
         <div className="demo-mode">
             <div className="demo-header">
-                <h3>🚀 Try Demo Mode</h3>
-                <p>Start with a sample file to see how AegisAIS works</p>
+                <h3>Demo Execution</h3>
+                <p>Select a scenario dataset to launch a replay run and observe alert generation in real time.</p>
                 <div className="demo-features">
-                    <p><strong>Available demo files:</strong></p>
+                    <p><strong>Recommended datasets:</strong></p>
                     <ul>
-                        <li><strong>demo_comprehensive.csv</strong> - All alert types (recommended)</li>
-                        <li><strong>demo_teleport_t1.csv</strong> - TELEPORT Tier 1 (impossible speed)</li>
-                        <li><strong>demo_teleport_t2.csv</strong> - TELEPORT Tier 2 (suspicious speed)</li>
-                        <li><strong>demo_turn_rate_t1.csv</strong> - TURN_RATE Tier 1 (impossible turn)</li>
-                        <li><strong>demo_turn_rate_t2.csv</strong> - TURN_RATE Tier 2 (suspicious turn)</li>
-                        <li><strong>demo_position_invalid.csv</strong> - Invalid coordinates</li>
-                        <li><strong>demo_acceleration.csv</strong> - Impossible acceleration</li>
-                        <li><strong>demo_heading_cog.csv</strong> - Heading/COG mismatch</li>
-                        <li><strong>demo_normal.csv</strong> - Normal track (no alerts)</li>
+                        {DEMO_DATASET_GUIDE.map((entry) => (
+                            <li key={entry.filename}>
+                                <strong>{entry.filename}</strong> - {entry.description}
+                            </li>
+                        ))}
                     </ul>
                 </div>
             </div>
@@ -67,12 +75,12 @@ export default function DemoMode({ onStartDemo }: DemoModeProps) {
             ) : demoFiles.length === 0 ? (
                 <div className="demo-empty">
                     <p>No demo files available.</p>
-                    <p>Upload a file first, or check the <code>data/raw/</code> directory for sample data.</p>
+                    <p>Upload a dataset first, or verify sample data is present in <code>data/raw/</code>.</p>
                 </div>
             ) : (
                 <div className="demo-files">
                     <p className="demo-instructions">
-                        Select a file to start the demo. The system will process it and show you alerts in real-time.
+                        Choose a file to start a replay run. Processing metrics and detections will update live.
                     </p>
                     <div className="demo-file-list">
                         {demoFiles.map((file) => (
@@ -85,7 +93,7 @@ export default function DemoMode({ onStartDemo }: DemoModeProps) {
                                     onClick={() => handleStartDemo(file.path)}
                                     className="btn-demo-start"
                                 >
-                                    Start Demo
+                                    Start Run
                                 </button>
                             </div>
                         ))}
@@ -94,12 +102,12 @@ export default function DemoMode({ onStartDemo }: DemoModeProps) {
             )}
 
             <div className="demo-tips">
-                <h4>💡 Demo Tips</h4>
+                <h4>Run Guidance</h4>
                 <ul>
-                    <li>Watch the Dashboard to see processing progress</li>
-                    <li>Check the Alerts tab for detected anomalies</li>
-                    <li>View vessels on the Map to see spatial patterns</li>
-                    <li>Click any vessel to see detailed information</li>
+                    <li>Monitor processed-point count in the header demo status banner.</li>
+                    <li>Use Operations and Alerts to validate rule firings and severity distribution.</li>
+                    <li>Compare Globe and Map views to inspect geographic context and movement traces.</li>
+                    <li>Run a baseline dataset after anomaly datasets for contrast.</li>
                 </ul>
             </div>
         </div>

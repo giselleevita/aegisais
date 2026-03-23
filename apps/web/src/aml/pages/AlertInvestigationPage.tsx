@@ -23,6 +23,7 @@ export default function AlertInvestigationPage() {
   const [editing, setEditing] = useState(false)
   const [statusDraft, setStatusDraft] = useState('new')
   const [notesDraft, setNotesDraft] = useState('')
+  const [actionError, setActionError] = useState<string | null>(null)
 
   useEffect(() => {
     if (!Number.isFinite(id)) return
@@ -59,13 +60,14 @@ export default function AlertInvestigationPage() {
   const handleSave = async () => {
     if (!alertRecord) return
     try {
+      setActionError(null)
       await apiClient.updateAlertStatus(alertRecord.id, statusDraft, notesDraft)
       const refreshed = await apiClient.getAlert(alertRecord.id)
       setAlertRecord(refreshed)
       setEditing(false)
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Update failed'
-      window.alert(msg)
+      setActionError(msg)
     }
   }
 
@@ -156,6 +158,7 @@ export default function AlertInvestigationPage() {
 
         <section className="aml-inv__actions">
           <h2 className="aml-inv__h2">Disposition</h2>
+          {actionError ? <p className="aml-inv__error" role="alert">{actionError}</p> : null}
           {editing ? (
             <div className="aml-inv__edit">
               <select
@@ -184,6 +187,7 @@ export default function AlertInvestigationPage() {
                   className="aml-inv__btn-ghost"
                   onClick={() => {
                     setEditing(false)
+                    setActionError(null)
                     setStatusDraft(alertRecord.status || 'new')
                     setNotesDraft(alertRecord.notes || '')
                   }}
@@ -193,7 +197,14 @@ export default function AlertInvestigationPage() {
               </div>
             </div>
           ) : (
-            <button type="button" className="aml-inv__btn-primary" onClick={() => setEditing(true)}>
+            <button
+              type="button"
+              className="aml-inv__btn-primary"
+              onClick={() => {
+                setActionError(null)
+                setEditing(true)
+              }}
+            >
               Update status
             </button>
           )}
