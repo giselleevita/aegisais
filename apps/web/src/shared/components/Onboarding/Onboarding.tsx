@@ -101,7 +101,7 @@ export default function Onboarding({ onComplete, onSkip }: OnboardingProps) {
             content: (
                 <div>
                     <p>You now know how to use AegisAIS!</p>
-                    <p><strong>Tip:</strong> Check the "About AegisAIS" section in the sidebar for more information about alert types and detection rules.</p>
+                    <p><strong>Tip:</strong> Use <strong>Operations</strong> for the alert queue and <strong>Lab</strong> for uploads; see project docs for detection rules.</p>
                     <p>Ready to get started? Upload your first file!</p>
                 </div>
             ),

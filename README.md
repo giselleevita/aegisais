@@ -393,7 +393,13 @@ alembic revision --autogenerate -m "describe your change"
 
 # Roll back one step
 alembic downgrade -1
+
+# If you see "Multiple head revisions", the repo includes a merge revision — upgrade to the single head:
+alembic heads   # should show one head after pulling latest
+alembic upgrade head
 ```
+
+**SQLite (default local dev):** The full migration chain runs on SQLite. Organisation **foreign keys** are skipped on SQLite only (Alembic cannot `ALTER ADD CONSTRAINT`); the app still enforces tenancy in code. Use **PostgreSQL** for database-level FK parity.
 
 See [`apps/api/MIGRATION_GUIDE.md`](./apps/api/MIGRATION_GUIDE.md) and [`docs/DB_MIGRATION_SETUP.md`](./docs/DB_MIGRATION_SETUP.md) for full details.
 
@@ -469,6 +475,8 @@ The API Dockerfile automatically runs `alembic upgrade head` on container startu
 | No alerts generated | Check thresholds in `settings.py`; verify the data contains anomalies; inspect API logs |
 | Alerts not appearing in UI | Refresh the page; clear active filters; confirm WebSocket shows "Connected" |
 | Database errors on startup | Run `alembic upgrade head`; verify `DATABASE_URL`; check database permissions |
+| `Multiple head revisions` from Alembic | Pull latest migrations, then `alembic upgrade head` (merge revisions unify branches) |
+| ITDAE geofence seed / missing `itdae_geofence_zones` | Apply migrations; until then the API skips seed cleanly when the table is absent |
 | `"Vite requires Node.js 20.19+"` | Run `nvm use` inside `apps/web/` or install Node.js 20.19+ |
 | Processing too slow on large files | Increase the `speedup` parameter; ensure `use_streaming=true` |
 

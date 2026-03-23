@@ -98,9 +98,6 @@ export default function AmlShell({ streamConnected, lastMessage }: AmlShellProps
           <NavLink to="/admin" className={navLinkClass}>
             Admin
           </NavLink>
-          <NavLink to="/about" className={navLinkClass}>
-            About
-          </NavLink>
         </div>
       </nav>
 
