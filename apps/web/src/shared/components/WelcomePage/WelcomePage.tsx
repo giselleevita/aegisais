@@ -12,13 +12,13 @@ export default function WelcomePage({ onStartOnboarding }: WelcomePageProps) {
     return (
         <div className="welcome-page">
             <div className="welcome-hero">
-                <h1 className="welcome-title">🛡️ Welcome to AegisAIS</h1>
+                <h1 className="welcome-title">Welcome to AegisAIS</h1>
                 <p className="welcome-subtitle">
-                    AIS Data Integrity and Anomaly Detection Tool
+                    Operational AIS data integrity and anomaly analysis platform
                 </p>
                 {onStartOnboarding && (
                     <button onClick={onStartOnboarding} className="welcome-tour-btn">
-                        📖 Take a Tour
+                        Guided Tour
                     </button>
                 )}
             </div>
@@ -155,7 +155,7 @@ export default function WelcomePage({ onStartOnboarding }: WelcomePageProps) {
                             <div className="demo-cta">
                                 <p>Ready to see AegisAIS in action? Start with a demo!</p>
                                 <button onClick={() => setShowDemo(true)} className="btn-demo-cta">
-                                    🚀 Start Demo Mode
+                                    Open Demo Execution
                                 </button>
                             </div>
                         ) : (

@@ -46,18 +46,19 @@ export default function ReplayControls({ lastMessage }: ReplayControlsProps) {
 
     const handleStart = async () => {
         if (!filePath.trim()) {
-            alert('Please enter a file path')
+            setError('Please enter a file path before starting replay.')
             return
         }
         // Parse batch size safely
         const parsedBatchSize = Number(batchSize) || 1
         try {
             setLoading(true)
+            setError(null)
             await apiClient.startReplay(filePath, speedup, useStreaming, parsedBatchSize)
             await loadStatus()
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : 'Failed to start replay'
-            alert(`Failed to start replay: ${errorMessage}`)
+            setError(`Failed to start replay: ${errorMessage}`)
         } finally {
             setLoading(false)
         }
@@ -65,11 +66,12 @@ export default function ReplayControls({ lastMessage }: ReplayControlsProps) {
 
     const handleStop = async () => {
         try {
+            setError(null)
             await apiClient.stopReplay()
             await loadStatus()
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : 'Failed to stop replay'
-            alert(`Failed to stop replay: ${errorMessage}`)
+            setError(`Failed to stop replay: ${errorMessage}`)
         }
     }
 
@@ -104,12 +106,10 @@ export default function ReplayControls({ lastMessage }: ReplayControlsProps) {
             } catch (replayError) {
                 const errorMsg = replayError instanceof Error ? replayError.message : 'Failed to start replay'
                 setError(`Replay failed: ${errorMsg}`)
-                alert(`Replay failed: ${errorMsg}`)
             }
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred'
             setError(`Upload failed: ${errorMessage}`)
-            alert(`Upload failed: ${errorMessage}`)
         } finally {
             setLoading(false)
         }
@@ -120,11 +120,11 @@ export default function ReplayControls({ lastMessage }: ReplayControlsProps) {
             <h3>Replay Controls</h3>
 
             <div className="replay-status">
-                <div className={`status-indicator ${status?.running ? 'running' : 'stopped'}`}>
+                <div className={`status-indicator ${status?.running ? 'running' : 'stopped'}`} aria-live="polite">
                     {status?.running ? '● Running' : '○ Stopped'}
                 </div>
                 {status && (
-                    <div className="status-details">
+                    <div className="status-details" role="status" aria-live="polite">
                         <div>Processed: {status.processed.toLocaleString()}</div>
                         {status.last_timestamp && (
                             <div className="timestamp">
@@ -133,11 +133,7 @@ export default function ReplayControls({ lastMessage }: ReplayControlsProps) {
                         )}
                     </div>
                 )}
-                {error && (
-                    <div style={{ color: 'red', marginTop: '0.5rem', fontSize: '0.875rem' }}>
-                        ⚠️ {error}
-                    </div>
-                )}
+                {error ? <div className="replay-error" role="alert">Warning: {error}</div> : null}
             </div>
 
             <div className="replay-form">
@@ -160,7 +156,7 @@ export default function ReplayControls({ lastMessage }: ReplayControlsProps) {
                         placeholder="data/raw/file.dat.zst or file.csv.zst"
                         disabled={status?.running || loading}
                     />
-                    <small style={{ display: 'block', marginTop: '0.25rem', color: '#6b7280' }}>
+                    <small className="form-help-text">
                         Drag & drop a file above, or enter a path manually
                     </small>
                 </div>
@@ -203,7 +199,7 @@ export default function ReplayControls({ lastMessage }: ReplayControlsProps) {
                         step="10"
                         disabled={status?.running}
                     />
-                    <small style={{ display: 'block', marginTop: '0.25rem', color: '#6b7280' }}>
+                    <small className="form-help-text">
                         Points per database commit (100-1000 recommended for large files)
                     </small>
                 </div>
