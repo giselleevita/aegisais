@@ -12,6 +12,9 @@ from app.modules.alerts.schemas import AlertOut
 from app.modules.alerts.schemas import AlertStatusUpdate
 from app.modules.alerts.mappers import alert_to_out
 from app.modules.alerts.service import AlertServiceDep
+from app.core.database import get_db
+from sqlalchemy.orm import Session
+from app.modules.audit.services import AuditService
 
 router = APIRouter()
 
@@ -62,6 +65,7 @@ def get_alert_stats(
 def export_alerts_csv(
     _: Annotated[None, Depends(api_read_rate_limit)],
     svc: AlertServiceDep,
+    db: Session = Depends(get_db),
     admin: Any = Depends(require_admin),
     mmsi: Optional[str] = Query(None, description="Filter by MMSI"),
     alert_type: Optional[str] = Query(None, description="Filter by alert type"),
@@ -87,6 +91,29 @@ def export_alerts_csv(
         start_time=start_time,
         end_time=end_time,
     )
+
+    AuditService.log_event(
+        db,
+        action="alert.export.csv",
+        change_summary=f"Exported {len(alerts)} alerts to CSV",
+        organisation_id=admin.organisation_id,
+        user_id=admin.username,
+        resource_type="alert_export",
+        details={
+            "format": "csv",
+            "count": len(alerts),
+            "filters": {
+                "mmsi": mmsi,
+                "alert_type": alert_type,
+                "status": status,
+                "min_severity": min_severity,
+                "max_severity": max_severity,
+                "start_time": start_time.isoformat() if start_time else None,
+                "end_time": end_time.isoformat() if end_time else None,
+            },
+        },
+    )
+    db.commit()
 
     output = io.StringIO()
     writer = csv.writer(output)
@@ -119,6 +146,7 @@ def export_alerts_csv(
 def export_alerts_json(
     _: Annotated[None, Depends(api_read_rate_limit)],
     svc: AlertServiceDep,
+    db: Session = Depends(get_db),
     admin: Any = Depends(require_admin),
     mmsi: Optional[str] = Query(None, description="Filter by MMSI"),
     alert_type: Optional[str] = Query(None, description="Filter by alert type"),
@@ -144,6 +172,29 @@ def export_alerts_json(
         start_time=start_time,
         end_time=end_time,
     )
+
+    AuditService.log_event(
+        db,
+        action="alert.export.json",
+        change_summary=f"Exported {len(alerts)} alerts to JSON",
+        organisation_id=admin.organisation_id,
+        user_id=admin.username,
+        resource_type="alert_export",
+        details={
+            "format": "json",
+            "count": len(alerts),
+            "filters": {
+                "mmsi": mmsi,
+                "alert_type": alert_type,
+                "status": status,
+                "min_severity": min_severity,
+                "max_severity": max_severity,
+                "start_time": start_time.isoformat() if start_time else None,
+                "end_time": end_time.isoformat() if end_time else None,
+            },
+        },
+    )
+    db.commit()
 
     alerts_data = [alert_to_out(a).model_dump() for a in alerts]
 

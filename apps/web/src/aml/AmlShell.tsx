@@ -56,6 +56,12 @@ export default function AmlShell({ streamConnected, lastMessage }: AmlShellProps
         <NavLink to="/watchlist" className={navLinkClass}>
           Watchlist
         </NavLink>
+        <NavLink to="/incidents" className={navLinkClass}>
+          Incidents
+        </NavLink>
+        <NavLink to="/audit" className={navLinkClass}>
+          Audit
+        </NavLink>
         <NavLink to="/admin" className={navLinkClass}>
           Admin
         </NavLink>

@@ -160,6 +160,16 @@ export interface IntegrationFeedsResponse {
     feeds: IntegrationFeed[]
 }
 
+export interface Incident {
+    id: number
+    organisation_id: number
+    alert_id: number
+    created_at: string
+    status: string
+    title: string
+    evidence_bundle: Record<string, unknown>
+}
+
 export interface LayerMetadata {
     provenance: string
     confidence: number
@@ -177,4 +187,17 @@ export interface LayerDefinition {
     restricted?: boolean
     nonCommercial?: boolean
     metadata: LayerMetadata
+}
+
+export interface AuditLogEntry {
+    id: number
+    organisation_id: number
+    timestamp: string
+    user_id: string | null
+    action: string
+    resource_id: string | null
+    resource_type: string | null
+    change_summary: string
+    details: Record<string, unknown> | null
+    correlation_id: string | null
 }
