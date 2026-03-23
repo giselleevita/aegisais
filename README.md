@@ -50,8 +50,9 @@ AegisAIS is a [Turborepo](https://turbo.build/) monorepo managed with npm worksp
 ```text
 aegisais/
 ├── apps/
-│   ├── api/          # FastAPI backend (Python)
-│   └── web/          # React + Vite frontend (TypeScript)
+│   ├── api/          # FastAPI backend (Python) — core AIS pipeline, detection engine, REST API
+│   ├── bff/          # Fastify BFF (TypeScript) — contract-first geospatial API gateway
+│   └── web/          # React + Vite frontend (TypeScript) — analyst dashboard and map UI
 ├── packages/         # Shared packages (reserved for future use)
 ├── data/
 │   ├── raw/          # Uploaded / source AIS data files
@@ -115,6 +116,7 @@ npm run dev   # starts api + web concurrently
 | Swagger UI | http://localhost:8000/docs |
 | ReDoc | http://localhost:8000/redoc |
 | Prometheus metrics | http://localhost:8000/metrics |
+| BFF Geospatial API | http://localhost:8080 |
 
 ### Docker
 
@@ -269,6 +271,20 @@ apps/api/app/
 ├── utils/                # Shared utility functions and error types
 └── main.py               # FastAPI application entry point
 ```
+
+### BFF — Geospatial API Gateway (`apps/bff`)
+
+A contract-first [Fastify](https://fastify.dev/) Backend-for-Frontend that exposes a geospatial query layer between the React client and the core Python API. Defined via OpenAPI 3.0 before implementation, it serves as a typed, stable contract surface for map and entity queries.
+
+| Route group | Description |
+|---|---|
+| `GET /v1/layers` | Discover available geospatial layers |
+| `GET /v1/search` | Geospatial entity search |
+| `GET /v1/query` | Spatial filter queries |
+| `GET /v1/entities` | Entity lookup by MMSI or ID |
+| `GET /v1/tracks` | Per-vessel track data |
+| `GET /v1/events` | Temporal event stream |
+| `WS /v1/stream` | Real-time streaming metadata |
 
 ### Frontend — Feature-Based (`apps/web`)
 
@@ -466,4 +482,4 @@ The API Dockerfile automatically runs `alembic upgrade head` on container startu
 
 ## License
 
-[Add your licence here]
+[MIT](./LICENSE)
