@@ -318,3 +318,115 @@
 .aml-feed-details dd {
   margin: 0.15rem 0 0 0.75rem;
 }
+
+.aml-incidents {
+  display: grid;
+  grid-template-columns: 360px 1fr;
+  gap: 1rem;
+  min-height: 0;
+}
+
+.aml-incidents__list {
+  border: 1px solid var(--border-default);
+  border-radius: 8px;
+  overflow: auto;
+  background: var(--bg-surface);
+}
+
+.aml-incidents__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.aml-incidents__list ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.aml-incidents__list li button {
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--border-subtle);
+  color: var(--text-primary);
+  padding: 0.65rem 0.75rem;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.aml-incidents__list li button.active,
+.aml-incidents__list li button:hover {
+  background: var(--bg-hover);
+}
+
+.aml-incidents__list li button span {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+
+.aml-incidents__detail {
+  border: 1px solid var(--border-default);
+  border-radius: 8px;
+  padding: 0.9rem;
+  background: var(--bg-surface);
+  overflow: auto;
+}
+
+.aml-incidents__detail label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-bottom: 0.75rem;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.aml-incidents__detail input,
+.aml-incidents__detail select {
+  background: var(--bg-base);
+  color: var(--text-primary);
+  border: 1px solid var(--border-default);
+  border-radius: 6px;
+  padding: 0.5rem 0.6rem;
+}
+
+.aml-incidents__detail button {
+  margin-bottom: 0.9rem;
+}
+
+.aml-audit__table-wrap {
+  border: 1px solid var(--border-default);
+  border-radius: 8px;
+  overflow: auto;
+  background: var(--bg-surface);
+}
+
+.aml-audit__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.84rem;
+}
+
+.aml-audit__table th,
+.aml-audit__table td {
+  padding: 0.55rem 0.65rem;
+  border-bottom: 1px solid var(--border-subtle);
+  vertical-align: top;
+}
+
+.aml-audit__table th {
+  text-align: left;
+  color: var(--text-secondary);
+  font-weight: 600;
+  position: sticky;
+  top: 0;
+  background: var(--bg-elevated);
+}

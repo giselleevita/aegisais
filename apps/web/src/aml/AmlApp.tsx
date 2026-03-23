@@ -14,6 +14,9 @@ import WatchlistPage from '@/aml/pages/WatchlistPage'
 import AboutPage from '@/aml/pages/AboutPage'
 import AdminPage from '@/aml/pages/AdminPage'
 import GlobeWorkbenchPage from '@/aml/pages/GlobeWorkbenchPage'
+import IncidentsPage from '@/aml/pages/IncidentsPage'
+import IncidentDetailPage from '@/aml/pages/IncidentDetailPage'
+import AuditPage from '@/aml/pages/AuditPage'
 import { AML_OPERATIONS_PATH } from '@/aml/amlRoutes'
 
 export default function AmlApp() {
@@ -32,6 +35,9 @@ export default function AmlApp() {
         <Route path="/itdae" element={<ItdaePage />} />
         <Route path="/globe" element={<GlobeWorkbenchPage />} />
         <Route path="/watchlist" element={<WatchlistPage />} />
+        <Route path="/incidents" element={<IncidentsPage />} />
+        <Route path="/incidents/:incidentId" element={<IncidentDetailPage />} />
+        <Route path="/audit" element={<AuditPage />} />
         <Route path="/about" element={<AboutPage />} />
         <Route path="/admin" element={<AdminPage />} />
       </Route>

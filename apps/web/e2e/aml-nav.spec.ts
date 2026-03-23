@@ -25,6 +25,13 @@ test.describe('AML shell navigation', () => {
         }),
       })
     })
+    await page.route('**/v1/audit/logs**', async (route) => {
+      await route.fulfill({
+        status: 403,
+        contentType: 'application/json',
+        body: JSON.stringify({ detail: 'Admin privileges required' }),
+      })
+    })
   })
 
   test('redirects / to /triage and shows triage queue', async ({ page }) => {
@@ -50,6 +57,11 @@ test.describe('AML shell navigation', () => {
     await nav.getByRole('link', { name: 'Admin' }).click()
     await expect(page).toHaveURL(/\/admin$/)
 
+    await nav.getByRole('link', { name: 'Incidents' }).click()
+    await expect(page).toHaveURL(/\/incidents$/)
+    await expect(page.getByRole('heading', { name: 'Incidents' })).toBeVisible()
+    await expect(page.locator('.aml-incidents__detail')).toContainText('Incident details')
+
     await nav.getByRole('link', { name: 'Operations' }).click()
     await expect(page).toHaveURL(/\/triage$/)
 
@@ -64,5 +76,17 @@ test.describe('AML shell navigation', () => {
     await expect(feedsList.getByText('Satellite AIS')).toBeVisible()
     await expect(page.getByText('Partial')).toBeVisible()
     await expect(page.getByText('adapter not fully configured')).toBeVisible()
+  })
+
+  test('supports dedicated incident detail route', async ({ page }) => {
+    await page.goto('/incidents/123')
+    await expect(page).toHaveURL(/\/incidents\/123$/)
+    await expect(page.getByRole('link', { name: 'Back to incidents' })).toBeVisible()
+  })
+
+  test('shows audit page with admin access message', async ({ page }) => {
+    await page.goto('/audit')
+    await expect(page.getByRole('heading', { name: 'Audit' })).toBeVisible()
+    await expect(page.getByText('Sign in as admin to view audit logs.')).toBeVisible()
   })
 })
