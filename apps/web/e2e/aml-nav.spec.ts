@@ -27,9 +27,30 @@ test.describe('AML shell navigation', () => {
     })
     await page.route('**/v1/audit/logs**', async (route) => {
       await route.fulfill({
-        status: 403,
+        status: 200,
         contentType: 'application/json',
-        body: JSON.stringify({ detail: 'Admin privileges required' }),
+        body: JSON.stringify([
+          {
+            id: 1,
+            organisation_id: 1,
+            timestamp: new Date().toISOString(),
+            user_id: 'admin',
+            action: 'incident.update',
+            resource_id: '123',
+            resource_type: 'incident',
+            change_summary: 'Incident updated',
+            details: {},
+            correlation_id: null,
+          },
+        ]),
+      })
+    })
+    await page.route('**/v1/audit/logs/export/csv**', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'text/csv',
+        headers: { 'Content-Disposition': 'attachment; filename="audit_logs_export.csv"' },
+        body: 'ID,Timestamp,User ID,Action,Resource ID,Resource Type,Change Summary,Details JSON,Correlation ID\n1,ts,admin,incident.update,123,incident,Incident updated,{},\n',
       })
     })
   })
@@ -87,6 +108,7 @@ test.describe('AML shell navigation', () => {
   test('shows audit page with admin access message', async ({ page }) => {
     await page.goto('/audit')
     await expect(page.getByRole('heading', { name: 'Audit' })).toBeVisible()
-    await expect(page.getByText('Sign in as admin to view audit logs.')).toBeVisible()
+    await expect(page.getByRole('cell', { name: 'incident.update' })).toBeVisible()
+    await page.getByRole('button', { name: 'Export CSV' }).click()
   })
 })
