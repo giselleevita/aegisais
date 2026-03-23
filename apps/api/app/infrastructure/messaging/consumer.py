@@ -1,6 +1,6 @@
 import json
 import logging
-from typing import Callable, Any, Dict
+from typing import Callable, Any, Dict, Optional, cast
 from app.infrastructure.cache.redis_client import get_redis_client
 from app.core.config import settings
 
@@ -34,12 +34,18 @@ class RedisConsumer:
         Get the number of messages pending in the stream.
         """
         try:
-            return self.redis.xlen(self.stream_key)
+            return cast(int, self.redis.xlen(self.stream_key))
         except Exception as e:
             log.error("Failed to get stream lag: %s", e)
             return 0
 
-    def listen(self, callback: Callable[[str, Dict[str, Any]], None], on_tick: Callable[[], None] = None, block_ms: int = 1000, count: int = 10):
+    def listen(
+        self,
+        callback: Callable[[str, Dict[str, Any]], None],
+        on_tick: Optional[Callable[[], None]] = None,
+        block_ms: int = 1000,
+        count: int = 10,
+    ):
         """
         Listen for messages in a blocking loop.
         
@@ -53,17 +59,20 @@ class RedisConsumer:
         
         while True:
             try:
-                if on_tick:
+                if on_tick is not None:
                     on_tick()
 
                 # Read from the group. ">" means only new messages that haven't been delivered
                 # to any other consumer in this group.
-                messages = self.redis.xreadgroup(
+                messages = cast(
+                    list[tuple[str, list[tuple[str, dict[str, str]]]]],
+                    self.redis.xreadgroup(
                     groupname=self.group_name,
                     consumername=self.consumer_name,
                     streams={self.stream_key: ">"},
                     count=count,
                     block=block_ms
+                    ),
                 )
                 
                 if not messages:

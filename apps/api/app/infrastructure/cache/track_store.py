@@ -1,5 +1,5 @@
 import json
-from typing import List
+from typing import List, cast
 from datetime import datetime, timezone
 from app.infrastructure.ingest.loaders import AisPoint
 from app.infrastructure.cache.redis_client import get_redis_client
@@ -51,7 +51,7 @@ class RedisTrackStore:
     def get_track(self, mmsi: str, limit: int = 5) -> List[AisPoint]:
         """Retrieve the last N points for a vessel, ordered by time."""
         key = self._get_key(mmsi)
-        raw_points = self.redis.zrevrange(key, 0, limit - 1)
+        raw_points = cast(list[str], self.redis.zrevrange(key, 0, limit - 1))
         
         points = []
         for raw in reversed(raw_points):

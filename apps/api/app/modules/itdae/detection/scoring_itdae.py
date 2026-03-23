@@ -77,7 +77,11 @@ def compute_vessel_risk(alerts: list[dict[str, Any]]) -> dict[str, Any]:
         label = "low"
 
     # Dominant signal = highest contributing type
-    dominant_signal = max(signal_breakdown, key=signal_breakdown.get) if signal_breakdown else None
+    dominant_signal = (
+        max(signal_breakdown, key=lambda signal: signal_breakdown[signal])
+        if signal_breakdown
+        else None
+    )
 
     return {
         "score": score,
