@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aegisais.dev/contracts/common.schema.json",
+  "title": "Common Contract Types",
+  "$defs": {
+    "AccessMetadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["classification", "allowedRoles"],
+      "properties": {
+        "classification": {
+          "type": "string",
+          "enum": ["public", "internal", "restricted", "secret"]
+        },
+        "allowedRoles": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "compartments": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "ownerOrgId": { "type": "string" }
+      }
+    },
+    "Confidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["score", "method"],
+      "properties": {
+        "score": { "type": "number", "minimum": 0, "maximum": 1 },
+        "method": { "type": "string" },
+        "lowerBound": { "type": "number", "minimum": 0, "maximum": 1 },
+        "upperBound": { "type": "number", "minimum": 0, "maximum": 1 },
+        "notes": { "type": "string" }
+      }
+    },
+    "Provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source", "processor", "ingestedAt"],
+      "properties": {
+        "source": { "type": "string" },
+        "sourceRecordId": { "type": "string" },
+        "processor": { "type": "string" },
+        "ingestedAt": { "type": "string", "format": "date-time" },
+        "lineage": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "GeoPoint": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "coordinates"],
+      "properties": {
+        "type": { "type": "string", "const": "Point" },
+        "coordinates": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 3,
+          "items": { "type": "number" }
+        }
+      }
+    }
+  }
+}

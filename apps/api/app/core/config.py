@@ -23,7 +23,9 @@ class Settings(BaseSettings):
     secret_key: str = "supersecretkey"  # Change in production!
     # Comma-separated origins; env CORS_ALLOWED_ORIGINS
     cors_allowed_origins: str = (
-        "http://localhost:5173,http://localhost:3000,http://127.0.0.1:5173"
+        "http://localhost:5174,http://127.0.0.1:5174,"
+        "http://localhost:5173,http://127.0.0.1:5173,"
+        "http://localhost:3000"
     )
     # Optional explicit Redis password (compose may embed in REDIS_URL instead).
     redis_password: str = ""
@@ -34,7 +36,7 @@ class Settings(BaseSettings):
     refresh_token_expire_days: int = 7
     password_reset_token_ttl_hours: int = 1
     # Base URL for password reset links (query: ?token=...). Used in dev logs and SMTP emails.
-    password_reset_link_base: str = "http://localhost:5173"
+    password_reset_link_base: str = "http://localhost:5174"
     # Optional SMTP for password reset emails; if SMTP_HOST is empty, dev logs link instead (see auth service).
     smtp_host: str = ""
     smtp_port: int = 587
@@ -72,6 +74,12 @@ class Settings(BaseSettings):
     SAIS_PROVIDER: str = "none"  # spire | orbcomm | exactearth | none
     SAIS_API_KEY: str = ""
     SAIS_API_BASE_URL: str = ""
+    OPENSKY_API_BASE_URL: str = "https://opensky-network.org"
+    OPENSKY_USERNAME: str = ""
+    OPENSKY_PASSWORD: str = ""
+    OPENSKY_RATE_LIMIT_PER_MINUTE: int = 60
+    OPENSKY_RATE_LIMIT_PER_DAY: int = 4000
+    OPENSKY_CACHE_TTL_SEC: int = 30
 
     # ITDAE Core Settings
     ITDAE_AIS_API_KEY: str = ""
@@ -108,6 +116,8 @@ class Settings(BaseSettings):
 
     # Deduplication/cooldown
     alert_cooldown_sec: int = 300  # 5 minutes cooldown per (MMSI, rule_type)
+    fused_cable_proximity_m: float = 1500.0
+    fused_cable_time_window_sec: int = 1200
 
     @field_validator("database_url")
     @classmethod

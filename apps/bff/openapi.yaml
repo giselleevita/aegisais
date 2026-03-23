@@ -1,0 +1,506 @@
+openapi: 3.0.3
+info:
+  title: AegisAIS BFF Geospatial API
+  version: 1.0.0
+  description: |
+    Contract-first BFF routes for geospatial layer discovery, search, query, entities,
+    tracks, events, and realtime streaming metadata.
+servers:
+  - url: http://localhost:8080
+tags:
+  - name: Layers
+  - name: Search
+  - name: Query
+  - name: Entities
+  - name: Tracks
+  - name: Events
+  - name: Stream
+paths:
+  /v1/layers:
+    get:
+      tags: [Layers]
+      operationId: listLayers
+      summary: List available geospatial layers
+      parameters:
+        - in: query
+          name: includeDisabled
+          schema:
+            type: boolean
+            default: false
+      responses:
+        "200":
+          description: Layer catalog response
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [layers]
+                properties:
+                  layers:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/LayerDefinition"
+  /v1/search:
+    get:
+      tags: [Search]
+      operationId: searchEntitiesAndEvents
+      summary: Full-text and spatially scoped search
+      parameters:
+        - in: query
+          name: q
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: layerIds
+          description: Comma-separated layer identifiers
+          schema:
+            type: string
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 500
+            default: 100
+      responses:
+        "200":
+          description: Search results
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [results]
+                properties:
+                  results:
+                    type: array
+                    items:
+                      oneOf:
+                        - $ref: "#/components/schemas/Entity"
+                        - $ref: "#/components/schemas/Event"
+  /v1/query:
+    post:
+      tags: [Query]
+      operationId: queryLayers
+      summary: Run bounded geospatial query across one or more layers
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/QueryRequest"
+      responses:
+        "200":
+          description: Query results
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items:
+                      oneOf:
+                        - $ref: "#/components/schemas/Entity"
+                        - $ref: "#/components/schemas/Observation"
+                        - $ref: "#/components/schemas/Event"
+  /v1/entities/{id}:
+    get:
+      tags: [Entities]
+      operationId: getEntityById
+      summary: Fetch a single canonical entity
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Entity found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Entity"
+        "404":
+          description: Entity not found
+  /v1/tracks/{entityId}:
+    get:
+      tags: [Tracks]
+      operationId: getTracksForEntity
+      summary: Retrieve tracks for an entity
+      parameters:
+        - in: path
+          name: entityId
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: start
+          schema:
+            type: string
+            format: date-time
+        - in: query
+          name: end
+          schema:
+            type: string
+            format: date-time
+      responses:
+        "200":
+          description: Track collection
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [tracks]
+                properties:
+                  tracks:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Track"
+  /v1/events:
+    get:
+      tags: [Events]
+      operationId: listEvents
+      summary: List canonical events
+      parameters:
+        - in: query
+          name: eventType
+          schema:
+            type: string
+        - in: query
+          name: entityId
+          schema:
+            type: string
+        - in: query
+          name: start
+          schema:
+            type: string
+            format: date-time
+        - in: query
+          name: end
+          schema:
+            type: string
+            format: date-time
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 500
+            default: 100
+      responses:
+        "200":
+          description: Event list
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [events]
+                properties:
+                  events:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Event"
+  /v1/stream:
+    get:
+      tags: [Stream]
+      operationId: streamHandshake
+      summary: Realtime stream handshake metadata
+      description: |
+        Documented websocket endpoint for realtime updates.
+        Upgrade this route to websocket for bidirectional stream usage.
+      parameters:
+        - in: query
+          name: channels
+          schema:
+            type: string
+          description: Comma-separated channels, e.g. events,tracks,alerts
+      responses:
+        "101":
+          description: Switching Protocols (websocket upgrade)
+        "200":
+          description: HTTP metadata response for clients that cannot upgrade
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [url, protocol]
+                properties:
+                  url:
+                    type: string
+                    example: ws://localhost:8080/v1/stream
+                  protocol:
+                    type: string
+                    example: websocket
+                  heartbeatSeconds:
+                    type: integer
+                    example: 30
+      x-stream-protocol: websocket
+components:
+  schemas:
+    AccessMetadata:
+      type: object
+      additionalProperties: false
+      required: [classification, allowedRoles]
+      properties:
+        classification:
+          type: string
+          enum: [public, internal, restricted, secret]
+        allowedRoles:
+          type: array
+          items:
+            type: string
+        compartments:
+          type: array
+          items:
+            type: string
+        ownerOrgId:
+          type: string
+    Confidence:
+      type: object
+      additionalProperties: false
+      required: [score, method]
+      properties:
+        score:
+          type: number
+          minimum: 0
+          maximum: 1
+        method:
+          type: string
+        lowerBound:
+          type: number
+          minimum: 0
+          maximum: 1
+        upperBound:
+          type: number
+          minimum: 0
+          maximum: 1
+        notes:
+          type: string
+    Provenance:
+      type: object
+      additionalProperties: false
+      required: [source, processor, ingestedAt]
+      properties:
+        source:
+          type: string
+        sourceRecordId:
+          type: string
+        processor:
+          type: string
+        ingestedAt:
+          type: string
+          format: date-time
+        lineage:
+          type: array
+          items:
+            type: string
+    GeoPoint:
+      type: object
+      additionalProperties: false
+      required: [type, coordinates]
+      properties:
+        type:
+          type: string
+          enum: [Point]
+        coordinates:
+          type: array
+          minItems: 2
+          maxItems: 3
+          items:
+            type: number
+    LayerDefinition:
+      type: object
+      additionalProperties: false
+      required:
+        [id, name, geometryType, queryable, streamable, confidence, provenance, access]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        geometryType:
+          type: string
+        entityType:
+          type: string
+        queryable:
+          type: boolean
+        streamable:
+          type: boolean
+        confidence:
+          $ref: "#/components/schemas/Confidence"
+        provenance:
+          $ref: "#/components/schemas/Provenance"
+        access:
+          $ref: "#/components/schemas/AccessMetadata"
+    Entity:
+      type: object
+      additionalProperties: false
+      required:
+        [id, entityType, observedAt, updatedAt, confidence, provenance, access]
+      properties:
+        id:
+          type: string
+        entityType:
+          type: string
+        aliases:
+          type: array
+          items:
+            type: string
+        position:
+          $ref: "#/components/schemas/GeoPoint"
+        heading:
+          type: number
+        speed:
+          type: number
+        status:
+          type: string
+        observedAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        confidence:
+          $ref: "#/components/schemas/Confidence"
+        provenance:
+          $ref: "#/components/schemas/Provenance"
+        access:
+          $ref: "#/components/schemas/AccessMetadata"
+    Observation:
+      type: object
+      additionalProperties: false
+      required:
+        [id, entityId, layerId, geometry, observedAt, confidence, provenance, access]
+      properties:
+        id:
+          type: string
+        entityId:
+          type: string
+        layerId:
+          type: string
+        geometry:
+          $ref: "#/components/schemas/GeoPoint"
+        properties:
+          type: object
+          additionalProperties: true
+        observedAt:
+          type: string
+          format: date-time
+        ingestedAt:
+          type: string
+          format: date-time
+        confidence:
+          $ref: "#/components/schemas/Confidence"
+        provenance:
+          $ref: "#/components/schemas/Provenance"
+        access:
+          $ref: "#/components/schemas/AccessMetadata"
+    Track:
+      type: object
+      additionalProperties: false
+      required:
+        [id, entityId, layerId, startTime, endTime, points, confidence, provenance, access]
+      properties:
+        id:
+          type: string
+        entityId:
+          type: string
+        layerId:
+          type: string
+        startTime:
+          type: string
+          format: date-time
+        endTime:
+          type: string
+          format: date-time
+        points:
+          type: array
+          minItems: 1
+          items:
+            $ref: "#/components/schemas/GeoPoint"
+        confidence:
+          $ref: "#/components/schemas/Confidence"
+        provenance:
+          $ref: "#/components/schemas/Provenance"
+        access:
+          $ref: "#/components/schemas/AccessMetadata"
+    Event:
+      type: object
+      additionalProperties: false
+      required:
+        [id, eventType, entityIds, occurredAt, confidence, provenance, access]
+      properties:
+        id:
+          type: string
+        eventType:
+          type: string
+        incidentId:
+          type: string
+        entityIds:
+          type: array
+          items:
+            type: string
+        geometry:
+          $ref: "#/components/schemas/GeoPoint"
+        occurredAt:
+          type: string
+          format: date-time
+        endedAt:
+          type: string
+          format: date-time
+        severity:
+          type: string
+          enum: [low, medium, high, critical]
+        attributes:
+          type: object
+          additionalProperties: true
+        confidence:
+          $ref: "#/components/schemas/Confidence"
+        provenance:
+          $ref: "#/components/schemas/Provenance"
+        access:
+          $ref: "#/components/schemas/AccessMetadata"
+    QueryRequest:
+      type: object
+      additionalProperties: false
+      required: [layerIds]
+      properties:
+        layerIds:
+          type: array
+          minItems: 1
+          items:
+            type: string
+        bbox:
+          type: array
+          minItems: 4
+          maxItems: 4
+          items:
+            type: number
+          description: [minLon, minLat, maxLon, maxLat]
+        intersects:
+          type: object
+          description: GeoJSON geometry object
+          additionalProperties: true
+        timeRange:
+          type: object
+          additionalProperties: false
+          properties:
+            start:
+              type: string
+              format: date-time
+            end:
+              type: string
+              format: date-time
+        filters:
+          type: object
+          additionalProperties: true
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 5000
+          default: 1000

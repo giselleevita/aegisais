@@ -1,0 +1,178 @@
+.aml-inv {
+  max-width: 900px;
+}
+
+.aml-inv__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.aml-inv__back {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-default);
+  color: var(--text-primary);
+  border-radius: 6px;
+  padding: 0.35rem 0.65rem;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+.aml-inv__back:hover {
+  border-color: var(--border-strong);
+}
+
+.aml-inv__link {
+  color: var(--accent);
+  text-decoration: none;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.aml-inv__link:hover {
+  text-decoration: underline;
+}
+
+.aml-inv__card {
+  border: 1px solid var(--border-default);
+  border-radius: 10px;
+  padding: 1.25rem;
+  background: var(--bg-card);
+}
+
+.aml-inv__card.severity-high {
+  border-color: var(--sev-high-border);
+}
+
+.aml-inv__header {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+}
+
+.aml-inv__eyebrow {
+  margin: 0 0 0.25rem;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-muted);
+}
+
+.aml-inv__title {
+  margin: 0 0 0.35rem;
+  font-size: 1.15rem;
+}
+
+.aml-inv__summary {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.aml-inv__badges {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  align-items: flex-end;
+}
+
+.aml-inv__meta {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 0.75rem;
+  font-size: 0.85rem;
+  margin-bottom: 1rem;
+}
+
+.aml-inv__meta .label {
+  display: block;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  margin-bottom: 0.2rem;
+}
+
+.aml-inv__h2 {
+  margin: 0 0 0.5rem;
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+}
+
+.aml-inv__evidence {
+  margin-bottom: 1rem;
+  padding: 0.75rem;
+  background: var(--bg-surface);
+  border-radius: 8px;
+  border: 1px solid var(--border-subtle);
+}
+
+.aml-inv__notes p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.aml-inv__actions {
+  border-top: 1px solid var(--border-subtle);
+  padding-top: 1rem;
+}
+
+.aml-inv__edit {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.aml-inv__select,
+.aml-inv__textarea {
+  font-family: var(--font-sans, inherit);
+  font-size: 0.875rem;
+  background: var(--bg-base);
+  color: var(--text-primary);
+  border: 1px solid var(--border-default);
+  border-radius: 6px;
+  padding: 0.5rem 0.65rem;
+}
+
+.aml-inv__textarea {
+  resize: vertical;
+  min-height: 96px;
+}
+
+.aml-inv__edit-buttons {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.aml-inv__btn-primary {
+  padding: 0.45rem 1rem;
+  background: var(--accent-dim);
+  color: var(--accent);
+  border: 1px solid var(--accent-border);
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.aml-inv__btn-primary:hover {
+  background: rgba(14, 165, 233, 0.2);
+}
+
+.aml-inv__btn-ghost {
+  padding: 0.45rem 1rem;
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid var(--border-default);
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.aml-inv__btn-ghost:hover {
+  color: var(--text-primary);
+}

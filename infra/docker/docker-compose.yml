@@ -1,6 +1,6 @@
 services:
   db:
-    image: postgres:16
+    image: postgis/postgis:16-3.4
     environment:
       POSTGRES_DB: aegisais
       POSTGRES_USER: aegisais
@@ -67,6 +67,50 @@ services:
       timeout: 10s
       retries: 3
       start_period: 20s
+    restart: unless-stopped
+
+  bff:
+    build:
+      context: ../../apps/bff
+    environment:
+      APP_ENV: docker
+      BFF_HOST: 0.0.0.0
+      BFF_PORT: 8081
+      DATABASE_URL: postgres://aegisais:aegisais@db:5432/aegisais
+      TELEGEOGRAPHY_TOKEN: ${TELEGEOGRAPHY_TOKEN:-}
+      EO_PROVIDER_TOKEN: ${EO_PROVIDER_TOKEN:-}
+    ports:
+      - "8081:8081"
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:8081/health').then((r)=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 15s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    restart: unless-stopped
+
+  web:
+    image: node:20-alpine
+    working_dir: /workspace
+    command: sh -c "npm install && npm run dev -- --host 0.0.0.0 --port 5174"
+    environment:
+      VITE_BFF_URL: http://bff:8081
+    ports:
+      - "5174:5174"
+    volumes:
+      - ../../:/workspace
+    depends_on:
+      bff:
+        condition: service_healthy
     restart: unless-stopped
 
   nginx:

@@ -1,35 +1,164 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   AegisAIS Design System — Global Tokens & Base Styles
+   Theme: Maritime Command & Control — Dark Navy
+   ═══════════════════════════════════════════════════════════════════════ */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+/* ── Design Tokens ─────────────────────────────────────────────────── */
 :root {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
+  /* Backgrounds */
+  --bg-base:      #080d18;
+  --bg-surface:   #0d1424;
+  --bg-card:      #111b2d;
+  --bg-elevated:  #172034;
+  --bg-hover:     #1d2840;
+
+  /* Borders */
+  --border-subtle:  #172034;
+  --border-default: #1f2f45;
+  --border-strong:  #2a3f5c;
+
+  /* Text */
+  --text-primary:   #dde4ef;
+  --text-secondary: #8496b0;
+  --text-muted:     #4d6080;
+  --text-disabled:  #2d3f55;
+
+  /* Accent — maritime sky blue */
+  --accent:         #0ea5e9;
+  --accent-dim:     rgba(14, 165, 233, 0.12);
+  --accent-border:  rgba(14, 165, 233, 0.35);
+
+  /* Severity — military standard */
+  --sev-high:          #ef4444;
+  --sev-high-bg:       rgba(239, 68, 68, 0.08);
+  --sev-high-border:   rgba(239, 68, 68, 0.35);
+  --sev-high-text:     #fca5a5;
+
+  --sev-med:           #f59e0b;
+  --sev-med-bg:        rgba(245, 158, 11, 0.08);
+  --sev-med-border:    rgba(245, 158, 11, 0.35);
+  --sev-med-text:      #fcd34d;
+
+  --sev-low:           #22c55e;
+  --sev-low-bg:        rgba(34, 197, 94, 0.08);
+  --sev-low-border:    rgba(34, 197, 94, 0.35);
+  --sev-low-text:      #86efac;
+
+  /* Alert status */
+  --status-new:        #3b82f6;
+  --status-new-bg:     rgba(59, 130, 246, 0.1);
+  --status-reviewed:   #f59e0b;
+  --status-reviewed-bg: rgba(245, 158, 11, 0.1);
+  --status-resolved:   #22c55e;
+  --status-resolved-bg: rgba(34, 197, 94, 0.1);
+  --status-fp:         #6b7280;
+  --status-fp-bg:      rgba(107, 114, 128, 0.1);
+
+  /* Connection state */
+  --connected:    #22c55e;
+  --disconnected: #ef4444;
+
+  /* Watchlist priority */
+  --prio-high:   #a78bfa;
+  --prio-med:    #f59e0b;
+  --prio-low:    #22c55e;
+
+  /* Typography */
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+
+  /* Spacing (4px grid) */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 20px;
+  --sp-6: 24px;
+  --sp-8: 32px;
+
+  /* Radii */
+  --radius-sm:  4px;
+  --radius-md:  6px;
+  --radius-lg:  8px;
+
+  /* Transitions */
+  --transition: 150ms ease;
+}
+
+/* ── Reset ─────────────────────────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* ── Base ──────────────────────────────────────────────────────────── */
+:root {
+  font-family: var(--font-sans);
+  font-size: 14px;
   line-height: 1.5;
   font-weight: 400;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  color: var(--text-primary);
+  background: var(--bg-base);
 }
 
 body {
-  margin: 0;
-  padding: 0;
   min-height: 100vh;
-  color: #1f2937;
+  background: var(--bg-base);
+  color: var(--text-primary);
 }
 
-/* Ensure form controls have visible text */
+#root {
+  min-height: 100vh;
+}
+
+/* ── Form Controls ─────────────────────────────────────────────────── */
 select,
 input[type="text"],
 input[type="number"],
 input[type="datetime-local"],
 textarea {
-  color: #1f2937;
-  background: white;
+  font-family: var(--font-sans);
+  font-size: 0.875rem;
+  color: var(--text-primary);
+  background: var(--bg-card);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  padding: 6px 10px;
+  outline: none;
+  transition: border-color var(--transition), box-shadow var(--transition);
+}
+
+select:focus,
+input[type="text"]:focus,
+input[type="number"]:focus,
+input[type="datetime-local"]:focus,
+textarea:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-dim);
 }
 
 select option {
-  background: white;
-  color: #1f2937;
+  background: var(--bg-elevated);
+  color: var(--text-primary);
 }
 
-#root {
-  min-height: 100vh;
+/* ── Scrollbar ─────────────────────────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg-surface);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
 }

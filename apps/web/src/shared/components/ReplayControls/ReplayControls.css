@@ -1,128 +1,162 @@
+/* ── Replay Controls ───────────────────────────────────────────────── */
 .replay-controls {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border-default);
+  margin-bottom: 16px;
 }
 
 .replay-controls h3 {
-  font-size: 1.25rem;
-  color: #1f2937;
-  margin-bottom: 0.5rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-muted);
+  margin-bottom: 4px;
 }
 
+/* ── Status block ──────────────────────────────────────────────────── */
 .replay-status {
-  padding: 1rem;
-  background: #f9fafb;
-  border-radius: 8px;
-  border: 1px solid #e5e7eb;
+  padding: 10px 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
 }
 
 .status-indicator {
-  font-size: 0.875rem;
+  font-size: 0.75rem;
   font-weight: 600;
-  margin-bottom: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.status-indicator::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
 }
 
 .status-indicator.running {
-  color: #059669;
+  color: var(--connected);
+}
+
+.status-indicator.running::before {
+  background: var(--connected);
+  box-shadow: 0 0 5px var(--connected);
 }
 
 .status-indicator.stopped {
-  color: #6b7280;
+  color: var(--text-muted);
+}
+
+.status-indicator.stopped::before {
+  background: var(--text-muted);
 }
 
 .status-details {
-  font-size: 0.875rem;
-  color: #6b7280;
+  font-size: 0.8125rem;
+  color: var(--text-muted);
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: 3px;
 }
 
 .status-details .timestamp {
+  font-family: var(--font-mono);
   font-size: 0.75rem;
-  color: #9ca3af;
+  color: var(--text-muted);
 }
 
+/* ── Form ──────────────────────────────────────────────────────────── */
 .replay-form {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 12px;
 }
 
 .form-group {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 6px;
 }
 
 .form-group label {
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: #374151;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
 }
 
 .form-group input {
-  padding: 0.5rem 0.75rem;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
-  font-size: 0.875rem;
-  background: white;
+  padding: 6px 10px;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  font-size: 0.8125rem;
+  font-family: var(--font-mono);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  transition: border-color var(--transition);
 }
 
 .form-group input:focus {
   outline: none;
-  border-color: #667eea;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-dim);
 }
 
 .form-group input:disabled {
-  background: #f3f4f6;
-  color: #9ca3af;
+  background: var(--bg-surface);
+  color: var(--text-disabled);
   cursor: not-allowed;
 }
 
 .form-actions {
   display: flex;
-  gap: 0.75rem;
+  gap: 8px;
 }
 
 .btn {
   flex: 1;
-  padding: 0.75rem 1rem;
+  padding: 8px 12px;
   border: none;
-  border-radius: 6px;
-  font-size: 0.875rem;
+  border-radius: var(--radius-md);
+  font-size: 0.8125rem;
+  font-family: var(--font-sans);
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: opacity var(--transition), background var(--transition);
 }
 
 .btn:disabled {
-  opacity: 0.5;
+  opacity: 0.4;
   cursor: not-allowed;
 }
 
 .btn-primary {
-  background: #667eea;
-  color: white;
+  background: var(--accent-dim);
+  color: var(--accent);
+  border: 1px solid var(--accent-border);
 }
 
 .btn-primary:hover:not(:disabled) {
-  background: #5568d3;
+  background: rgba(14, 165, 233, 0.2);
 }
 
 .btn-danger {
-  background: #dc2626;
-  color: white;
+  background: var(--sev-high-bg);
+  color: var(--sev-high);
+  border: 1px solid var(--sev-high-border);
 }
 
 .btn-danger:hover:not(:disabled) {
-  background: #b91c1c;
+  background: rgba(239, 68, 68, 0.15);
 }
-
-.form-group label {
-  margin-bottom: 0.5rem;
-  display: block;
-}
-

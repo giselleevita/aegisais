@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aegisais.dev/contracts/Entity.schema.json",
+  "title": "Entity",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "entityType",
+    "observedAt",
+    "updatedAt",
+    "confidence",
+    "provenance",
+    "access"
+  ],
+  "properties": {
+    "id": { "type": "string" },
+    "entityType": { "type": "string" },
+    "aliases": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "position": { "$ref": "_common.json#/$defs/GeoPoint" },
+    "heading": { "type": "number" },
+    "speed": { "type": "number" },
+    "status": { "type": "string" },
+    "observedAt": { "type": "string", "format": "date-time" },
+    "updatedAt": { "type": "string", "format": "date-time" },
+    "confidence": { "$ref": "./Confidence.schema.json" },
+    "provenance": { "$ref": "./Provenance.schema.json" },
+    "access": { "$ref": "_common.json#/$defs/AccessMetadata" }
+  }
+}

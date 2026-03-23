@@ -1,0 +1,320 @@
+/**
+ * AML analyst console — layout shell & route-level tokens.
+ *
+ * Wireframe (desktop):
+ * - Operations `/`: left column = triage queue (filters + ranked alerts); right = map with ?mmsi= sync.
+ * - Investigation `/alerts/:id`: evidence-first detail, status actions, link to vessel on map.
+ * - Lab `/lab`: replay + file upload only (no global sidebar).
+ * - ITDAE `/itdae`, Watchlist `/watchlist`: feature panels in main column.
+ * - Admin `/admin`: control-plane stub (analyst vs admin entry via route; roles enforced server-side later).
+ */
+:root {
+  --aml-shell-header-h: 52px;
+  --aml-shell-nav-gap: 0.35rem;
+  --aml-operations-queue-w: min(420px, 42vw);
+}
+
+.aml-app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-base);
+  color: var(--text-primary);
+}
+
+.aml-shell__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  min-height: var(--aml-shell-header-h);
+  padding: 0 1rem;
+  border-bottom: 1px solid var(--border-default);
+  background: var(--bg-surface);
+}
+
+.aml-shell__brand {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+.aml-shell__brand h1 {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.aml-shell__brand h1 span {
+  color: var(--accent);
+}
+
+.aml-shell__brand-sub {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--text-muted);
+}
+
+.aml-shell__nav {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--aml-shell-nav-gap);
+  padding: 0.35rem 1rem;
+  border-bottom: 1px solid var(--border-subtle);
+  background: var(--bg-surface);
+}
+
+.aml-shell__nav a {
+  padding: 0.4rem 0.65rem;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  text-decoration: none;
+  border: 1px solid transparent;
+}
+
+.aml-shell__nav a:hover {
+  color: var(--text-primary);
+  background: var(--bg-hover);
+}
+
+.aml-shell__nav a.aml-shell__nav-link--active {
+  color: var(--text-primary);
+  background: var(--accent-dim);
+  border-color: var(--accent-border);
+}
+
+.aml-shell__footer {
+  margin-top: auto;
+  padding: 0.5rem 1rem;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  border-top: 1px solid var(--border-subtle);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.aml-shell__footer button {
+  background: transparent;
+  border: 1px solid var(--border-default);
+  color: var(--text-secondary);
+  border-radius: 4px;
+  padding: 0.25rem 0.5rem;
+  cursor: pointer;
+  font-size: 0.75rem;
+}
+
+.aml-shell__footer button:hover {
+  color: var(--text-primary);
+  border-color: var(--border-strong);
+}
+
+.aml-shell__main {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.aml-operations {
+  flex: 1;
+  display: flex;
+  min-height: 0;
+}
+
+.aml-operations__queue {
+  width: var(--aml-operations-queue-w);
+  min-width: 280px;
+  border-right: 1px solid var(--border-default);
+  overflow: auto;
+  background: var(--bg-base);
+}
+
+.aml-operations__queue .alerts-panel {
+  min-height: 100%;
+}
+
+.aml-operations__right {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.aml-operations__map {
+  flex: 1;
+  min-height: 0;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Let the map breathe in split view (MapView defaults to 600px tall). */
+.aml-operations__map .map-view {
+  flex: 1;
+  min-height: 0;
+}
+
+.aml-operations__map .map-view > div:not(.map-controls) {
+  height: min(58vh, 720px) !important;
+  min-height: 320px;
+}
+
+.aml-map-page__map .map-view > div:not(.map-controls) {
+  height: min(70vh, 900px) !important;
+  min-height: 360px;
+}
+
+.aml-operations__vessel {
+  max-height: 45vh;
+  overflow: auto;
+  border-top: 1px solid var(--border-default);
+  background: var(--bg-card);
+}
+
+.aml-page-pad {
+  padding: 1rem;
+  flex: 1;
+  overflow: auto;
+}
+
+.aml-map-page {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.aml-map-page__map {
+  flex: 1;
+  min-height: 0;
+  position: relative;
+}
+
+.aml-map-page__map .leaflet-container {
+  height: 100%;
+}
+
+.aml-map-page__details {
+  max-height: 50vh;
+  overflow: auto;
+  border-top: 1px solid var(--border-default);
+  background: var(--bg-card);
+}
+
+.aml-page-title {
+  margin: 0 0 0.75rem;
+  font-size: 1.1rem;
+}
+
+.aml-admin-stub {
+  padding: 0.75rem 1rem;
+  border: 1px dashed var(--border-strong);
+  border-radius: 8px;
+  color: var(--text-secondary);
+  max-width: 520px;
+}
+
+.aml-admin-subtitle {
+  margin: 1.5rem 0 0.35rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.aml-admin-lead {
+  margin: 0 0 0.75rem;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  max-width: 40rem;
+  line-height: 1.5;
+}
+
+.aml-feed-stubs {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-width: 28rem;
+  border: 1px solid var(--border-default);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.aml-feed-stubs li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.85rem;
+  border-bottom: 1px solid var(--border-subtle);
+  background: var(--bg-surface);
+}
+
+.aml-feed-stubs li:last-child {
+  border-bottom: none;
+}
+
+.aml-feed-stubs__name {
+  color: var(--text-primary);
+}
+
+.aml-feed-stubs__status {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+}
+
+.aml-feed-stubs__status--ready {
+  color: var(--connected, #22c55e);
+}
+
+.aml-feed-stubs__status--partial {
+  color: var(--sev-med, #f59e0b);
+}
+
+.aml-feed-stubs__status--error {
+  color: var(--sev-high, #ef4444);
+}
+
+.aml-feed-stubs__status--off {
+  color: var(--text-muted);
+}
+
+.aml-admin-code {
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 0.8em;
+  color: var(--text-secondary);
+}
+
+.aml-admin-hint {
+  margin: 0 0 0.75rem;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.aml-feed-details {
+  margin: 0.75rem 0 0;
+  max-width: 36rem;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.aml-feed-details dt {
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-top: 0.35rem;
+}
+
+.aml-feed-details dd {
+  margin: 0.15rem 0 0 0.75rem;
+}

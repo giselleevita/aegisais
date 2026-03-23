@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aegisais.dev/contracts/Observation.schema.json",
+  "title": "Observation",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "entityId",
+    "layerId",
+    "geometry",
+    "observedAt",
+    "confidence",
+    "provenance",
+    "access"
+  ],
+  "properties": {
+    "id": { "type": "string" },
+    "entityId": { "type": "string" },
+    "layerId": { "type": "string" },
+    "geometry": { "$ref": "_common.json#/$defs/GeoPoint" },
+    "properties": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "observedAt": { "type": "string", "format": "date-time" },
+    "ingestedAt": { "type": "string", "format": "date-time" },
+    "confidence": { "$ref": "./Confidence.schema.json" },
+    "provenance": { "$ref": "./Provenance.schema.json" },
+    "access": { "$ref": "_common.json#/$defs/AccessMetadata" }
+  }
+}
