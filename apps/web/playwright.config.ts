@@ -7,7 +7,8 @@ import { defineConfig, devices } from '@playwright/test'
  * Override the app URL: `BASE_URL=http://127.0.0.1:4173 npm run test:e2e` (e.g. after `vite build && vite preview`).
  * Skip starting webServer by setting `BASE_URL` to an already-running server.
  */
-const baseURL = process.env.BASE_URL ?? 'http://127.0.0.1:5174'
+const e2ePort = process.env.E2E_PORT ?? '4173'
+const baseURL = process.env.BASE_URL ?? `http://127.0.0.1:${e2ePort}`
 
 export default defineConfig({
   testDir: './e2e',
@@ -23,9 +24,10 @@ export default defineConfig({
   webServer: process.env.BASE_URL
     ? undefined
     : {
-        command: 'npm run dev -- --host 127.0.0.1 --port 5174 --strictPort',
+        command: `npm run dev -- --host 127.0.0.1 --port ${e2ePort} --strictPort`,
         url: baseURL,
-        reuseExistingServer: !process.env.CI,
+        // Always use a fresh server for deterministic local/CI runs.
+        reuseExistingServer: false,
         timeout: 120_000,
       },
 })
