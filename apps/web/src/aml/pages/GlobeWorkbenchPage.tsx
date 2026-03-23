@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   Cartesian3,
   ClockRange,
@@ -7,6 +7,7 @@ import {
   HeadingPitchRange,
   HeightReference,
   PolylineDashMaterialProperty,
+  ScreenSpaceEventType,
   VerticalOrigin,
   Viewer,
 } from 'cesium'
@@ -22,10 +23,29 @@ import {
   type FlightPoint,
   type PortPoint,
 } from '@/features/globe/globeData'
+import { emitGlobeCameraTelemetry } from '@/features/globe/globeCameraTelemetry'
 import './globe-workbench.css'
 
 type TimelineMode = 'live' | 'replay'
 type FocusPresetId = 'global' | 'atlantic' | 'indo-pacific' | 'europe-med'
+type CameraMoveReason = 'preset' | 'fit-visible' | 'auto-initial'
+
+const AUTO_CAMERA_STORAGE_KEY = 'aegis.globe.autoCamera'
+
+const USER_CAMERA_PRIORITY_WINDOW_MS = 5000
+const MIN_CAMERA_DISTANCE_METERS = 850_000
+const MAX_CAMERA_DISTANCE_METERS = 32_000_000
+
+function readAutoCameraPref(): boolean {
+  try {
+    const v = localStorage.getItem(AUTO_CAMERA_STORAGE_KEY)
+    if (v === 'false') return false
+    if (v === 'true') return true
+  } catch {
+    /* ignore */
+  }
+  return true
+}
 
 const FOCUS_PRESETS: Record<
   FocusPresetId,
@@ -56,8 +76,13 @@ const FOCUS_PRESETS: Record<
 export default function GlobeWorkbenchPage() {
   const hostRef = useRef<HTMLDivElement | null>(null)
   const viewerRef = useRef<Viewer | null>(null)
+  const userCameraLockRef = useRef(false)
+  const userCameraLockTimerRef = useRef<number | null>(null)
+  const autoFramedOnceRef = useRef(false)
 
   const [timelineMode, setTimelineMode] = useState<TimelineMode>('live')
+  const [autoCameraEnabled, setAutoCameraEnabled] = useState(() => readAutoCameraPref())
+  const autoCameraEnabledRef = useRef(autoCameraEnabled)
   const [catalogue, setCatalogue] = useState<LayerDefinition[]>([])
   const [enabled, setEnabled] = useState<Record<string, boolean>>({})
   const [selectedLayerId, setSelectedLayerId] = useState<string | null>(null)
@@ -69,6 +94,59 @@ export default function GlobeWorkbenchPage() {
   const selectedLayer = useMemo(
     () => catalogue.find((layer) => layer.id === selectedLayerId) ?? null,
     [catalogue, selectedLayerId]
+  )
+
+  useEffect(() => {
+    autoCameraEnabledRef.current = autoCameraEnabled
+  }, [autoCameraEnabled])
+
+  const setAutoCameraEnabledPersisted = useCallback((next: boolean) => {
+    setAutoCameraEnabled(next)
+    try {
+      localStorage.setItem(AUTO_CAMERA_STORAGE_KEY, String(next))
+    } catch {
+      /* ignore */
+    }
+    emitGlobeCameraTelemetry({ type: 'auto_camera_changed', enabled: next })
+  }, [])
+
+  const markUserInteraction = useCallback(() => {
+    userCameraLockRef.current = true
+    if (userCameraLockTimerRef.current !== null) {
+      window.clearTimeout(userCameraLockTimerRef.current)
+    }
+    userCameraLockTimerRef.current = window.setTimeout(() => {
+      userCameraLockRef.current = false
+      userCameraLockTimerRef.current = null
+    }, USER_CAMERA_PRIORITY_WINDOW_MS)
+  }, [])
+
+  const moveCamera = useCallback(
+    (reason: CameraMoveReason, runMove: (viewer: Viewer) => void, options?: { force?: boolean }) => {
+      const viewer = viewerRef.current
+      if (!viewer) return false
+      const passive = reason === 'auto-initial'
+      if (passive && !options?.force && !autoCameraEnabledRef.current) {
+        emitGlobeCameraTelemetry({
+          type: 'camera_move_blocked',
+          reason: 'auto_disabled',
+          attempted: reason,
+        })
+        return false
+      }
+      if (passive && !options?.force && userCameraLockRef.current) {
+        emitGlobeCameraTelemetry({
+          type: 'camera_move_blocked',
+          reason: 'user_lock',
+          attempted: reason,
+        })
+        return false
+      }
+      runMove(viewer)
+      emitGlobeCameraTelemetry({ type: 'camera_move_applied', reason })
+      return true
+    },
+    []
   )
 
   useEffect(() => {
@@ -90,30 +168,32 @@ export default function GlobeWorkbenchPage() {
     }
   }, [])
 
-  const moveCameraToPreset = (presetId: FocusPresetId) => {
-    const viewer = viewerRef.current
-    if (!viewer) return
-    const preset = FOCUS_PRESETS[presetId]
+  const moveCameraToPreset = useCallback((presetId: FocusPresetId) => {
     setActivePreset(presetId)
-    viewer.camera.flyTo({
-      destination: preset.destination,
-      duration: 0.9,
-      orientation: {
-        heading: 0,
-        pitch: -0.95,
-        roll: 0,
-      },
+    const preset = FOCUS_PRESETS[presetId]
+    void moveCamera('preset', (viewer) => {
+      viewer.camera.flyTo({
+        destination: preset.destination,
+        duration: 1.1,
+        orientation: {
+          heading: 0,
+          pitch: -0.95,
+          roll: 0,
+        },
+      })
     })
-  }
+  }, [moveCamera])
 
-  const focusOnVisibleEntities = () => {
-    const viewer = viewerRef.current
-    if (!viewer) return
-    void viewer.flyTo(viewer.entities.values, {
-      duration: 0.9,
-      offset: new HeadingPitchRange(0, -0.9, 3_000_000),
+  const focusOnVisibleEntities = useCallback(() => {
+    setActivePreset('global')
+    void moveCamera('fit-visible', (viewer) => {
+      void viewer.flyTo(viewer.entities.values, {
+        duration: 1.15,
+        maximumHeight: MAX_CAMERA_DISTANCE_METERS,
+        offset: new HeadingPitchRange(0, -0.95, 4_000_000),
+      })
     })
-  }
+  }, [moveCamera])
 
   useEffect(() => {
     let stop: () => void = () => {}
@@ -141,13 +221,46 @@ export default function GlobeWorkbenchPage() {
       navigationHelpButton: false,
       fullscreenButton: false,
     })
-    viewerRef.current.scene.globe.enableLighting = true
+    const viewer = viewerRef.current
+    viewer.scene.globe.enableLighting = true
+    viewer.trackedEntity = undefined
+
+    const cameraController = viewer.scene.screenSpaceCameraController
+    cameraController.inertiaZoom = 0.45
+    cameraController.minimumZoomDistance = MIN_CAMERA_DISTANCE_METERS
+    cameraController.maximumZoomDistance = MAX_CAMERA_DISTANCE_METERS
+
+    // Reduce accidental zoom jumps from double-click interactions.
+    viewer.cesiumWidget.screenSpaceEventHandler.removeInputAction(ScreenSpaceEventType.LEFT_DOUBLE_CLICK)
+
+    const canvas = viewer.scene.canvas
+    const onWheel = () => markUserInteraction()
+    const onPointerDown = () => markUserInteraction()
+    const onTouchStart = () => markUserInteraction()
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (['+', '=', '-', '_', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key)) {
+        markUserInteraction()
+      }
+    }
+
+    canvas.addEventListener('wheel', onWheel, { passive: true })
+    canvas.addEventListener('pointerdown', onPointerDown)
+    canvas.addEventListener('touchstart', onTouchStart, { passive: true })
+    window.addEventListener('keydown', onKeyDown)
 
     return () => {
+      canvas.removeEventListener('wheel', onWheel)
+      canvas.removeEventListener('pointerdown', onPointerDown)
+      canvas.removeEventListener('touchstart', onTouchStart)
+      window.removeEventListener('keydown', onKeyDown)
+      if (userCameraLockTimerRef.current !== null) {
+        window.clearTimeout(userCameraLockTimerRef.current)
+        userCameraLockTimerRef.current = null
+      }
       viewerRef.current?.destroy()
       viewerRef.current = null
     }
-  }, [])
+  }, [markUserInteraction])
 
   useEffect(() => {
     const viewer = viewerRef.current
@@ -227,6 +340,25 @@ export default function GlobeWorkbenchPage() {
     viewer.clock.shouldAnimate = true
   }, [cables, enabled, flights, ports, timelineMode])
 
+  useEffect(() => {
+    const viewer = viewerRef.current
+    if (!viewer || autoFramedOnceRef.current) return
+    if (!autoCameraEnabled) return
+    if (viewer.entities.values.length === 0) return
+    const moved = moveCamera(
+      'auto-initial',
+      (activeViewer) => {
+        void activeViewer.flyTo(activeViewer.entities.values, {
+          duration: 1.2,
+          maximumHeight: MAX_CAMERA_DISTANCE_METERS,
+          offset: new HeadingPitchRange(0, -0.95, 6_000_000),
+        })
+      },
+      { force: false }
+    )
+    if (moved) autoFramedOnceRef.current = true
+  }, [autoCameraEnabled, cables, enabled, flights, moveCamera, ports])
+
   return (
     <section className="globe-workbench">
       <aside className="globe-workbench__catalogue">
@@ -248,6 +380,25 @@ export default function GlobeWorkbenchPage() {
           <button type="button" onClick={focusOnVisibleEntities}>
             Fit Active Data
           </button>
+        </div>
+        <div className="globe-workbench__auto-camera">
+          <div className="globe-workbench__auto-camera-row">
+            <label className="globe-workbench__auto-camera-label" htmlFor="globe-auto-camera">
+              Auto camera
+            </label>
+            <input
+              id="globe-auto-camera"
+              type="checkbox"
+              role="switch"
+              className="globe-workbench__auto-camera-switch"
+              checked={autoCameraEnabled}
+              onChange={(e) => setAutoCameraEnabledPersisted(e.target.checked)}
+              aria-describedby="globe-auto-camera-help"
+            />
+          </div>
+          <p id="globe-auto-camera-help" className="globe-workbench__auto-camera-help">
+            Off: no automatic framing when layers load; use presets or Fit Active Data.
+          </p>
         </div>
         <ul>
           {catalogue.map((layer) => (
