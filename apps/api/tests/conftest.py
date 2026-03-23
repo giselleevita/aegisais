@@ -24,7 +24,12 @@ from app.modules.auth.models import (  # noqa: F401
     User,
 )
 from app.modules.audit.models import AuditLog  # noqa: F401 — register audit_logs for create_all
+from app.modules.integrations.models import (  # noqa: F401 — integration refs
+    PortReference,
+    UnlocodeReference,
+)
 from app.modules.itdae.models import ItdaeGeofenceZone  # noqa: F401 — itdae_geofence_zones
+from app.modules.incidents.models import Incident  # noqa: F401 — incidents
 from app.modules.vessels.models import WatchlistEntry  # noqa: F401 — register for create_all
 
 # StaticPool: all sessions share one in-memory SQLite DB.

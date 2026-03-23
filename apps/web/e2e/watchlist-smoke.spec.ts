@@ -51,6 +51,8 @@ test.describe('Watchlist smoke', () => {
   test.beforeEach(async ({ page }) => {
     await page.addInitScript(() => {
       localStorage.setItem('aegisais_onboarding_completed', 'true')
+      localStorage.removeItem('aegisais_access_token')
+      localStorage.removeItem('aegisais_ui_mode')
     })
     await mockAuthAndWatchlistApi(page)
   })
@@ -64,7 +66,7 @@ test.describe('Watchlist smoke', () => {
 
     await expect(page.getByText('Signed in')).toBeVisible()
 
-    await page.getByRole('navigation', { name: 'Main navigation' }).getByRole('button', { name: 'Watchlist' }).click()
+    await page.getByRole('navigation', { name: 'Main navigation' }).getByRole('link', { name: 'Watchlist' }).click()
 
     await expect(page.locator('.watchlist-panel')).toBeVisible()
     await expect(page.locator('.watchlist-panel').getByRole('heading', { name: 'Watchlist' })).toBeVisible()

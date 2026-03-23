@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aegisais.dev/contracts/Event.schema.json",
+  "title": "Event",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "eventType",
+    "entityIds",
+    "occurredAt",
+    "confidence",
+    "provenance",
+    "access"
+  ],
+  "properties": {
+    "id": { "type": "string" },
+    "eventType": { "type": "string" },
+    "incidentId": { "type": "string" },
+    "entityIds": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "geometry": { "$ref": "_common.json#/$defs/GeoPoint" },
+    "occurredAt": { "type": "string", "format": "date-time" },
+    "endedAt": { "type": "string", "format": "date-time" },
+    "severity": {
+      "type": "string",
+      "enum": ["low", "medium", "high", "critical"]
+    },
+    "attributes": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "confidence": { "$ref": "./Confidence.schema.json" },
+    "provenance": { "$ref": "./Provenance.schema.json" },
+    "access": { "$ref": "_common.json#/$defs/AccessMetadata" }
+  }
+}

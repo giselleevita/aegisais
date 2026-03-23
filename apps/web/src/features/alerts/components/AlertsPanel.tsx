@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { apiClient } from '@/core/api-client'
 import type { Alert, AlertFilters, WebSocketMessage } from '@/shared/types/common'
 import {
@@ -12,9 +13,17 @@ import './AlertsPanel.css'
 type AlertsPanelProps = {
     /** Merge alert status changes broadcast from the API after PATCH /alerts/{id}/status */
     streamMessage?: WebSocketMessage | null
+    /** When set (AML console), links each row to a full investigation route. */
+    linkToAlert?: (alertId: number) => string
+    /** When set, links to map context for the vessel MMSI (e.g. `/map?mmsi=`). */
+    linkToMapForMmsi?: (mmsi: string) => string
 }
 
-export default function AlertsPanel({ streamMessage = null }: AlertsPanelProps) {
+export default function AlertsPanel({
+    streamMessage = null,
+    linkToAlert,
+    linkToMapForMmsi,
+}: AlertsPanelProps) {
     const [alerts, setAlerts] = useState<Alert[]>([])
     const [loading, setLoading] = useState(true)
     const [filterType, setFilterType] = useState<string>('')
@@ -232,6 +241,20 @@ export default function AlertsPanel({ streamMessage = null }: AlertsPanelProps) 
                                     </details>
                                 )}
                                 <div className="alert-actions">
+                                    {(linkToAlert || linkToMapForMmsi) && (
+                                        <div className="alert-actions-row aml-triage-links">
+                                            {linkToAlert ? (
+                                                <Link to={linkToAlert(alert.id)} className="btn-aml-triage">
+                                                    Investigate
+                                                </Link>
+                                            ) : null}
+                                            {linkToMapForMmsi ? (
+                                                <Link to={linkToMapForMmsi(alert.mmsi)} className="btn-aml-triage">
+                                                    Map
+                                                </Link>
+                                            ) : null}
+                                        </div>
+                                    )}
                                     {editingAlert === alert.id ? (
                                         <div className="status-edit">
                                             <select

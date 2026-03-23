@@ -1,43 +1,79 @@
+/* ── Map View ──────────────────────────────────────────────────────── */
 .map-view {
-    height: 600px;
-    width: 100%;
-    position: relative;
-    border-radius: 0.5rem;
-    overflow: hidden;
-    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.map-container {
+  height: 600px;
+  width: 100%;
+  position: relative;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  border: 1px solid var(--border-default);
+}
+
+/* Legacy selector for inline Leaflet */
+.map-view > .leaflet-container,
+.map-view > div:not(.map-controls) {
+  height: 600px;
+  width: 100%;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-default);
 }
 
 .map-loading {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 600px;
-    color: #6b7280;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 600px;
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
 }
 
+/* ── Map overlay controls ──────────────────────────────────────────── */
 .map-controls {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    z-index: 1000;
-    background: white;
-    padding: 0.5rem;
-    border-radius: 0.25rem;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 1000;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  padding: 8px 12px;
+  border-radius: var(--radius-md);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
 .map-controls label {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    font-size: 0.875rem;
-    cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 0.8125rem;
+  font-family: var(--font-sans);
+  color: var(--text-secondary);
+  cursor: pointer;
+  user-select: none;
+  transition: color var(--transition);
 }
 
+.map-controls label:hover {
+  color: var(--text-primary);
+}
+
+.map-controls input[type="checkbox"] {
+  accent-color: var(--accent);
+  width: 14px;
+  height: 14px;
+}
+
+/* ── Alert marker ──────────────────────────────────────────────────── */
 .alert-marker {
-    background: transparent !important;
-    border: none !important;
+  background: transparent !important;
+  border: none !important;
 }

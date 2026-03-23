@@ -10,6 +10,7 @@ from app.core.database import SessionLocal
 from app.core.logging import configure_logging
 from app.infrastructure.messaging.consumer import RedisConsumer
 from app.modules.alerts.models import Alert
+from app.modules.incidents.service import create_incident_from_alert
 from app.services.workers.heartbeat import WorkerHeartbeat
 
 log = structlog.get_logger("aegisais.worker.alerts")
@@ -20,14 +21,24 @@ HEARTBEAT = WorkerHeartbeat("/tmp/worker_alert_heartbeat")
 ALERTS_PERSISTED = Counter('aegisais_alerts_persisted_total', 'Total alerts persisted to DB')
 ALERT_ERROR = Counter('aegisais_alert_processing_errors_total', 'Total errors in alert processing')
 STREAM_LAG = Gauge('aegisais_stream_lag_alert', 'Redis Stream Lag (pending messages)', ['stream'])
+INCIDENTS_CREATED = Counter('aegisais_incidents_created_total', 'Total incidents created from alerts')
+INCIDENT_CREATE_ERRORS = Counter('aegisais_incident_create_errors_total', 'Total incident creation errors')
+
+try:
+    from opentelemetry import trace
+    _tracer = trace.get_tracer("aegisais.worker.alerts")
+except Exception:  # pragma: no cover - optional dependency
+    _tracer = None
 
 def handle_alert(msg_id: str, data: Dict[str, Any]):
     """
     Process a single alert from the stream.
     Persists to DB. 
     """
+    span_ctx = _tracer.start_as_current_span("handle_alert") if _tracer else None
     try:
-        # 1. Persist to DB
+        if span_ctx:
+            span_ctx.__enter__()
         try:
             with SessionLocal() as db:
                 a = Alert(
@@ -40,18 +51,24 @@ def handle_alert(msg_id: str, data: Dict[str, Any]):
                     evidence=data["evidence"],
                 )
                 db.add(a)
+                db.flush()
+                create_incident_from_alert(db, a)
                 db.commit()
                 ALERTS_PERSISTED.inc()
-                log.info("alert_persisted", 
-                         mmsi=data["mmsi"], 
-                         alert_type=data["type"], 
+                INCIDENTS_CREATED.inc()
+                log.info("alert_persisted",
+                         mmsi=data["mmsi"],
+                         alert_type=data["type"],
                          msg_id=msg_id)
         except Exception as e:
             ALERT_ERROR.inc()
+            INCIDENT_CREATE_ERRORS.inc()
             raise e
-        
     except Exception as e:
         log.error("alert_processing_error", msg_id=msg_id, error=str(e), exc_info=True)
+    finally:
+        if span_ctx:
+            span_ctx.__exit__(None, None, None)
 
 def main():
     configure_logging()

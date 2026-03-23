@@ -28,7 +28,7 @@
    npm run dev
    ```
 
-   The app will be available at `http://localhost:5173` (or the port Vite assigns).
+   The app will be available at `http://127.0.0.1:5174` (see `vite.config.ts`).
 
 4. **Build for production:**
    ```bash
@@ -67,5 +67,31 @@ If you see this error, you're not using the correct Node version:
 Create a `.env` file in the frontend directory to configure the API URL:
 
 ```
-VITE_API_BASE_URL=http://localhost:8000
+VITE_API_BASE_URL=http://localhost:8001
+```
+
+### UI mode
+
+By default the app loads the **AML analyst console** (mission-oriented routes: operations split view, investigation, lab, etc.). The root path **`/`** redirects to **`/triage`** (canonical operations / alert queue + map split).
+
+The API exposes optional **integration feed status** for the Admin screen:
+
+- `GET /v1/integrations/feeds` (authenticated: viewer role or above) — returns S-AIS / SAR / RF rows derived from server config (no secrets in the JSON).
+
+To use the **legacy tabbed UI** (original Home / Dashboard / … tabs and sidebar replay), set:
+
+```
+VITE_USE_LEGACY_UI=true
+```
+
+Users can also switch modes from the app: **Classic tabbed UI** in the analyst footer, or **Analyst console** in the legacy header (preference is stored in `localStorage`).
+
+## End-to-end tests
+
+Playwright starts the Vite dev server on port **5174** by default. If that port is already taken by a stale process, tests can fail with an empty page. Either free the port or run against a preview build:
+
+```bash
+npm run build
+npx vite preview --host 127.0.0.1 --port 4173
+BASE_URL=http://127.0.0.1:4173 npm run test:e2e
 ```
