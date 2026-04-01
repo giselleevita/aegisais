@@ -1,0 +1,65 @@
+"""Add organisation_id to vessels_latest and vessel_positions for per-tenant scoping.
+
+Revision ID: 015_vessel_org_scoping
+Revises: e7a1c9d2f301
+Create Date: 2026-03-30
+
+"""
+from typing import Sequence, Union
+
+from alembic import op
+import sqlalchemy as sa
+
+revision: str = "015_vessel_org_scoping"
+down_revision: Union[str, None] = "e7a1c9d2f301"
+branch_labels: Union[str, Sequence[str], None] = None
+depends_on: Union[str, Sequence[str], None] = None
+
+
+def upgrade() -> None:
+    bind = op.get_bind()
+    is_sqlite = bind.dialect.name == "sqlite"
+
+    # ── vessels_latest ─────────────────────────────────────────────────────────
+    op.add_column(
+        "vessels_latest",
+        sa.Column("organisation_id", sa.Integer(), nullable=True),
+    )
+    # Backfill existing rows to the default organisation (id=1)
+    op.execute(sa.text("UPDATE vessels_latest SET organisation_id = 1 WHERE organisation_id IS NULL"))
+
+    if not is_sqlite:
+        op.create_foreign_key(
+            "fk_vessels_latest_org",
+            "vessels_latest",
+            "organisations",
+            ["organisation_id"],
+            ["id"],
+            ondelete="SET NULL",
+        )
+    op.create_index("ix_vessels_latest_org", "vessels_latest", ["organisation_id"])
+
+    # ── vessel_positions ───────────────────────────────────────────────────────
+    op.add_column(
+        "vessel_positions",
+        sa.Column("organisation_id", sa.Integer(), nullable=True),
+    )
+    op.execute(sa.text("UPDATE vessel_positions SET organisation_id = 1 WHERE organisation_id IS NULL"))
+
+    if not is_sqlite:
+        op.create_foreign_key(
+            "fk_vessel_positions_org",
+            "vessel_positions",
+            "organisations",
+            ["organisation_id"],
+            ["id"],
+            ondelete="SET NULL",
+        )
+    op.create_index("ix_vessel_positions_org", "vessel_positions", ["organisation_id"])
+
+
+def downgrade() -> None:
+    op.drop_index("ix_vessel_positions_org", table_name="vessel_positions")
+    op.drop_column("vessel_positions", "organisation_id")
+    op.drop_index("ix_vessels_latest_org", table_name="vessels_latest")
+    op.drop_column("vessels_latest", "organisation_id")
