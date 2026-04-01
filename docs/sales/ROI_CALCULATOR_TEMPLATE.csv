@@ -1,0 +1,13 @@
+input_name,input_value,notes
+alerts_per_month,1200,Average monthly generated alerts
+analyst_hourly_rate_usd,95,Loaded analyst cost
+minutes_saved_per_alert,4,Time saved through triage + incident workflow
+false_positive_reduction_percent,18,Expected reduction from rule tuning
+estimated_cost_per_false_positive_usd,40,Context switching and investigative overhead
+annual_platform_cost_usd,120000,Maritime tier example
+
+metric,formula,example_value
+monthly_time_savings_usd,alerts_per_month*(minutes_saved_per_alert/60)*analyst_hourly_rate_usd,7600
+monthly_false_positive_savings_usd,alerts_per_month*(false_positive_reduction_percent/100)*estimated_cost_per_false_positive_usd,8640
+annual_operational_savings_usd,(monthly_time_savings_usd+monthly_false_positive_savings_usd)*12,194880
+annual_net_roi_usd,annual_operational_savings_usd-annual_platform_cost_usd,74880

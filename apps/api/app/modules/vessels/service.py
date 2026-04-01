@@ -21,14 +21,23 @@ class VesselService:
     def __init__(self, db: Session):
         self._db = db
 
-    def list_vessels(self, *, scope_user: User, min_severity: int, limit: int) -> list[VesselLatestOut]:
+    def list_vessels(
+        self,
+        *,
+        scope_user: User,
+        min_severity: int,
+        limit: int,
+        offset: int = 0,
+    ) -> list[VesselLatestOut]:
         q = (
             self._db.query(VesselLatest)
             .filter(VesselLatest.last_alert_severity >= min_severity)
+            .order_by(VesselLatest.timestamp.desc())
+            .offset(offset)
+            .limit(limit)
         )
         if not is_super_admin(scope_user):
             q = q.filter(VesselLatest.organisation_id == scope_user.organisation_id)
-        q = q.order_by(VesselLatest.timestamp.desc()).limit(limit)
         return [vessel_latest_to_out(v) for v in q.all()]
 
     def get_vessel(self, mmsi: str, *, scope_user: User) -> VesselLatestOut:

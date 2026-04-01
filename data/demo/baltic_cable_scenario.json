@@ -1,0 +1,72 @@
+{
+  "scenario": "baltic_cable_approach",
+  "description": "Simulated AIS tracks of a vessel making suspicious approach patterns near the Baltic Sea submarine cable corridor between Sweden and Estonia",
+  "generated": "2026-03-31T00:00:00Z",
+  "cable_route": {
+    "name": "EE-SE-1 (fictional)",
+    "start": {"lat": 59.44, "lon": 24.75, "label": "Tallinn, Estonia"},
+    "end": {"lat": 58.38, "lon": 16.66, "label": "Norrköping, Sweden"},
+    "corridor_width_nm": 1.0
+  },
+  "geofence": {
+    "type": "Polygon",
+    "coordinates": [
+      [24.75, 59.44], [24.00, 59.20], [18.50, 58.10],
+      [16.66, 58.38], [16.66, 58.48], [18.50, 58.20],
+      [24.00, 59.30], [24.75, 59.54], [24.75, 59.44]
+    ]
+  },
+  "vessels": [
+    {
+      "mmsi": 211000001,
+      "vessel_name": "DEMO VESSEL ALPHA",
+      "vessel_type": "Cargo",
+      "flag": "DE",
+      "behavior": "normal_transit",
+      "description": "Normal east-west transit crossing the cable corridor at speed",
+      "track": [
+        {"ts": "2026-03-20T08:00:00Z", "lat": 59.10, "lon": 22.50, "sog": 12.5, "cog": 270, "heading": 268},
+        {"ts": "2026-03-20T09:00:00Z", "lat": 59.05, "lon": 21.80, "sog": 12.3, "cog": 270, "heading": 269},
+        {"ts": "2026-03-20T10:00:00Z", "lat": 59.00, "lon": 21.10, "sog": 12.4, "cog": 270, "heading": 270},
+        {"ts": "2026-03-20T11:00:00Z", "lat": 58.95, "lon": 20.40, "sog": 12.5, "cog": 270, "heading": 270}
+      ]
+    },
+    {
+      "mmsi": 273000002,
+      "vessel_name": "DEMO VESSEL BRAVO",
+      "vessel_type": "Research",
+      "flag": "RU",
+      "behavior": "suspicious_loitering",
+      "description": "Research vessel loitering over cable corridor with speed drops and repeated passes",
+      "track": [
+        {"ts": "2026-03-20T06:00:00Z", "lat": 58.80, "lon": 20.50, "sog": 8.0, "cog": 180, "heading": 178},
+        {"ts": "2026-03-20T07:00:00Z", "lat": 58.70, "lon": 20.48, "sog": 3.2, "cog": 190, "heading": 185},
+        {"ts": "2026-03-20T08:00:00Z", "lat": 58.65, "lon": 20.45, "sog": 1.0, "cog": 210, "heading": 200},
+        {"ts": "2026-03-20T09:00:00Z", "lat": 58.63, "lon": 20.42, "sog": 0.5, "cog": 350, "heading": 5},
+        {"ts": "2026-03-20T10:00:00Z", "lat": 58.66, "lon": 20.44, "sog": 2.0, "cog": 15, "heading": 10},
+        {"ts": "2026-03-20T11:00:00Z", "lat": 58.72, "lon": 20.46, "sog": 1.5, "cog": 200, "heading": 195},
+        {"ts": "2026-03-20T12:00:00Z", "lat": 58.68, "lon": 20.43, "sog": 0.8, "cog": 180, "heading": 175},
+        {"ts": "2026-03-20T13:00:00Z", "lat": 58.64, "lon": 20.41, "sog": 0.3, "cog": 270, "heading": 260}
+      ]
+    },
+    {
+      "mmsi": 0,
+      "vessel_name": "UNKNOWN",
+      "vessel_type": "Unknown",
+      "flag": "NONE",
+      "behavior": "ais_spoofing",
+      "description": "Vessel with invalid MMSI transmitting positions that teleport between distant locations",
+      "track": [
+        {"ts": "2026-03-20T10:00:00Z", "lat": 58.70, "lon": 20.50, "sog": 5.0, "cog": 90, "heading": 85},
+        {"ts": "2026-03-20T10:05:00Z", "lat": 59.20, "lon": 23.00, "sog": 5.0, "cog": 90, "heading": 85},
+        {"ts": "2026-03-20T10:10:00Z", "lat": 58.50, "lon": 19.00, "sog": 5.0, "cog": 270, "heading": 268}
+      ]
+    }
+  ],
+  "expected_alerts": [
+    {"vessel_mmsi": 273000002, "rule": "geofence_breach", "severity": "P1", "description": "Research vessel entered cable corridor geofence"},
+    {"vessel_mmsi": 273000002, "rule": "speed_anomaly", "severity": "P2", "description": "Vessel loitering with repeated speed drops below 1 knot"},
+    {"vessel_mmsi": 0, "rule": "teleportation", "severity": "P1", "description": "Impossible position jump (>100nm in 5 minutes)"},
+    {"vessel_mmsi": 0, "rule": "identity_consistency", "severity": "P1", "description": "Invalid MMSI (0)"}
+  ]
+}

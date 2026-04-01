@@ -16,6 +16,7 @@ import IncidentsPage from '@/aml/pages/IncidentsPage'
 import IncidentDetailPage from '@/aml/pages/IncidentDetailPage'
 import AuditPage from '@/aml/pages/AuditPage'
 import SanctionsPage from '@/aml/pages/SanctionsPage'
+import OnboardingTourPage from '@/aml/pages/OnboardingTourPage'
 import { AML_OPERATIONS_PATH } from '@/aml/amlRoutes'
 
 export default function AmlApp() {
@@ -38,6 +39,7 @@ export default function AmlApp() {
         <Route path="/incidents" element={<IncidentsPage />} />
         <Route path="/incidents/:incidentId" element={<IncidentDetailPage />} />
         <Route path="/audit" element={<AuditPage />} />
+        <Route path="/onboarding" element={<OnboardingTourPage />} />
         <Route path="/about" element={<Navigate to={AML_OPERATIONS_PATH} replace />} />
         <Route path="/admin" element={<AdminPage />} />
       </Route>

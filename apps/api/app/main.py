@@ -21,6 +21,7 @@ from app.api.v1.incidents import router as incidents_router
 from app.modules.itdae.api.routes_itdae import router as itdae_router
 from app.modules.sais.api.routes_sais import router as sais_router
 from app.api.v1.pilot import router as pilot_router
+from app.api.v1.import_ais import router as import_ais_router
 
 # ITDAE integration
 from app.modules.auth.api.routes_auth import router as auth_router
@@ -42,6 +43,22 @@ from prometheus_fastapi_instrumentator import Instrumentator
 configure_logging()
 
 _startup_log = logging.getLogger("aegisais.startup")
+
+
+def _init_sentry_stub() -> None:
+    if not settings.sentry_dsn:
+        _startup_log.info("Sentry disabled (SENTRY_DSN not configured)")
+        return
+    try:
+        import sentry_sdk
+
+        sentry_sdk.init(dsn=settings.sentry_dsn, traces_sample_rate=0.05)
+        _startup_log.info("Sentry initialized")
+    except Exception as exc:
+        _startup_log.warning("Sentry initialization skipped: %s", exc)
+
+
+_init_sentry_stub()
 
 
 @asynccontextmanager
@@ -95,6 +112,7 @@ app.include_router(incidents_router, prefix="/v1", tags=["incidents"])
 app.include_router(itdae_router, prefix="/api/v1/itdae", tags=["itdae"])
 app.include_router(sais_router, prefix="/v1/sais", tags=["sais"])
 app.include_router(pilot_router, prefix="/v1", tags=["pilot"])
+app.include_router(import_ais_router, prefix="/v1", tags=["import"])
 app.include_router(interop_router, prefix="/v1/interop", tags=["interop"])
 app.include_router(sanctions_router, prefix="/v1/sanctions", tags=["sanctions"])
 app.include_router(intel_router, prefix="/v1/intel", tags=["intel"])
