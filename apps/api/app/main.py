@@ -20,9 +20,23 @@ from app.api.v1.reports import router as reports_router
 from app.api.v1.incidents import router as incidents_router
 from app.modules.itdae.api.routes_itdae import router as itdae_router
 from app.modules.sais.api.routes_sais import router as sais_router
+from app.api.v1.pilot import router as pilot_router
 
 # ITDAE integration
 from app.modules.auth.api.routes_auth import router as auth_router
+
+# NATO interoperability (GAP-04)
+from app.modules.interop.router import router as interop_router
+# Sanctions screening (GAP-09)
+from app.modules.sanctions.router import router as sanctions_router
+# Intelligence products (GAP-11)
+from app.modules.intel.router import router as intel_router
+# Multi-national sharing (GAP-12)
+from app.modules.sharing.router import router as sharing_router
+# AI Analyst assistant (Featherless AI)
+from app.modules.analyst.router import router as analyst_router
+# Geodata: EEZ, weather, bathymetry
+from app.services.geodata.router import router as geodata_router
 from prometheus_fastapi_instrumentator import Instrumentator
 
 configure_logging()
@@ -80,6 +94,13 @@ app.include_router(reports_router, prefix="/v1", tags=["reports"])
 app.include_router(incidents_router, prefix="/v1", tags=["incidents"])
 app.include_router(itdae_router, prefix="/api/v1/itdae", tags=["itdae"])
 app.include_router(sais_router, prefix="/v1/sais", tags=["sais"])
+app.include_router(pilot_router, prefix="/v1", tags=["pilot"])
+app.include_router(interop_router, prefix="/v1/interop", tags=["interop"])
+app.include_router(sanctions_router, prefix="/v1/sanctions", tags=["sanctions"])
+app.include_router(intel_router, prefix="/v1/intel", tags=["intel"])
+app.include_router(sharing_router, prefix="/v1/sharing", tags=["sharing"])
+app.include_router(analyst_router, prefix="/v1/analyst", tags=["analyst"])
+app.include_router(geodata_router, prefix="/v1/geodata", tags=["geodata"])
 
 @app.get("/")
 async def root():

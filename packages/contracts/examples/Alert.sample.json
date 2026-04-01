@@ -1,0 +1,26 @@
+{
+  "id": "alert-teleport-001",
+  "alertType": "teleport",
+  "eventId": "event-001",
+  "status": "new",
+  "priority": "p2",
+  "message": "Teleport anomaly detected",
+  "createdAt": "2026-03-31T12:00:00Z",
+  "confidence": {
+    "score": 0.92,
+    "method": "rule-engine",
+    "notes": "Teleport rule exceeded threshold"
+  },
+  "provenance": {
+    "source": "ais",
+    "sourceRecordId": "raw-point-001",
+    "processor": "aegisais-detection-pipeline",
+    "ingestedAt": "2026-03-31T11:59:30Z",
+    "lineage": ["raw-point-001", "teleport-rule-v2"]
+  },
+  "access": {
+    "classification": "restricted",
+    "allowedRoles": ["analyst", "admin"],
+    "ownerOrgId": "org-1"
+  }
+}

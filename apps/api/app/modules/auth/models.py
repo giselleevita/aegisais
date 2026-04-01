@@ -58,6 +58,10 @@ class User(Base):
     )
     last_login = Column(DateTime(timezone=True), nullable=True)
 
+    # MFA (GAP-10) — TOTP secret stored encrypted-at-rest via column-level encryption
+    totp_secret = Column(String, nullable=True)
+    mfa_enabled = Column(Boolean, default=False, nullable=False)
+
     organisation = relationship("Organisation", back_populates="users")
 
     refresh_tokens = relationship(

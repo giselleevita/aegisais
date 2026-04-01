@@ -1,0 +1,203 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: itdae-ingestion
+  labels:
+    app.kubernetes.io/name: itdae-ingestion
+    app.kubernetes.io/part-of: aegisais
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: itdae-ingestion
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: itdae-ingestion
+        app.kubernetes.io/part-of: aegisais
+    spec:
+      containers:
+        - name: worker
+          image: ghcr.io/giselleevita/aegisais-api:latest
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+            seccompProfile:
+              type: RuntimeDefault
+          command: ["python", "-m", "app.modules.itdae.ingestion.stream"]
+          envFrom:
+            - configMapRef:
+                name: aegisais-config
+            - secretRef:
+                name: aegisais-secrets
+          livenessProbe:
+            exec:
+              command:
+                - python
+                - -c
+                - "import os,time,sys;p='/tmp/worker_itdae_heartbeat';sys.exit(0 if os.path.exists(p) and time.time()-os.path.getmtime(p)<180 else 1)"
+            initialDelaySeconds: 30
+            periodSeconds: 30
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: processing-worker
+  labels:
+    app.kubernetes.io/name: processing-worker
+    app.kubernetes.io/part-of: aegisais
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: processing-worker
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: processing-worker
+        app.kubernetes.io/part-of: aegisais
+    spec:
+      containers:
+        - name: worker
+          image: ghcr.io/giselleevita/aegisais-api:latest
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+            seccompProfile:
+              type: RuntimeDefault
+          command: ["python", "-m", "app.services.workers.processing_worker"]
+          envFrom:
+            - configMapRef:
+                name: aegisais-config
+            - secretRef:
+                name: aegisais-secrets
+          livenessProbe:
+            exec:
+              command:
+                - python
+                - -c
+                - "import os,time,sys;p='/tmp/worker_processing_heartbeat';sys.exit(0 if os.path.exists(p) and time.time()-os.path.getmtime(p)<180 else 1)"
+            initialDelaySeconds: 30
+            periodSeconds: 30
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: persistence-worker
+  labels:
+    app.kubernetes.io/name: persistence-worker
+    app.kubernetes.io/part-of: aegisais
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: persistence-worker
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: persistence-worker
+        app.kubernetes.io/part-of: aegisais
+    spec:
+      containers:
+        - name: worker
+          image: ghcr.io/giselleevita/aegisais-api:latest
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+            seccompProfile:
+              type: RuntimeDefault
+          command: ["python", "-m", "app.services.workers.persistence_worker"]
+          envFrom:
+            - configMapRef:
+                name: aegisais-config
+            - secretRef:
+                name: aegisais-secrets
+          livenessProbe:
+            exec:
+              command:
+                - python
+                - -c
+                - "import os,time,sys;p='/tmp/worker_persistence_heartbeat';sys.exit(0 if os.path.exists(p) and time.time()-os.path.getmtime(p)<180 else 1)"
+            initialDelaySeconds: 30
+            periodSeconds: 30
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: alert-worker
+  labels:
+    app.kubernetes.io/name: alert-worker
+    app.kubernetes.io/part-of: aegisais
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: alert-worker
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: alert-worker
+        app.kubernetes.io/part-of: aegisais
+    spec:
+      containers:
+        - name: worker
+          image: ghcr.io/giselleevita/aegisais-api:latest
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+            seccompProfile:
+              type: RuntimeDefault
+          command: ["python", "-m", "app.services.workers.alert_worker"]
+          envFrom:
+            - configMapRef:
+                name: aegisais-config
+            - secretRef:
+                name: aegisais-secrets
+          livenessProbe:
+            exec:
+              command:
+                - python
+                - -c
+                - "import os,time,sys;p='/tmp/worker_alert_heartbeat';sys.exit(0 if os.path.exists(p) and time.time()-os.path.getmtime(p)<180 else 1)"
+            initialDelaySeconds: 30
+            periodSeconds: 30
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi

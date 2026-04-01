@@ -1,7 +1,11 @@
 from datetime import datetime, timedelta, timezone
+from contextlib import nullcontext
+from types import SimpleNamespace
+from unittest.mock import Mock
 
 import pytest
 from pydantic import ValidationError
+from sqlalchemy.exc import IntegrityError
 
 from app.infrastructure.ingest.loaders import AisPoint
 from app.modules.alerts.models import Alert
@@ -140,3 +144,30 @@ def test_create_incident_from_alert_with_flag_reports_existing(client):
         assert first.id == second.id
     finally:
         db.close()
+
+
+def test_create_incident_from_alert_with_flag_recovers_from_integrity_error():
+    alert = SimpleNamespace(
+        id=42,
+        organisation_id=1,
+        timestamp=datetime.now(timezone.utc),
+        mmsi="265503692",
+        type="FUSED_ACTIVITY_NEAR_CABLE",
+        severity=80,
+        summary="Near cable activity",
+        evidence={"schema_version": FUSED_RULE_SCHEMA_VERSION},
+    )
+    existing = object()
+    query = Mock()
+    query.filter.return_value.first.side_effect = [None, existing]
+
+    db = Mock()
+    db.query.return_value = query
+    db.begin_nested.return_value = nullcontext()
+    db.flush.side_effect = IntegrityError("insert", {}, Exception("duplicate"))
+
+    incident, created = create_incident_from_alert_with_flag(db, alert)
+
+    assert incident is existing
+    assert created is False
+    db.add.assert_called_once()

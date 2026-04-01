@@ -86,6 +86,41 @@ class Settings(BaseSettings):
     ITDAE_BALTIC_BBOX: str = ""
     ITDAE_GEOFENCE_BUFFER_NM: float = 5.0  # Buffer around cable corridors in nautical miles
 
+    # Live AIS stream (GAP-02) — aisstream.io WebSocket feed
+    AISSTREAM_API_KEY: str = ""
+    AISSTREAM_BBOX: str = ""  # lat_min,lon_min,lat_max,lon_max (e.g. "54.0,10.0,66.0,30.0")
+
+    # Sanctions screening (GAP-09)
+    SANCTIONS_WATCHLIST_PATH: str = ""  # Override default JSON file path
+    SANCTIONS_ENABLE_STS: bool = True  # Enable ship-to-ship transfer detection
+
+    # MFA (GAP-10)
+    MFA_ENABLED: bool = True  # Allow users to enable TOTP MFA
+    MFA_ISSUER: str = "AegisAIS"
+
+    # Geodata: EEZ boundaries, bathymetry (marineregions.org, GEBCO)
+    EEZ_GEOJSON_PATH: str = ""  # Path to marineregions.org EEZ GeoJSON file
+    WEATHER_ENABLED: bool = True  # Enable Open-Meteo marine weather lookups
+    BATHYMETRY_ENABLED: bool = True  # Enable GEBCO depth lookups
+
+    # Classification (GAP-07)
+    DEFAULT_CLASSIFICATION: str = "NATO UNCLASSIFIED"
+    DEFAULT_TLP: str = "TLP:GREEN"
+
+    # ML scoring (GAP-01)
+    ML_SCORING_ENABLED: bool = True
+    ML_WEIGHT_RULES: float = 0.6
+    ML_WEIGHT_STATISTICAL: float = 0.4
+
+    # LLM Integration (Featherless AI — OpenAI-compatible)
+    LLM_ENABLED: bool = False
+    LLM_API_KEY: str = ""
+    LLM_BASE_URL: str = "https://api.featherless.ai/v1"
+    LLM_MODEL: str = "Qwen/Qwen3-32B"
+    LLM_TEMPERATURE: float = 0.3
+    LLM_MAX_TOKENS: int = 600
+    LLM_TIMEOUT_SEC: int = 30
+
     # Detection thresholds
     # TELEPORT rule thresholds (tiered by time gap)
     teleport_speed_knots_short: float = 60.0  # For dt <= 120s (Tier 1)

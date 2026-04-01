@@ -44,9 +44,14 @@
 .auth-bar {
   display: flex;
   align-items: center;
-  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  row-gap: 4px;
+  column-gap: 6px;
   font-size: 0.8125rem;
   margin-left: auto;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .auth-bar-label {
@@ -55,6 +60,14 @@
   font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.06em;
+  max-width: min(220px, 42vw);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.auth-bar--session .auth-bar-label {
+  text-transform: none;
+  letter-spacing: normal;
 }
 
 .auth-bar input {
@@ -103,7 +116,10 @@
 .auth-bar-error {
   color: var(--sev-high);
   font-size: 0.75rem;
-  max-width: 160px;
+  flex-basis: 100%;
+  text-align: right;
+  word-break: break-word;
+  max-width: min(320px, 100%);
 }
 
 /* ── Status & Tour ─────────────────────────────────────────────────── */

@@ -1,0 +1,109 @@
+name: Promote Kubernetes Overlay
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Target environment"
+        required: true
+        type: choice
+        options:
+          - staging
+          - production
+      image_tag:
+        description: "Image tag to deploy (for all app images)"
+        required: true
+        type: string
+      profile:
+        description: "Dependency profile"
+        required: true
+        type: choice
+        options:
+          - base
+          - managed-deps
+
+permissions:
+  contents: read
+
+jobs:
+  promote:
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install kubectl
+        uses: azure/setup-kubectl@v4
+
+      - name: Configure kubeconfig
+        run: |
+          mkdir -p $HOME/.kube
+          if [ "${{ github.event.inputs.environment }}" = "production" ]; then
+            echo "${{ secrets.KUBE_CONFIG_PRODUCTION }}" | base64 --decode > $HOME/.kube/config
+          else
+            echo "${{ secrets.KUBE_CONFIG_STAGING }}" | base64 --decode > $HOME/.kube/config
+          fi
+
+      - name: Apply selected overlay/profile
+        run: |
+          if [ "${{ github.event.inputs.profile }}" = "managed-deps" ]; then
+            kubectl apply -k infra/k8s/profiles/managed-deps
+          else
+            kubectl apply -k infra/k8s/overlays/${{ github.event.inputs.environment }}
+          fi
+
+      - name: Pin image tags
+        run: |
+          kubectl -n aegisais set image deploy/api api=ghcr.io/${{ github.repository_owner }}/aegisais-api:${{ github.event.inputs.image_tag }}
+          kubectl -n aegisais set image deploy/bff bff=ghcr.io/${{ github.repository_owner }}/aegisais-bff:${{ github.event.inputs.image_tag }}
+          kubectl -n aegisais set image deploy/web web=ghcr.io/${{ github.repository_owner }}/aegisais-web:${{ github.event.inputs.image_tag }}
+          kubectl -n aegisais set image deploy/itdae-ingestion worker=ghcr.io/${{ github.repository_owner }}/aegisais-api:${{ github.event.inputs.image_tag }}
+          kubectl -n aegisais set image deploy/processing-worker worker=ghcr.io/${{ github.repository_owner }}/aegisais-api:${{ github.event.inputs.image_tag }}
+          kubectl -n aegisais set image deploy/persistence-worker worker=ghcr.io/${{ github.repository_owner }}/aegisais-api:${{ github.event.inputs.image_tag }}
+          kubectl -n aegisais set image deploy/alert-worker worker=ghcr.io/${{ github.repository_owner }}/aegisais-api:${{ github.event.inputs.image_tag }}
+
+      - name: Wait for rollout
+        run: |
+          kubectl rollout status deploy/api -n aegisais --timeout=300s
+          kubectl rollout status deploy/bff -n aegisais --timeout=300s
+          kubectl rollout status deploy/web -n aegisais --timeout=300s
+          kubectl rollout status deploy/itdae-ingestion -n aegisais --timeout=300s
+          kubectl rollout status deploy/processing-worker -n aegisais --timeout=300s
+          kubectl rollout status deploy/persistence-worker -n aegisais --timeout=300s
+          kubectl rollout status deploy/alert-worker -n aegisais --timeout=300s
+
+      - name: Auto rollback on failed rollout
+        if: ${{ failure() }}
+        run: |
+          set +e
+          kubectl rollout undo deploy/api -n aegisais
+          kubectl rollout undo deploy/bff -n aegisais
+          kubectl rollout undo deploy/web -n aegisais
+          kubectl rollout undo deploy/itdae-ingestion -n aegisais
+          kubectl rollout undo deploy/processing-worker -n aegisais
+          kubectl rollout undo deploy/persistence-worker -n aegisais
+          kubectl rollout undo deploy/alert-worker -n aegisais
+          echo "Automatic rollback attempted for app and worker deployments." >> $GITHUB_STEP_SUMMARY
+
+      - name: Rollback status
+        if: ${{ failure() }}
+        run: |
+          kubectl rollout status deploy/api -n aegisais --timeout=300s || true
+          kubectl rollout status deploy/bff -n aegisais --timeout=300s || true
+          kubectl rollout status deploy/web -n aegisais --timeout=300s || true
+          kubectl rollout status deploy/itdae-ingestion -n aegisais --timeout=300s || true
+          kubectl rollout status deploy/processing-worker -n aegisais --timeout=300s || true
+          kubectl rollout status deploy/persistence-worker -n aegisais --timeout=300s || true
+          kubectl rollout status deploy/alert-worker -n aegisais --timeout=300s || true
+
+      - name: Deployment summary
+        run: |
+          echo "Environment: ${{ github.event.inputs.environment }}" >> $GITHUB_STEP_SUMMARY
+          echo "Profile: ${{ github.event.inputs.profile }}" >> $GITHUB_STEP_SUMMARY
+          echo "Image tag: ${{ github.event.inputs.image_tag }}" >> $GITHUB_STEP_SUMMARY
+          echo "If rollback is needed:" >> $GITHUB_STEP_SUMMARY
+          echo "kubectl rollout undo deploy/api -n aegisais" >> $GITHUB_STEP_SUMMARY
+          echo "kubectl rollout undo deploy/bff -n aegisais" >> $GITHUB_STEP_SUMMARY
+          echo "kubectl rollout undo deploy/web -n aegisais" >> $GITHUB_STEP_SUMMARY

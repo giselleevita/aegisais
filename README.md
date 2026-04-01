@@ -70,11 +70,11 @@ aegisais/
 
 ### Prerequisites
 
-| Tool | Version |
-|---|---|
-| Python | 3.11+ |
-| Node.js | 20.19+ |
-| npm | 10.8+ |
+| Tool       | Version                                         |
+| ---------- | ----------------------------------------------- |
+| Python     | 3.11+                                           |
+| Node.js    | 20.19+                                          |
+| npm        | 10.8+                                           |
 | PostgreSQL | 14+ _(optional — SQLite works for development)_ |
 
 ### Local Development
@@ -110,19 +110,19 @@ npm install   # install root devDependencies (turbo)
 npm run dev   # starts api + web concurrently
 ```
 
-| Service | URL |
-|---|---|
-| Frontend | http://localhost:5173 |
-| Backend API | http://localhost:8000 |
-| Swagger UI | http://localhost:8000/docs |
-| ReDoc | http://localhost:8000/redoc |
+| Service            | URL                           |
+| ------------------ | ----------------------------- |
+| Frontend           | http://localhost:5173         |
+| Backend API        | http://localhost:8000         |
+| Swagger UI         | http://localhost:8000/docs    |
+| ReDoc              | http://localhost:8000/redoc   |
 | Prometheus metrics | http://localhost:8000/metrics |
-| BFF Geospatial API | http://localhost:8080 |
+| BFF Geospatial API | http://localhost:8080         |
 
 ### Docker
 
 ```bash
-docker-compose up --build
+docker compose -f infra/docker/docker-compose.yml up --build
 ```
 
 ---
@@ -157,24 +157,24 @@ Place AIS data files in `data/raw/` or upload them via the web interface.
 
 **Supported formats:**
 
-| Format | Description |
-|---|---|
-| `.csv` | Comma-delimited CSV |
-| `.dat` | Tab- or space-delimited |
+| Format     | Description              |
+| ---------- | ------------------------ |
+| `.csv`     | Comma-delimited CSV      |
+| `.dat`     | Tab- or space-delimited  |
 | `.csv.zst` | Zstandard-compressed CSV |
 | `.dat.zst` | Zstandard-compressed DAT |
 
 **Required columns** (flexible name matching):
 
-| Field | Accepted column names |
-|---|---|
-| MMSI | `mmsi`, `MMSI` |
-| Timestamp | `timestamp`, `base_date_time`, `time` |
-| Latitude | `lat`, `latitude` |
-| Longitude | `lon`, `longitude` |
-| SOG _(optional)_ | `sog` |
-| COG _(optional)_ | `cog` |
-| Heading _(optional)_ | `heading` |
+| Field                | Accepted column names                 |
+| -------------------- | ------------------------------------- |
+| MMSI                 | `mmsi`, `MMSI`                        |
+| Timestamp            | `timestamp`, `base_date_time`, `time` |
+| Latitude             | `lat`, `latitude`                     |
+| Longitude            | `lon`, `longitude`                    |
+| SOG _(optional)_     | `sog`                                 |
+| COG _(optional)_     | `cog`                                 |
+| Heading _(optional)_ | `heading`                             |
 
 ### 2. Process Data
 
@@ -193,12 +193,12 @@ curl -X POST "http://localhost:8000/v1/replay/stop"
 
 ### 3. View Results
 
-| View | Description |
-|---|---|
-| **Dashboard** | Processing progress and system metrics |
-| **Alerts** | Filter, annotate, and export detected anomalies |
-| **Vessels** | Browse tracked vessels and their latest positions |
-| **Map** | Interactive Leaflet map with vessel tracks and alert markers |
+| View          | Description                                                  |
+| ------------- | ------------------------------------------------------------ |
+| **Dashboard** | Processing progress and system metrics                       |
+| **Alerts**    | Filter, annotate, and export detected anomalies              |
+| **Vessels**   | Browse tracked vessels and their latest positions            |
+| **Map**       | Interactive Leaflet map with vessel tracks and alert markers |
 
 ---
 
@@ -207,31 +207,32 @@ curl -X POST "http://localhost:8000/v1/replay/stop"
 Full reference: [`docs/API_DOCUMENTATION.md`](./docs/API_DOCUMENTATION.md)
 
 Interactive docs are served by the running API:
+
 - **Swagger UI**: http://localhost:8000/docs
 - **ReDoc**: http://localhost:8000/redoc
 
 ### Key Endpoints
 
-| Method | Path | Description |
-|---|---|---|
-| `GET` | `/v1/health` | Basic health check |
-| `GET` | `/v1/health/detailed` | Health check including database connectivity |
-| `GET` | `/v1/metrics` | System metrics (vessel and alert counts) |
-| `GET` | `/v1/vessels` | List vessels (filterable by min severity) |
-| `GET` | `/v1/vessels/{mmsi}` | Get vessel by MMSI |
-| `GET` | `/v1/vessels/{mmsi}/track` | Get historical track positions |
-| `GET` | `/v1/alerts` | List alerts (filterable by type, status, severity, time) |
-| `PATCH` | `/v1/alerts/{id}/status` | Update alert status and/or analyst notes |
-| `GET` | `/v1/alerts/stats/summary` | Alert statistics summary |
-| `GET` | `/v1/alerts/export/csv` | Export alerts as CSV |
-| `GET` | `/v1/alerts/export/json` | Export alerts as JSON |
-| `POST` | `/v1/upload` | Upload AIS data file (max 5 GB) |
-| `GET` | `/v1/upload/list` | List uploaded files |
-| `POST` | `/v1/replay/start` | Start data replay |
-| `POST` | `/v1/replay/stop` | Stop current replay |
-| `GET` | `/v1/replay/status` | Get replay progress |
-| `WS` | `/v1/stream` | WebSocket stream for real-time alerts and progress ticks |
-| `GET` | `/metrics` | Prometheus metrics endpoint |
+| Method  | Path                       | Description                                              |
+| ------- | -------------------------- | -------------------------------------------------------- |
+| `GET`   | `/v1/health`               | Basic health check                                       |
+| `GET`   | `/v1/health/detailed`      | Health check including database connectivity             |
+| `GET`   | `/v1/metrics`              | System metrics (vessel and alert counts)                 |
+| `GET`   | `/v1/vessels`              | List vessels (filterable by min severity)                |
+| `GET`   | `/v1/vessels/{mmsi}`       | Get vessel by MMSI                                       |
+| `GET`   | `/v1/vessels/{mmsi}/track` | Get historical track positions                           |
+| `GET`   | `/v1/alerts`               | List alerts (filterable by type, status, severity, time) |
+| `PATCH` | `/v1/alerts/{id}/status`   | Update alert status and/or analyst notes                 |
+| `GET`   | `/v1/alerts/stats/summary` | Alert statistics summary                                 |
+| `GET`   | `/v1/alerts/export/csv`    | Export alerts as CSV                                     |
+| `GET`   | `/v1/alerts/export/json`   | Export alerts as JSON                                    |
+| `POST`  | `/v1/upload`               | Upload AIS data file (max 5 GB)                          |
+| `GET`   | `/v1/upload/list`          | List uploaded files                                      |
+| `POST`  | `/v1/replay/start`         | Start data replay                                        |
+| `POST`  | `/v1/replay/stop`          | Stop current replay                                      |
+| `GET`   | `/v1/replay/status`        | Get replay progress                                      |
+| `WS`    | `/v1/stream`               | WebSocket stream for real-time alerts and progress ticks |
+| `GET`   | `/metrics`                 | Prometheus metrics endpoint                              |
 
 ---
 
@@ -277,14 +278,15 @@ apps/api/app/
 
 A contract-first [Fastify](https://fastify.dev/) Backend-for-Frontend, designed via OpenAPI 3.0, that sits between the React client and the core Python API. It provides JWT-authenticated, rate-limited, license-gated geospatial endpoints with in-memory response caching.
 
-| Endpoint | Auth | Description |
-|---|---|---|
-| `GET /health` | — | Liveness probe — returns env and status |
-| `GET /v1/storage/status` | — | Object storage provider configuration check |
-| `GET /v1/layers/manifest` | JWT + licence | License-filtered layer catalogue; Redis-backed cache |
-| `WS /v1/stream` | JWT + `ports:read` licence | Real-time heartbeat stream with ping/pong protocol |
+| Endpoint                  | Auth                       | Description                                          |
+| ------------------------- | -------------------------- | ---------------------------------------------------- |
+| `GET /health`             | —                          | Liveness probe — returns env and status              |
+| `GET /v1/storage/status`  | —                          | Object storage provider configuration check          |
+| `GET /v1/layers/manifest` | JWT + licence              | License-filtered layer catalogue; Redis-backed cache |
+| `WS /v1/stream`           | JWT + `ports:read` licence | Real-time heartbeat stream with ping/pong protocol   |
 
 **Key design properties:**
+
 - **OpenAPI-first** — full contract in `openapi.yaml` before any implementation
 - **License-gated** — per-feature licence flags enforced at the route layer
 - **Rate limited** — sliding-window per-identity limiter on all read endpoints
@@ -317,15 +319,15 @@ apps/web/src/
 
 **Backend (`apps/api`)**
 
-| Variable | Default | Description |
-|---|---|---|
+| Variable       | Default                   | Description                           |
+| -------------- | ------------------------- | ------------------------------------- |
 | `DATABASE_URL` | `sqlite:///./aegisais.db` | SQLAlchemy database connection string |
-| `LOG_LEVEL` | `INFO` | Logging verbosity |
+| `LOG_LEVEL`    | `INFO`                    | Logging verbosity                     |
 
 **Frontend (`apps/web`)**
 
-| Variable | Default | Description |
-|---|---|---|
+| Variable            | Default                 | Description          |
+| ------------------- | ----------------------- | -------------------- |
 | `VITE_API_BASE_URL` | `http://localhost:8000` | Backend API base URL |
 
 Create a `.env` file in `apps/web/` to override:
@@ -342,20 +344,20 @@ AegisAIS applies two tiers of detection rules to every incoming AIS position upd
 
 ### Tier 1 — Integrity Violations
 
-| Alert Type | Trigger |
-|---|---|
-| `TELEPORT` | Implied speed between consecutive positions exceeds the physical speed limit for the time gap |
-| `TURN_RATE` | Heading change rate exceeds the maximum physically possible for the reported speed |
+| Alert Type  | Trigger                                                                                       |
+| ----------- | --------------------------------------------------------------------------------------------- |
+| `TELEPORT`  | Implied speed between consecutive positions exceeds the physical speed limit for the time gap |
+| `TURN_RATE` | Heading change rate exceeds the maximum physically possible for the reported speed            |
 
 ### Tier 2 — Suspicious Behaviour
 
-| Alert Type | Trigger |
-|---|---|
-| `TELEPORT_T2` | Implied speed is high but not outright impossible — warrants review |
-| `TURN_RATE_T2` | Turn rate is elevated but below the hard physical threshold |
-| `POSITION_INVALID` | Coordinates fall outside valid geographic range (lat > ±90°, lon > ±180°) |
-| `ACCELERATION` | Speed change between positions exceeds physical limits |
-| `HEADING_COG_CONSISTENCY` | Heading and COG diverge significantly at a reportable speed |
+| Alert Type                | Trigger                                                                   |
+| ------------------------- | ------------------------------------------------------------------------- |
+| `TELEPORT_T2`             | Implied speed is high but not outright impossible — warrants review       |
+| `TURN_RATE_T2`            | Turn rate is elevated but below the hard physical threshold               |
+| `POSITION_INVALID`        | Coordinates fall outside valid geographic range (lat > ±90°, lon > ±180°) |
+| `ACCELERATION`            | Speed change between positions exceeds physical limits                    |
+| `HEADING_COG_CONSISTENCY` | Heading and COG diverge significantly at a reportable speed               |
 
 All alerts carry a **severity score (0–100)** and structured **evidence fields** (implied speed, distance, time delta, tier, etc.).
 
@@ -447,38 +449,52 @@ npm run lint
 ### Docker
 
 ```bash
-docker-compose up -d
+docker compose -f infra/docker/docker-compose.yml up -d
 ```
 
 The API Dockerfile automatically runs `alembic upgrade head` on container startup before launching the server. See [`apps/api/start_with_migrations.sh`](./apps/api/start_with_migrations.sh) for manual control.
+
+### Kubernetes (Recommended for Staging/Production)
+
+Use the Kubernetes-first baseline in [`infra/k8s/`](./infra/k8s/) with environment overlays:
+
+```bash
+# Staging
+kubectl apply -k infra/k8s/overlays/staging
+
+# Production
+kubectl apply -k infra/k8s/overlays/production
+```
+
+Deployment baseline, topology rationale, and rollback steps are documented in [`docs/INFRA_BASELINE_KUBERNETES.md`](./docs/INFRA_BASELINE_KUBERNETES.md).
 
 ---
 
 ## Documentation
 
-| Document | Description |
-|---|---|
-| [`docs/API_DOCUMENTATION.md`](./docs/API_DOCUMENTATION.md) | Complete REST and WebSocket API reference |
-| [`docs/DEMO_GUIDE.md`](./docs/DEMO_GUIDE.md) | Demo datasets, scenarios, and expected results |
-| [`docs/DB_MIGRATION_SETUP.md`](./docs/DB_MIGRATION_SETUP.md) | Database migration system overview |
-| [`docs/LARGE_DATASET_GUIDE.md`](./docs/LARGE_DATASET_GUIDE.md) | Performance tuning for large AIS datasets |
-| [`docs/SECURITY.md`](./docs/SECURITY.md) | Security scope, limitations, and responsible use |
-| [`apps/api/MIGRATION_GUIDE.md`](./apps/api/MIGRATION_GUIDE.md) | Alembic migration developer guide |
+| Document                                                       | Description                                      |
+| -------------------------------------------------------------- | ------------------------------------------------ |
+| [`docs/API_DOCUMENTATION.md`](./docs/API_DOCUMENTATION.md)     | Complete REST and WebSocket API reference        |
+| [`docs/DEMO_GUIDE.md`](./docs/DEMO_GUIDE.md)                   | Demo datasets, scenarios, and expected results   |
+| [`docs/DB_MIGRATION_SETUP.md`](./docs/DB_MIGRATION_SETUP.md)   | Database migration system overview               |
+| [`docs/LARGE_DATASET_GUIDE.md`](./docs/LARGE_DATASET_GUIDE.md) | Performance tuning for large AIS datasets        |
+| [`docs/SECURITY.md`](./docs/SECURITY.md)                       | Security scope, limitations, and responsible use |
+| [`apps/api/MIGRATION_GUIDE.md`](./apps/api/MIGRATION_GUIDE.md) | Alembic migration developer guide                |
 
 ---
 
 ## Troubleshooting
 
-| Symptom | Resolution |
-|---|---|
-| `"File not found"` during replay | Ensure the file is in `data/raw/` and the path is relative to the project root |
-| No alerts generated | Check thresholds in `settings.py`; verify the data contains anomalies; inspect API logs |
-| Alerts not appearing in UI | Refresh the page; clear active filters; confirm WebSocket shows "Connected" |
-| Database errors on startup | Run `alembic upgrade head`; verify `DATABASE_URL`; check database permissions |
-| `Multiple head revisions` from Alembic | Pull latest migrations, then `alembic upgrade head` (merge revisions unify branches) |
-| ITDAE geofence seed / missing `itdae_geofence_zones` | Apply migrations; until then the API skips seed cleanly when the table is absent |
-| `"Vite requires Node.js 20.19+"` | Run `nvm use` inside `apps/web/` or install Node.js 20.19+ |
-| Processing too slow on large files | Increase the `speedup` parameter; ensure `use_streaming=true` |
+| Symptom                                              | Resolution                                                                              |
+| ---------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| `"File not found"` during replay                     | Ensure the file is in `data/raw/` and the path is relative to the project root          |
+| No alerts generated                                  | Check thresholds in `settings.py`; verify the data contains anomalies; inspect API logs |
+| Alerts not appearing in UI                           | Refresh the page; clear active filters; confirm WebSocket shows "Connected"             |
+| Database errors on startup                           | Run `alembic upgrade head`; verify `DATABASE_URL`; check database permissions           |
+| `Multiple head revisions` from Alembic               | Pull latest migrations, then `alembic upgrade head` (merge revisions unify branches)    |
+| ITDAE geofence seed / missing `itdae_geofence_zones` | Apply migrations; until then the API skips seed cleanly when the table is absent        |
+| `"Vite requires Node.js 20.19+"`                     | Run `nvm use` inside `apps/web/` or install Node.js 20.19+                              |
+| Processing too slow on large files                   | Increase the `speedup` parameter; ensure `use_streaming=true`                           |
 
 ---
 

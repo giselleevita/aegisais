@@ -11,6 +11,25 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 - `CONTRIBUTING.md` and `MIT LICENSE` for open-source best practices
+- SBOM generation (`anchore/sbom-action`) for backend and frontend on every CI run
+- Sigstore build-provenance attestation for SBOM artifacts and all three Docker images (API, BFF, Web)
+- `docs/AUDIT_COVERAGE_MATRIX.md` — machine-checkable audit event matrix, enforced in CI
+- `scripts/check_audit_coverage.py` — CI gate that fails when audit-sensitive files change without audit evidence updates
+- `scripts/check_contract_samples.py` — CI gate validating Alert/Incident/Track sample payloads against JSON schemas
+- `apps/api/app/modules/integrations/contracts_validator.py` — lightweight stdlib-only JSON Schema validator
+- `apps/api/app/modules/integrations/migration_validator.py` — `PortSeedRow` batch import validator with structured `MigrationValidationReport`
+- `apps/api/app/services/pilot_metrics.py` — pilot KPI calculation scaffold (detection lead-time, false alert rate, analyst time saved)
+- `apps/api/app/api/v1/pilot.py` — `GET /v1/pilot/kpi-summary` endpoint backed by live alert data
+- Interoperability conformance test harness (`test_interoperability.py`) covering INT-001 and INT-002
+- Sovereign Kubernetes deployment profiles for EU (`infra/k8s/profiles/sovereign-eu`) and UK (`infra/k8s/profiles/sovereign-uk`)
+- `securityContext` hardening on all Kubernetes pod specs: `runAsNonRoot`, `allowPrivilegeEscalation: false`, `capabilities.drop: ALL`, `seccompProfile: RuntimeDefault`
+- `cryptography>=46.0.6` and `ecdsa>=0.19.2` explicit pins to close CVE-2026-34073 and CVE-2026-33936
+
+### Changed
+- CI frontend vulnerability gate raised from `--audit-level=critical` to `--audit-level=high`
+- API `PodDisruptionBudget` raised from `minAvailable: 1` to `minAvailable: 2` to prevent single-pod SPOF under node drain
+- BL-009 (evidence integrity) scheduled to Week 9, unblocking INT-003, BL-011, BL-012
+- Sovereign profile READMEs now include `kubectl diff` step before apply
 - `CHANGELOG.md` to track releases
 - BFF (`apps/bff`) geospatial API gateway: JWT-authenticated layer manifest, license-gated WebSocket stream, object storage status endpoint
 - Codecov integration for test coverage reporting

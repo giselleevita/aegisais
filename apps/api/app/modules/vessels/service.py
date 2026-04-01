@@ -10,6 +10,8 @@ from sqlalchemy.orm import Session
 
 from app.api.validators import validate_mmsi
 from app.core.database import get_db
+from app.modules.auth.models import User
+from app.modules.auth.org_scope import is_super_admin
 from app.modules.vessels.mappers import vessel_latest_to_out, vessel_position_to_out
 from app.modules.vessels.models import VesselLatest, VesselPosition
 from app.modules.vessels.schemas import VesselLatestOut, VesselPositionOut
@@ -19,18 +21,22 @@ class VesselService:
     def __init__(self, db: Session):
         self._db = db
 
-    def list_vessels(self, *, min_severity: int, limit: int) -> list[VesselLatestOut]:
+    def list_vessels(self, *, scope_user: User, min_severity: int, limit: int) -> list[VesselLatestOut]:
         q = (
             self._db.query(VesselLatest)
             .filter(VesselLatest.last_alert_severity >= min_severity)
-            .order_by(VesselLatest.timestamp.desc())
-            .limit(limit)
         )
+        if not is_super_admin(scope_user):
+            q = q.filter(VesselLatest.organisation_id == scope_user.organisation_id)
+        q = q.order_by(VesselLatest.timestamp.desc()).limit(limit)
         return [vessel_latest_to_out(v) for v in q.all()]
 
-    def get_vessel(self, mmsi: str) -> VesselLatestOut:
+    def get_vessel(self, mmsi: str, *, scope_user: User) -> VesselLatestOut:
         validate_mmsi(mmsi)
-        vessel = self._db.query(VesselLatest).filter(VesselLatest.mmsi == mmsi).first()
+        q = self._db.query(VesselLatest).filter(VesselLatest.mmsi == mmsi)
+        if not is_super_admin(scope_user):
+            q = q.filter(VesselLatest.organisation_id == scope_user.organisation_id)
+        vessel = q.first()
         if vessel is None:
             raise HTTPException(
                 status_code=404, detail=f"Vessel with MMSI {mmsi} not found"
@@ -41,12 +47,15 @@ class VesselService:
         self,
         mmsi: str,
         *,
+        scope_user: User,
         start_time: Optional[datetime] = None,
         end_time: Optional[datetime] = None,
         limit: int = 1000,
     ) -> list[VesselPositionOut]:
         validate_mmsi(mmsi)
         query = self._db.query(VesselPosition).filter(VesselPosition.mmsi == mmsi)
+        if not is_super_admin(scope_user):
+            query = query.filter(VesselPosition.organisation_id == scope_user.organisation_id)
 
         if start_time:
             query = query.filter(VesselPosition.timestamp >= start_time)
