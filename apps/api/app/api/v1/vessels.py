@@ -18,9 +18,10 @@ def list_vessels(
     viewer: User = Depends(require_viewer_or_above),
     min_severity: int = Query(0, ge=0, le=100, description="Minimum alert severity"),
     limit: int = Query(500, ge=1, le=5000, description="Maximum number of results"),
+    offset: int = Query(0, ge=0, description="Pagination offset"),
 ):
-    """List vessels with optional severity filtering. Ordered by most recent timestamp."""
-    return svc.list_vessels(scope_user=viewer, min_severity=min_severity, limit=limit)
+    """List vessels with optional severity filtering and pagination. Ordered by most recent timestamp."""
+    return svc.list_vessels(scope_user=viewer, min_severity=min_severity, limit=limit, offset=offset)
 
 @router.get("/vessels/{mmsi}/track", response_model=list[VesselPositionOut])
 def get_vessel_track(

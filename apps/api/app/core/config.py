@@ -248,6 +248,7 @@ class Settings(BaseSettings):
     # Security & Interoperability
     strict_schema_validation: bool = True
     enable_telemetry_scrubbing: bool = True
+    sentry_dsn: str = ""
     
     model_config = {
         "env_prefix": "",
