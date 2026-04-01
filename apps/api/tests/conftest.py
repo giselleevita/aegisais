@@ -30,7 +30,12 @@ from app.modules.integrations.models import (  # noqa: F401 — integration refs
 )
 from app.modules.itdae.models import ItdaeGeofenceZone  # noqa: F401 — itdae_geofence_zones
 from app.modules.incidents.models import Incident  # noqa: F401 — incidents
-from app.modules.vessels.models import WatchlistEntry  # noqa: F401 — register for create_all
+from app.modules.vessels.models import (  # noqa: F401 — register for create_all
+    VesselLatest,
+    VesselPosition,
+    WatchlistEntry,
+)
+from app.modules.billing.models import UsageLedgerEntry  # noqa: F401 — BL-010 billing ledger
 
 # StaticPool: all sessions share one in-memory SQLite DB.
 TEST_URL = "sqlite:///:memory:"

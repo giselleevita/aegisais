@@ -17,6 +17,13 @@ class VesselLatest(Base):
     __tablename__ = "vessels_latest"
 
     mmsi = Column(String, primary_key=True)
+    organisation_id = Column(
+        Integer,
+        ForeignKey("organisations.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
+        server_default="1",
+    )
     timestamp = Column(DateTime, index=True, nullable=False)
 
     lat = Column(Float, nullable=False)
@@ -33,6 +40,13 @@ class VesselPosition(Base):
     __tablename__ = "vessel_positions"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
+    organisation_id = Column(
+        Integer,
+        ForeignKey("organisations.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
+        server_default="1",
+    )
     mmsi = Column(String, index=True, nullable=False)
     timestamp = Column(DateTime, index=True, nullable=False)
     
@@ -44,8 +58,10 @@ class VesselPosition(Base):
     heading = Column(Float, nullable=True)
 
 Index("idx_vessel_positions_mmsi_time", VesselPosition.mmsi, VesselPosition.timestamp)
+Index("idx_vessel_positions_org_mmsi_time", VesselPosition.organisation_id, VesselPosition.mmsi, VesselPosition.timestamp)
 Index("idx_vessel_positions_timestamp", VesselPosition.timestamp)
 Index("idx_vessels_timestamp", VesselLatest.timestamp)
+Index("idx_vessels_org_mmsi", VesselLatest.organisation_id, VesselLatest.mmsi)
 Index("idx_vessels_severity", VesselLatest.last_alert_severity)
 
 

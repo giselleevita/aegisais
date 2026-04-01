@@ -40,3 +40,40 @@ groups:
         annotations:
           summary: No AIS positions processed in the last 10 minutes
           description: Ingestion or processing worker may be stalled.
+
+      # BL-007 Redis degraded-mode alerts
+      - alert: AegisAISCooldownRedisDegraded
+        expr: increase(aegisais_cooldown_redis_degraded_total[5m]) > 0
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: Alert cooldown is using in-memory fallback (Redis unavailable)
+          description: >
+            Redis is unreachable for cooldown checks. Cooldown is bounded per
+            process but not cluster-safe; alert spam is possible across replicas.
+            Investigate Redis connectivity immediately.
+
+      - alert: AegisAISTokenRevocationDegraded
+        expr: increase(aegisais_token_revocation_redis_degraded_total[5m]) > 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: Token revocations are being lost (Redis unavailable)
+          description: >
+            Redis is unreachable for token revocation writes. Revoked tokens may
+            remain valid until Redis recovers and tokens expire naturally.
+            Review active sessions and investigate Redis connectivity immediately.
+
+      - alert: AegisAISTokenCheckDegraded
+        expr: increase(aegisais_token_check_redis_degraded_total[5m]) > 0
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: Token revocation checks are being skipped (Redis unavailable)
+          description: >
+            Redis is unreachable for JTI revocation lookups. Requests are being
+            allowed through with unverified revocation status (fail-open policy).
+            Correlate with AegisAISTokenRevocationDegraded to assess exposure.

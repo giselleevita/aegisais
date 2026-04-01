@@ -1,3 +1,5 @@
+# Local development and smoke-testing stack.
+# Production/staging deployments should use manifests under infra/k8s/.
 services:
   db:
     image: postgis/postgis:16-3.4

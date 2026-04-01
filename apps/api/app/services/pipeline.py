@@ -12,7 +12,12 @@ from app.detection.rules import (
     rule_acceleration,
     rule_heading_cog_consistency,
 )
+from app.detection.spoofing import rule_mmsi_format_invalid, rule_gps_manipulation
+from app.detection.dark_vessel import rule_ais_dark
+from app.detection.ml_scoring import ensemble_score
+from app.modules.sanctions.service import rule_sanctions_check
 from app.infrastructure.messaging import publisher
+from app.modules.alerts.models import derive_evidence_hash
 from app.modules.fusion.fused_rules import rule_surface_activity_near_cable_segment
 
 log = logging.getLogger("aegisais.pipeline")
@@ -69,6 +74,10 @@ def process_point(p: AisPoint) -> dict:
                 rule_acceleration,
                 rule_heading_cog_consistency,
                 rule_surface_activity_near_cable_segment,
+                rule_mmsi_format_invalid,
+                rule_gps_manipulation,
+                rule_ais_dark,
+                rule_sanctions_check,
             ):
                 try:
                     res = rule(p1, p2)
@@ -113,6 +122,7 @@ def process_point(p: AisPoint) -> dict:
                             "severity": severity,
                             "summary": res["summary"],
                             "evidence": slim_evidence,
+                            "evidence_hash": derive_evidence_hash(slim_evidence),  # BL-009
                         }
                         new_alerts.append(alert_data)
                         log.info("Alert triggered: %s for MMSI %s", res["type"], p2.mmsi)
@@ -120,6 +130,17 @@ def process_point(p: AisPoint) -> dict:
                     log.warning("Error applying rule %s: %s", rule.__name__, e)
                     continue
         
+        # Run ML ensemble scoring (GAP-01) — enriches max_severity
+        if len(pts) >= 2:
+            try:
+                from app.detection.ml_scoring import compute_anomaly_score
+                ml_result = compute_anomaly_score(pts[-1], pts)
+                score_result = ensemble_score(new_alerts, ml_result)
+                ml_severity = int(score_result.get("composite_score", 0))
+                max_severity = max(max_severity, ml_severity)
+            except Exception as e:
+                log.warning("ML ensemble scoring failed for MMSI %s: %s", p.mmsi, e)
+
         return {
             "point": {
                 "mmsi": p.mmsi,

@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aegisais.dev/contracts/ImportBundle.schema.json",
+  "title": "ImportBundle",
+  "description": "Batch import payload for historical AIS track data (BL-011 competitor migration, BL-015 interoperability profile)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "bundleId",
+    "sourceFormat",
+    "organisationId",
+    "createdAt",
+    "tracks"
+  ],
+  "properties": {
+    "bundleId": { "type": "string", "format": "uuid" },
+    "sourceFormat": {
+      "type": "string",
+      "enum": [
+        "marine_traffic",
+        "vessel_finder",
+        "fleet_mon",
+        "generic_nmea",
+        "aegisais_native"
+      ]
+    },
+    "organisationId": { "type": "string" },
+    "createdAt": { "type": "string", "format": "date-time" },
+    "schemaVersion": { "type": "string", "const": "1.0.0" },
+    "tracks": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "./Track.schema.json" }
+    },
+    "validationReport": { "$ref": "#/$defs/ValidationReport" }
+  },
+  "$defs": {
+    "ValidationReport": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "totalRows",
+        "importedRows",
+        "failedRows",
+        "confidenceScore"
+      ],
+      "properties": {
+        "totalRows": { "type": "integer", "minimum": 0 },
+        "importedRows": { "type": "integer", "minimum": 0 },
+        "failedRows": { "type": "integer", "minimum": 0 },
+        "confidenceScore": { "type": "number", "minimum": 0, "maximum": 1 },
+        "missingPosition": { "type": "integer", "minimum": 0 },
+        "missingTimestamp": { "type": "integer", "minimum": 0 },
+        "duplicateTrackKeys": { "type": "integer", "minimum": 0 },
+        "invalidMmsi": { "type": "integer", "minimum": 0 },
+        "driftSummary": { "type": "string" }
+      }
+    }
+  }
+}

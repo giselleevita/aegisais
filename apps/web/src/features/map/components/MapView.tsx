@@ -9,6 +9,8 @@ import { apiClient } from '@/core/api-client'
 import type { Vessel, Alert, VesselPosition } from '@/shared/types/common'
 import './MapView.css'
 import InfrastructureLayer from '@/features/itdae/components/InfrastructureLayer'
+import EezLayer from '@/features/geodata/EezLayer'
+import EnvironmentalOverlay from '@/features/geodata/EnvironmentalOverlay'
 
 interface MapViewProps {
     selectedVessel?: string | null
@@ -24,6 +26,8 @@ export default function MapView({ selectedVessel, onVesselClick, showInfrastruct
     const [showAlerts, setShowAlerts] = useState(true)
     const [showTracks, setShowTracks] = useState(false)
     const [infraVisible, setInfraVisible] = useState(showInfrastructure)
+    const [eezVisible, setEezVisible] = useState(false)
+    const [envOverlay, setEnvOverlay] = useState(true)
     const [watchMmsi, setWatchMmsi] = useState<Set<string>>(new Set())
     const [controlsOpen, setControlsOpen] = useState(true)
 
@@ -135,6 +139,24 @@ export default function MapView({ selectedVessel, onVesselClick, showInfrastruct
                         />
                         Cable Zones
                     </label>
+                    <label htmlFor="map-show-eez">
+                        <input
+                            id="map-show-eez"
+                            type="checkbox"
+                            checked={eezVisible}
+                            onChange={(e) => setEezVisible(e.target.checked)}
+                        />
+                        EEZ Boundaries
+                    </label>
+                    <label htmlFor="map-show-env">
+                        <input
+                            id="map-show-env"
+                            type="checkbox"
+                            checked={envOverlay}
+                            onChange={(e) => setEnvOverlay(e.target.checked)}
+                        />
+                        Env Context (right-click)
+                    </label>
                     {selectedVessel && (
                         <label htmlFor="map-show-track">
                             <input
@@ -216,6 +238,12 @@ export default function MapView({ selectedVessel, onVesselClick, showInfrastruct
 
                 {/* ITDAE cable corridor geofence zones */}
                 <InfrastructureLayer visible={infraVisible} />
+
+                {/* EEZ boundary zones */}
+                <EezLayer visible={eezVisible} />
+
+                {/* Environmental context on right-click */}
+                <EnvironmentalOverlay visible={envOverlay} />
             </MapContainer>
         </div>
     )

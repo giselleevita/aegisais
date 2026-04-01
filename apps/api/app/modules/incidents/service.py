@@ -4,6 +4,7 @@ from datetime import datetime, timezone
 from typing import Any, cast
 
 from pydantic import BaseModel, ConfigDict, Field
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 from sqlalchemy import desc
 from fastapi import HTTPException
@@ -62,21 +63,33 @@ def create_incident_from_alert(db: Session, alert: Alert) -> Incident:
     return incident
 
 
+def _get_existing_incident_for_alert(db: Session, alert_id: int) -> Incident | None:
+    return db.query(Incident).filter(Incident.alert_id == alert_id).first()
+
+
 def create_incident_from_alert_with_flag(db: Session, alert: Alert) -> tuple[Incident, bool]:
-    existing = db.query(Incident).filter(Incident.alert_id == alert.id).first()
+    existing = _get_existing_incident_for_alert(db, cast(int, alert.id))
     if existing is not None:
         return existing, False
 
-    incident = Incident(
-        organisation_id=alert.organisation_id,
-        alert_id=alert.id,
-        created_at=datetime.now(timezone.utc),
-        status="open",
-        title=f"Incident for alert {alert.type} ({alert.mmsi})",
-        evidence_bundle=build_incident_evidence_bundle(alert),
-    )
-    db.add(incident)
-    db.flush()
+    try:
+        with db.begin_nested():
+            incident = Incident(
+                organisation_id=alert.organisation_id,
+                alert_id=alert.id,
+                created_at=datetime.now(timezone.utc),
+                status="open",
+                title=f"Incident for alert {alert.type} ({alert.mmsi})",
+                evidence_bundle=build_incident_evidence_bundle(alert),
+            )
+            db.add(incident)
+            db.flush()
+    except IntegrityError:
+        existing = _get_existing_incident_for_alert(db, cast(int, alert.id))
+        if existing is None:
+            raise
+        return existing, False
+
     return incident, True
 
 

@@ -62,12 +62,21 @@ class PersistenceWorker:
                     for data in self.batch:
                         ts = datetime.fromisoformat(data["timestamp"])
                         mmsi = data["mmsi"]
+                        org_id = int(data.get("organisation_id") or settings.default_organisation_id)
                         
                         # Update Latest
-                        v = db.query(VesselLatest).filter(VesselLatest.mmsi == mmsi).first()
+                        v = (
+                            db.query(VesselLatest)
+                            .filter(
+                                VesselLatest.mmsi == mmsi,
+                                VesselLatest.organisation_id == org_id,
+                            )
+                            .first()
+                        )
                         if not v:
                             v = VesselLatest(
                                 mmsi=mmsi,
+                                organisation_id=org_id,
                                 timestamp=ts,
                                 lat=float(data["lat"]),
                                 lon=float(data["lon"]),
@@ -89,6 +98,7 @@ class PersistenceWorker:
 
                         # Insert historical position
                         pos = VesselPosition(
+                            organisation_id=org_id,
                             mmsi=mmsi,
                             timestamp=ts,
                             lat=float(data["lat"]),

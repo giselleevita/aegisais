@@ -1,0 +1,26 @@
+{
+  "id": "incident-001",
+  "title": "Suspicious cable-adjacent activity",
+  "status": "open",
+  "entityIds": ["entity-vessel-001"],
+  "eventIds": ["event-001"],
+  "alertIds": ["alert-teleport-001"],
+  "summary": "Multiple correlated alerts require analyst review.",
+  "createdAt": "2026-03-31T12:05:00Z",
+  "updatedAt": "2026-03-31T12:05:00Z",
+  "confidence": {
+    "score": 0.81,
+    "method": "incident-fusion"
+  },
+  "provenance": {
+    "source": "fusion-engine",
+    "processor": "aegisais-incident-service",
+    "ingestedAt": "2026-03-31T12:05:00Z",
+    "lineage": ["alert-teleport-001"]
+  },
+  "access": {
+    "classification": "restricted",
+    "allowedRoles": ["analyst", "admin"],
+    "ownerOrgId": "org-1"
+  }
+}

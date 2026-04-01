@@ -22,6 +22,7 @@ const DOC_TITLE_BY_PATH: Array<{ match: (p: string) => boolean; title: string }>
   { match: (p) => p.startsWith('/alerts/'), title: 'Alert' },
   { match: (p) => p === '/incidents' || p.startsWith('/incidents/'), title: 'Incidents' },
   { match: (p) => p === '/watchlist', title: 'Watchlist' },
+  { match: (p) => p === '/sanctions', title: 'Sanctions' },
   { match: (p) => p === '/globe', title: 'Globe' },
   { match: (p) => p === '/itdae', title: 'ITDAE' },
   { match: (p) => p === '/audit', title: 'Audit' },
@@ -111,6 +112,9 @@ export default function AmlShell({ streamConnected, lastMessage }: AmlShellProps
             </NavLink>
             <NavLink to="/watchlist" className={navLinkClass} title="Vessels under active watch">
               Watchlist
+            </NavLink>
+            <NavLink to="/sanctions" className={navLinkClass} title="Sanctions list sync and management">
+              Sanctions
             </NavLink>
           </div>
         </div>

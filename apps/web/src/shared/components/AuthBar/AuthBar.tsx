@@ -1,6 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { apiClient } from '@/core/api-client'
-import { getAccessToken, subscribeAuth } from '@/core/auth-token'
+import { getAccessToken, getSessionUsername, subscribeAuth } from '@/core/auth-token'
 
 /**
  * Minimal login so the SPA can attach Bearer tokens to protected API routes.
@@ -8,12 +8,20 @@ import { getAccessToken, subscribeAuth } from '@/core/auth-token'
  */
 export default function AuthBar() {
     const [authed, setAuthed] = useState(() => !!getAccessToken())
+    const [sessionName, setSessionName] = useState<string | null>(() => getSessionUsername())
     const [username, setUsername] = useState('')
     const [password, setPassword] = useState('')
     const [error, setError] = useState('')
     const [busy, setBusy] = useState(false)
 
-    useEffect(() => subscribeAuth(() => setAuthed(!!getAccessToken())), [])
+    useEffect(() => {
+        const sync = () => {
+            setAuthed(!!getAccessToken())
+            setSessionName(getSessionUsername())
+        }
+        sync()
+        return subscribeAuth(sync)
+    }, [])
 
     const onSubmit = async (e: FormEvent) => {
         e.preventDefault()
@@ -30,9 +38,15 @@ export default function AuthBar() {
     }
 
     if (authed) {
+        const label =
+            sessionName && sessionName.length > 0
+                ? `Signed in as ${sessionName}`
+                : 'Signed in'
         return (
-            <div className="auth-bar">
-                <span className="auth-bar-label">Signed in</span>
+            <div className="auth-bar auth-bar--session">
+                <span className="auth-bar-label" title={sessionName ?? undefined}>
+                    {label}
+                </span>
                 <button type="button" onClick={() => apiClient.logout()}>
                     Log out
                 </button>
@@ -64,9 +78,13 @@ export default function AuthBar() {
                 disabled={busy}
             />
             <button type="submit" disabled={busy || !username || !password}>
-                {busy ? '…' : 'Sign in'}
+                {busy ? 'Signing in…' : 'Sign in'}
             </button>
-            {error ? <span className="auth-bar-error">{error}</span> : null}
+            {error ? (
+                <span className="auth-bar-error" role="alert">
+                    {error}
+                </span>
+            ) : null}
         </form>
     )
 }

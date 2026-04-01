@@ -3,6 +3,27 @@
 Revision ID: e7a1c9d2f301
 Revises: c32b98a46d40
 Create Date: 2026-03-23 12:00:00.000000
+
+Concurrency and uniqueness notes
+---------------------------------
+The ``incidents`` table enforces a **database-level** unique constraint on
+``alert_id`` (``uq_incidents_alert_id`` / ``ix_incidents_alert_id``).
+
+This is the last-resort guard against duplicate incident rows under concurrent
+worker execution.  The application layer (``create_incident_from_alert_with_flag``)
+also uses a savepoint-based optimistic check to avoid relying solely on the
+database constraint, but the constraint must exist independently so that:
+
+1. Direct database inserts (e.g. data migrations, manual tooling) are also
+   protected.
+2. Any future worker path that bypasses the service layer cannot silently
+   create duplicates.
+3. The constraint is provably present in production and therefore safe to
+   assert in CI regression tests.
+
+If two workers race to create an incident for the same alert, exactly one
+INSERT will succeed; the loser receives an ``IntegrityError`` which the
+service layer recovers from by re-querying for the already-committed row.
 """
 
 from typing import Sequence, Union

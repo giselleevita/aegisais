@@ -1,5 +1,6 @@
 """Health check and system status endpoints."""
 from fastapi import APIRouter, Depends
+from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 from datetime import datetime, timezone
@@ -116,6 +117,17 @@ async def detailed_health_check(db: Session = Depends(get_db)):
             "error": redis_error
         }
     }
+
+
+@router.get("/health/ready")
+async def readiness_check(db: Session = Depends(get_db)):
+    """
+    Kubernetes readiness endpoint.
+    Returns 200 only when both database and Redis are reachable.
+    """
+    payload = await detailed_health_check(db)
+    status_code = 200 if payload.get("status") == "healthy" else 503
+    return JSONResponse(content=payload, status_code=status_code)
 
 @router.get("/metrics")
 async def get_metrics(db: Session = Depends(get_db)):

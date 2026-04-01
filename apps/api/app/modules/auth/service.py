@@ -8,6 +8,7 @@ from typing import Optional, cast
 import bcrypt
 import structlog
 from jose import jwt  # type: ignore[import-untyped]
+from prometheus_client import Counter
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
@@ -15,6 +16,17 @@ from app.infrastructure.cache.redis_client import get_redis_client
 from app.modules.auth.models import PasswordResetToken, RefreshToken, User
 
 log = structlog.get_logger("aegisais.auth")
+
+# BL-007: Prometheus counters for Redis-degraded auth paths.
+# Alert on these counters so revocation outages are not silent.
+_TOKEN_CHECK_DEGRADED = Counter(
+    "aegisais_token_check_redis_degraded_total",
+    "Token revocation checks skipped because Redis was unavailable (fail-open)",
+)
+_TOKEN_REVOKE_DEGRADED = Counter(
+    "aegisais_token_revocation_redis_degraded_total",
+    "Token revocations lost because Redis was unavailable",
+)
 
 
 def _as_utc_aware(dt: datetime) -> datetime:
@@ -82,8 +94,10 @@ def decode_access_token(token: str) -> Optional[dict]:
             if r.exists(_revoked_jti_key(jti)):
                 return None
         except Exception as e:
-            # Fail-open: if Redis is down, allow the request so the API stays available.
-            # Revocation is best-effort until Redis recovers; see IMPLEMENTATION_PLAN Sprint 1.3.
+            # BL-007 fail-open policy: keep the API available when Redis is down.
+            # Revocation is best-effort until Redis recovers.  The counter lets
+            # ops alert on a sustained outage before tokens expire naturally.
+            _TOKEN_CHECK_DEGRADED.inc()
             log.warning(
                 "redis_unavailable_revocation_check_skipped",
                 error=str(e),
@@ -113,6 +127,9 @@ def revoke_access_token(token: str) -> None:
         r = get_redis_client()
         r.setex(_revoked_jti_key(jti), ttl_sec, "1")
     except Exception as e:
+        # BL-007: revocation write lost — token may remain valid until natural expiry.
+        # Counter is wired to alert_rules.yml so ops are paged immediately.
+        _TOKEN_REVOKE_DEGRADED.inc()
         log.warning("redis_unavailable_revoke_access_failed", error=str(e))
 
 

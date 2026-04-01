@@ -1,6 +1,15 @@
 import type { FastifyInstance } from "fastify";
 import type { RawData, WebSocket } from "ws";
 import { config } from "../config.js";
+
+// @fastify/websocket augments RouteShorthandOptions but its package has no
+// "exports" field, so the module augmentation is not picked up automatically
+// under "moduleResolution": "NodeNext". Mirror the declaration locally.
+declare module "fastify" {
+  interface RouteShorthandOptions {
+    websocket?: boolean;
+  }
+}
 import { authMiddleware } from "../middleware/auth.js";
 import { requireLicense } from "../middleware/licensing.js";
 
@@ -14,6 +23,10 @@ export async function registerStreamRoutes(app: FastifyInstance): Promise<void> 
         websocket: true,
         preHandler: [authMiddleware, requireLicense("ports:read")]
       },
+      // @ts-expect-error: @fastify/websocket adds a RouteShorthandMethod overload
+      // where the handler receives (socket: WebSocket) when websocket:true, but its
+      // module augmentation is not loaded under "moduleResolution":"NodeNext" (no
+      // exports field). Runtime behaviour is correct — ws.WebSocket is passed here.
       (socket: WebSocket) => {
         const timer = setInterval(() => {
           socket.send(

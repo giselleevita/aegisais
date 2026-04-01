@@ -10,6 +10,7 @@ class AlertOut(BaseModel):
     severity: int
     summary: str
     evidence: Any
+    evidence_hash: Optional[str] = None  # BL-009: SHA-256 fingerprint of slim evidence
     status: str = "new"
     notes: Optional[str] = None
 

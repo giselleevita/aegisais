@@ -1,0 +1,68 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: api
+  labels:
+    app.kubernetes.io/name: api
+    app.kubernetes.io/part-of: aegisais
+spec:
+  replicas: 3
+  revisionHistoryLimit: 5
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: api
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: api
+        app.kubernetes.io/part-of: aegisais
+    spec:
+      containers:
+        - name: api
+          image: ghcr.io/giselleevita/aegisais-api:stable
+          securityContext:
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: [ALL]
+            seccompProfile:
+              type: RuntimeDefault
+          ports:
+            - containerPort: 8000
+              name: http
+          envFrom:
+            - configMapRef:
+                name: aegisais-config
+            - secretRef:
+                name: aegisais-secrets
+          readinessProbe:
+            httpGet:
+              path: /v1/health/ready
+              port: http
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /v1/health
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 15
+  strategy:
+    canary:
+      canaryService: api-canary
+      stableService: api
+      trafficRouting:
+        nginx:
+          stableIngress: aegisais-ingress
+      steps:
+        - setWeight: 10
+        - pause:
+            duration: 120s
+        - setWeight: 30
+        - pause:
+            duration: 180s
+        - setWeight: 60
+        - pause:
+            duration: 180s
+        - setWeight: 100

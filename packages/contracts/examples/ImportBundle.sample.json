@@ -1,0 +1,45 @@
+{
+  "bundleId": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+  "sourceFormat": "marine_traffic",
+  "organisationId": "org-1",
+  "createdAt": "2026-03-31T12:00:00Z",
+  "schemaVersion": "1.0.0",
+  "tracks": [
+    {
+      "id": "track-import-001",
+      "entityId": "entity-vessel-001",
+      "layerId": "surface-vessels",
+      "startTime": "2026-03-31T11:00:00Z",
+      "endTime": "2026-03-31T12:00:00Z",
+      "points": [
+        {"type": "Point", "coordinates": [-0.1, 51.5]},
+        {"type": "Point", "coordinates": [-0.11, 51.52]}
+      ],
+      "confidence": {
+        "score": 0.90,
+        "method": "import-adapter"
+      },
+      "provenance": {
+        "source": "marine_traffic",
+        "processor": "aegisais-competitor-import",
+        "ingestedAt": "2026-03-31T12:00:00Z"
+      },
+      "access": {
+        "classification": "restricted",
+        "allowedRoles": ["analyst", "admin"],
+        "ownerOrgId": "org-1"
+      }
+    }
+  ],
+  "validationReport": {
+    "totalRows": 500,
+    "importedRows": 490,
+    "failedRows": 10,
+    "confidenceScore": 0.98,
+    "missingPosition": 3,
+    "missingTimestamp": 5,
+    "duplicateTrackKeys": 2,
+    "invalidMmsi": 0,
+    "driftSummary": "Minor coordinate precision drift in 2% of rows; within acceptable tolerance"
+  }
+}

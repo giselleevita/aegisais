@@ -1,7 +1,11 @@
 from datetime import datetime, timezone
 
+import pytest
+from sqlalchemy.exc import IntegrityError
+
 from app.modules.alerts.models import Alert
 from app.modules.audit.models import AuditLog
+from app.modules.incidents.models import Incident
 from app.modules.incidents.service import create_incident_from_alert
 from tests.conftest import TestingSessionLocal, register_and_login_as_admin
 
@@ -87,5 +91,59 @@ def test_alert_export_writes_audit_rows(client):
         assert csv_row is not None
         assert json_row is not None
     finally:
+        db.close()
+
+
+def test_incident_alert_id_unique_constraint_enforced_at_db_level(client):
+    """Database-level UniqueConstraint on incidents.alert_id prevents duplicates.
+
+    Concurrency note: the application layer uses savepoint-based optimistic
+    checks (create_incident_from_alert_with_flag) to handle races, but the
+    DB constraint is the authoritative last-resort guard.  This test proves
+    the constraint is present and populated by the migration so that any future
+    migration regression is caught in CI before reaching production.
+    """
+    db = TestingSessionLocal()
+    try:
+        alert = Alert(
+            organisation_id=1,
+            timestamp=datetime.now(timezone.utc),
+            mmsi="999000001",
+            type="FUSED_ACTIVITY_NEAR_CABLE",
+            severity=70,
+            summary="Uniqueness constraint regression test",
+            evidence={"rule": "test"},
+            status="new",
+        )
+        db.add(alert)
+        db.flush()
+
+        # First incident insert must succeed.
+        inc1 = Incident(
+            organisation_id=1,
+            alert_id=alert.id,
+            created_at=datetime.now(timezone.utc),
+            status="open",
+            title="First incident",
+            evidence_bundle={"schema_version": "1"},
+        )
+        db.add(inc1)
+        db.flush()
+
+        # A second Incident sharing the same alert_id must violate the
+        # unique constraint enforced at the database level.
+        with pytest.raises(IntegrityError):
+            inc2 = Incident(
+                organisation_id=1,
+                alert_id=alert.id,
+                created_at=datetime.now(timezone.utc),
+                status="open",
+                title="Duplicate incident",
+                evidence_bundle={"schema_version": "1"},
+            )
+            db.add(inc2)
+            db.flush()
+    finally:
+        db.rollback()
         db.close()
 

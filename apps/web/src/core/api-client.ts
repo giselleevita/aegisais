@@ -1,5 +1,5 @@
 import { API_BASE_URL } from '@/core/config'
-import { getAccessToken, setAccessToken } from '@/core/auth-token'
+import { getAccessToken, setAccessToken, setSessionUsername } from '@/core/auth-token'
 import type {
     Vessel,
     Alert,
@@ -43,6 +43,10 @@ class ApiClient {
             })
 
             if (!response.ok) {
+                if (response.status === 401 && getAccessToken()) {
+                    setAccessToken(null)
+                    throw new Error('Session expired or access denied. Sign in again.')
+                }
                 let errorMessage = `API error: ${response.statusText}`
                 try {
                     const errorData = await response.json()
@@ -232,11 +236,16 @@ class ApiClient {
         const body = new URLSearchParams()
         body.set('username', username)
         body.set('password', password)
-        const response = await fetch(`${this.baseUrl}/v1/auth/login`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body,
-        })
+        let response: Response
+        try {
+            response = await fetch(`${this.baseUrl}/v1/auth/login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body,
+            })
+        } catch {
+            throw new Error('Cannot reach the API. Check the server is running and VITE_API_BASE_URL.')
+        }
         if (!response.ok) {
             let message = 'Login failed'
             try {
@@ -248,6 +257,8 @@ class ApiClient {
             throw new Error(message)
         }
         const data = (await response.json()) as { access_token: string; token_type: string }
+        // Username before token so AUTH_CHANGED listeners see both together.
+        setSessionUsername(username.trim())
         setAccessToken(data.access_token)
         return data
     }
@@ -377,6 +388,79 @@ class ApiClient {
             }
             throw new Error(errorMessage)
         }
+    }
+
+    // ── Geodata / Environmental Context ──────────────────────────
+
+    async getEezZones(): Promise<{
+        count: number
+        zones: Array<{
+            name: string
+            sovereign: string
+            iso3: string
+            mrgid?: number
+            bbox?: [number, number, number, number]
+        }>
+    }> {
+        return this.request(`/v1/geodata/eez/zones`)
+    }
+
+    async identifyEez(lat: number, lon: number): Promise<{
+        lat: number
+        lon: number
+        eez: { name: string; sovereign: string; iso3: string } | null
+        international_waters: boolean
+    }> {
+        return this.request(`/v1/geodata/eez/identify?lat=${lat}&lon=${lon}`)
+    }
+
+    async getEnvironmentalContext(lat: number, lon: number): Promise<{
+        position: { lat: number; lon: number }
+        eez: { name: string; sovereign: string; iso3: string } | null
+        international_waters: boolean
+        weather: {
+            wave_height_m?: number
+            wind_speed_kmh?: number
+            sea_state?: string
+            sea_state_description?: string
+        } | null
+        depth: {
+            depth_m?: number
+            depth_category?: string
+            is_land?: boolean
+        } | null
+    }> {
+        return this.request(`/v1/geodata/context?lat=${lat}&lon=${lon}`)
+    }
+
+    async getWeather(lat: number, lon: number): Promise<{
+        lat: number
+        lon: number
+        available: boolean
+        weather: Record<string, unknown> | null
+    }> {
+        return this.request(`/v1/geodata/weather?lat=${lat}&lon=${lon}`)
+    }
+
+    async getBathymetry(lat: number, lon: number): Promise<{
+        lat: number
+        lon: number
+        available: boolean
+        depth: Record<string, unknown> | null
+    }> {
+        return this.request(`/v1/geodata/bathymetry?lat=${lat}&lon=${lon}`)
+    }
+
+    // ── Sanctions ────────────────────────────────────────────────
+
+    async syncSanctionsWatchlist(): Promise<{
+        status: string
+        source: string
+        mmsi_count: number
+        imo_count: number
+        name_count: number
+    }> {
+        return this.request(`/v1/sanctions/watchlist/sync`, { method: 'POST' })
     }
 }
 
