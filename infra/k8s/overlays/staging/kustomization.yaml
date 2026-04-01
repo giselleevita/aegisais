@@ -1,0 +1,16 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - ../../base
+
+patches:
+  - path: patch-replicas.yaml
+
+images:
+  - name: ghcr.io/giselleevita/aegisais-api
+    newTag: staging
+  - name: ghcr.io/giselleevita/aegisais-bff
+    newTag: staging
+  - name: ghcr.io/giselleevita/aegisais-web
+    newTag: staging

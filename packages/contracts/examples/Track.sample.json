@@ -1,0 +1,25 @@
+{
+  "id": "track-001",
+  "entityId": "entity-vessel-001",
+  "layerId": "surface-vessels",
+  "startTime": "2026-03-31T11:00:00Z",
+  "endTime": "2026-03-31T12:00:00Z",
+  "points": [
+    {"type": "Point", "coordinates": [-0.1, 51.5]},
+    {"type": "Point", "coordinates": [-0.11, 51.52]}
+  ],
+  "confidence": {
+    "score": 0.88,
+    "method": "track-fusion"
+  },
+  "provenance": {
+    "source": "ais",
+    "processor": "aegisais-track-builder",
+    "ingestedAt": "2026-03-31T12:00:00Z"
+  },
+  "access": {
+    "classification": "restricted",
+    "allowedRoles": ["analyst", "admin"],
+    "ownerOrgId": "org-1"
+  }
+}

@@ -1,0 +1,115 @@
+.sanctions-page {
+    padding: 1.5rem;
+    max-width: 720px;
+}
+
+.sanctions-page__header h2 {
+    margin: 0 0 0.25rem;
+    font-size: 1.4rem;
+}
+
+.sanctions-page__subtitle {
+    color: #666;
+    margin: 0 0 1.5rem;
+    line-height: 1.4;
+}
+
+.sanctions-page__status,
+.sanctions-page__actions,
+.sanctions-page__info {
+    margin-bottom: 1.5rem;
+}
+
+.sanctions-page__status h3,
+.sanctions-page__actions h3,
+.sanctions-page__info h3 {
+    font-size: 1rem;
+    margin: 0 0 0.5rem;
+    border-bottom: 1px solid #e0e0e0;
+    padding-bottom: 0.25rem;
+}
+
+.sanctions-page__stat-row {
+    display: flex;
+    gap: 0.5rem;
+    padding: 0.25rem 0;
+}
+
+.sanctions-page__stat-label {
+    color: #555;
+}
+
+.sanctions-page__stat-value {
+    font-weight: 600;
+}
+
+.sanctions-page__source-list {
+    margin: 0.5rem 0 1rem 1.25rem;
+    padding: 0;
+    line-height: 1.6;
+}
+
+.sanctions-page__sync-btn {
+    padding: 0.5rem 1.25rem;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #fff;
+    background: #1e3a5f;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: opacity 0.2s;
+}
+
+.sanctions-page__sync-btn:hover:not(:disabled) {
+    opacity: 0.85;
+}
+
+.sanctions-page__sync-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.sanctions-page__error {
+    margin-top: 0.75rem;
+    padding: 0.5rem 0.75rem;
+    color: #b00;
+    background: #ffeaea;
+    border-radius: 4px;
+    font-size: 0.9rem;
+}
+
+.sanctions-page__result {
+    margin-top: 1rem;
+    padding: 0.75rem;
+    background: #f0f8f0;
+    border-radius: 4px;
+}
+
+.sanctions-page__result h4 {
+    margin: 0 0 0.5rem;
+    color: #080;
+}
+
+.sanctions-page__result-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+}
+
+.sanctions-page__result-table td {
+    padding: 0.25rem 0.5rem;
+    border-bottom: 1px solid #ddd;
+}
+
+.sanctions-page__result-table td:last-child {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+.sanctions-page__info ol {
+    margin: 0.5rem 0 0 1.25rem;
+    padding: 0;
+    line-height: 1.8;
+    color: #444;
+}
