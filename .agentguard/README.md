@@ -27,11 +27,14 @@ Input:
 Default behavior:
 
 - installs AgentGuard from the repository variable `AGENTGUARD_INSTALL_SOURCE`
+- uses the repository secret `AGENTGUARD_REPO_TOKEN` automatically when the source is a private GitHub clone URL
 - bootstraps a baseline model into `.agentguard/models/default`
 - runs the sharing shadow scenarios
 - writes benchmark results and a signed report bundle as workflow artifacts
 
 Before the first run, set the AegisAIS repository variable `AGENTGUARD_INSTALL_SOURCE` to the exact install source you want the workflow to use.
+
+If the install source points to a private GitHub repository, also set the repository secret `AGENTGUARD_REPO_TOKEN` with a token that can read that repository.
 
 Current configured source:
 
