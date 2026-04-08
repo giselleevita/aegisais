@@ -31,6 +31,7 @@ jobs:
         env:
           AGENTGUARD_INSTALL_SOURCE_INPUT: ${{ github.event.inputs.agentguard_install_source }}
           AGENTGUARD_INSTALL_SOURCE_DEFAULT: ${{ vars.AGENTGUARD_INSTALL_SOURCE }}
+          AGENTGUARD_REPO_TOKEN: ${{ secrets.AGENTGUARD_REPO_TOKEN }}
         run: |
           install_source="${AGENTGUARD_INSTALL_SOURCE_INPUT:-$AGENTGUARD_INSTALL_SOURCE_DEFAULT}"
           if [ -z "$install_source" ]; then
@@ -38,6 +39,11 @@ jobs:
             echo "Set the repository variable AGENTGUARD_INSTALL_SOURCE or provide workflow_dispatch input agentguard_install_source." >&2
             exit 1
           fi
+
+          if [ -n "$AGENTGUARD_REPO_TOKEN" ]; then
+            install_source="${install_source/https:\/\/github.com\//https:\/\/x-access-token:${AGENTGUARD_REPO_TOKEN}@github.com/}"
+          fi
+
           python -m pip install --upgrade pip
           python -m pip install "$install_source"
 
