@@ -1,0 +1,112 @@
+name: AgentGuard Shadow - Sharing
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - .github/workflows/agentguard-shadow.yml
+      - .agentguard/**
+      - apps/api/**
+      - apps/bff/**
+  workflow_dispatch:
+    inputs:
+      agentguard_install_source:
+        description: Full pip install source for AgentGuard; overrides repository variable when set
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+
+jobs:
+  shadow-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      AGENTGUARD_ALLOW_EMBEDDED_PDP_FALLBACK: "true"
+    services:
+      opa:
+        image: openpolicyagent/opa:0.63.0
+        ports:
+          - 8181:8181
+        options: >-
+          --health-cmd "wget -qO- http://127.0.0.1:8181/health?plugins || exit 1"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install AgentGuard
+        env:
+          AGENTGUARD_INSTALL_SOURCE_INPUT: ${{ github.event.inputs.agentguard_install_source }}
+          AGENTGUARD_INSTALL_SOURCE_DEFAULT: ${{ vars.AGENTGUARD_INSTALL_SOURCE }}
+        run: |
+          install_source="${AGENTGUARD_INSTALL_SOURCE_INPUT:-$AGENTGUARD_INSTALL_SOURCE_DEFAULT}"
+          if [ -z "$install_source" ]; then
+            echo "AGENTGUARD_INSTALL_SOURCE is not configured." >&2
+            echo "Set the repository variable AGENTGUARD_INSTALL_SOURCE or provide workflow_dispatch input agentguard_install_source." >&2
+            exit 1
+          fi
+          python -m pip install --upgrade pip
+          python -m pip install "$install_source"
+
+      - name: Bootstrap baseline model
+        run: agentguard bootstrap-model --out .agentguard/models/default
+
+      - name: Run AgentGuard benchmark
+        run: |
+          mkdir -p results
+          python -m agentguard.benchmark.runner \
+            --scenarios .agentguard/scenarios/aegisais-sharing-shadow.yaml \
+            --out results/runs.json \
+            --summary results/summary.json
+
+      - name: Run shadow gate
+        run: |
+          python -m agentguard.ci.gate \
+            --results results/summary.json \
+            --thresholds .agentguard/config/thresholds.yaml \
+            --out results/gate_result.json \
+            --mode shadow
+
+      - name: Build report bundle
+        run: |
+          agentguard report-bundle \
+            --summary results/summary.json \
+            --runs results/runs.json \
+            --thresholds .agentguard/config/thresholds.yaml \
+            --out-dir results/report_bundle
+
+      - name: Print shadow outcome
+        if: always()
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          gate = json.loads(Path("results/gate_result.json").read_text())
+          print(f"gate_failed={gate.get('gate_failed')}")
+          print(f"violations={len(gate.get('violations') or [])}")
+          print(f"mode={gate.get('mode')}")
+          PY
+
+      - name: Upload AgentGuard artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: agentguard-shadow-results
+          path: |
+            results/summary.json
+            results/runs.json
+            results/gate_result.json
+            results/report_bundle/executive_summary.md
+            results/report_bundle/manifest.json
+            results/report_bundle/manifest.sig
