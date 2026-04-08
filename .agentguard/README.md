@@ -139,5 +139,6 @@ Recommended use:
 ## Operational Notes
 
 - the workflow explicitly enables embedded PDP fallback for this first pilot
-- that keeps the shadow run usable before a dedicated OPA policy bundle rollout
+- that keeps the shadow and blocking pilot workflows usable before a dedicated OPA policy bundle rollout
+- the current pilot workflows do not start a separate OPA service container; they rely on the embedded fallback path by design
 - once you want stricter production-like behavior, remove the fallback env var and require the external policy backend to answer successfully

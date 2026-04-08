@@ -24,16 +24,6 @@ jobs:
     timeout-minutes: 15
     env:
       AGENTGUARD_ALLOW_EMBEDDED_PDP_FALLBACK: "true"
-    services:
-      opa:
-        image: openpolicyagent/opa:0.63.0
-        ports:
-          - 8181:8181
-        options: >-
-          --health-cmd "wget -qO- http://127.0.0.1:8181/health?plugins || exit 1"
-          --health-interval 5s
-          --health-timeout 5s
-          --health-retries 20
 
     steps:
       - name: Checkout repository
@@ -92,7 +82,12 @@ jobs:
           import json
           from pathlib import Path
 
-          gate = json.loads(Path("results/gate_result.json").read_text())
+          gate_path = Path("results/gate_result.json")
+          if not gate_path.exists():
+              print("gate_result_missing=true")
+              raise SystemExit(0)
+
+          gate = json.loads(gate_path.read_text())
           print(f"gate_failed={gate.get('gate_failed')}")
           print(f"violations={len(gate.get('violations') or [])}")
           print(f"mode={gate.get('mode')}")
