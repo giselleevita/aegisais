@@ -22,6 +22,7 @@ Validated slices:
 - `.github/workflows/agentguard-blocking.yml`: manual blocking workflow for the second phase
 - `.github/workflows/agentguard-export-blocking.yml`: manual blocking workflow for the export and interop slice
 - `.github/workflows/agentguard-stability-sweep.yml`: scheduled and manual drift-check workflow for the validated slices
+- `.github/workflows/agentguard-pr-enforcement.yml`: combined blocking workflow for validated slices on pull requests
 
 ## First Run
 
@@ -168,12 +169,31 @@ Recommended use:
 2. use `workflow_dispatch` after meaningful AgentGuard or AegisAIS security-path changes
 3. only consider broader always-on enforcement after the stability sweep stays clean over repeated runs
 
+## PR Enforcement
+
+Use `.github/workflows/agentguard-pr-enforcement.yml` when you want the currently validated slices to run in blocking mode on relevant pull requests.
+
+Behavior:
+
+- runs the sharing/COP slice and the export/interop slice in a matrix
+- uses `config/thresholds.blocking.yaml`
+- fails the workflow if either slice violates the current blocking thresholds
+- uploads one blocking artifact bundle per slice for debugging
+
+Recommended use:
+
+1. keep this workflow scoped to the validated slices only
+2. use it as the workflow-level enforcement path before changing branch protection settings
+3. make it a required status check only after it stays clean under normal PR traffic
+
 ## Current Slice Status
 
 - sharing and COP: shadow validated and manual blocking validated
 - export and interop review: shadow validated and manual blocking validated
 
 Both slices now have one clean manual blocking validation, but they should still stay out of broader normal PR enforcement until repeated stability sweep runs remain clean.
+
+The repository now also has a combined PR enforcement workflow for these validated slices, but branch protection still needs to be configured separately if you want GitHub to require it for merging.
 
 ## Operational Notes
 
