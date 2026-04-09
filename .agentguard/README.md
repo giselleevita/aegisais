@@ -200,6 +200,8 @@ Both slices now have one clean manual blocking validation, but they should still
 
 The repository now also has a combined PR enforcement workflow for these validated slices, but hard required-merge enforcement is blocked by the current GitHub plan on this private repository.
 
+Verification note: draft pull requests touching AgentGuard rollout files should trigger the combined PR enforcement workflow.
+
 ## Operational Notes
 
 - the workflow explicitly enables embedded PDP fallback for this first pilot
