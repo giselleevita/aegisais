@@ -23,6 +23,7 @@ Current shadow-first expansion:
 - `.github/workflows/agentguard-shadow.yml`: GitHub Actions workflow that runs the benchmark and shadow gate
 - `.github/workflows/agentguard-export-shadow.yml`: GitHub Actions workflow for the export and interop shadow slice
 - `.github/workflows/agentguard-blocking.yml`: manual blocking workflow for the second phase
+- `.github/workflows/agentguard-export-blocking.yml`: manual blocking workflow for the export and interop slice
 
 ## First Run
 
@@ -126,19 +127,19 @@ When ready for a given slice:
 
 1. pin `agentguard_install_source` to a fixed tag or commit
 2. review or tighten `config/thresholds.blocking.yaml`
-3. run `.github/workflows/agentguard-blocking.yml` manually instead of editing the shadow workflow
+3. run the matching blocking workflow for that slice manually instead of editing the shadow workflow
 4. keep artifact upload enabled for the first blocking runs
 
 ## Blocking Workflow
 
-Use `.github/workflows/agentguard-blocking.yml` only after the sharing slice prerequisites are met.
+Use the blocking workflow that matches the validated slice you want to promote.
 
 Differences from the shadow workflow:
 
 - uses `config/thresholds.blocking.yaml`
 - runs the gate in `blocking` mode
 - is `workflow_dispatch` only
-- uploads artifacts as `agentguard-blocking-results`
+- uploads artifacts as a slice-specific blocking artifact bundle
 
 Recommended use:
 
@@ -146,6 +147,11 @@ Recommended use:
 2. run the blocking workflow manually
 3. review `gate_result.json` and `executive_summary.md`
 4. only after repeated stable blocking runs decide whether to make blocking part of normal PR enforcement
+
+Current blocking workflow mapping:
+
+- sharing and COP: `.github/workflows/agentguard-blocking.yml`
+- export and interop review: `.github/workflows/agentguard-export-blocking.yml`
 
 ## Current Slice Status
 
