@@ -1,19 +1,27 @@
-# AgentGuard Sharing Pilot
+# AgentGuard AegisAIS Pilots
 
-This directory contains the first AegisAIS AgentGuard rollout.
+This directory contains the current AegisAIS AgentGuard rollout slices.
 
-Scope:
+Validated slice:
 
 - workflow: authenticated alert sharing and COP access
-- mode: shadow only
-- purpose: measure policy violations and false positives before any blocking gate is enabled
+- status: validated in both shadow and blocking mode
+- purpose: keep the first enforced slice narrow and stable
+
+Current shadow-first expansion:
+
+- workflow: bounded alert export and interop export review
+- status: shadow only until repeated clean runs
+- purpose: add the next tenant-safety slice without broadening the rollout all at once
 
 ## Files
 
 - `config/thresholds.yaml`: initial shadow thresholds
-- `config/thresholds.blocking.yaml`: stricter second-phase thresholds for the same sharing corpus
+- `config/thresholds.blocking.yaml`: stricter second-phase thresholds for validated slices
 - `scenarios/aegisais-sharing-shadow.yaml`: focused sharing and COP scenario corpus
+- `scenarios/aegisais-export-shadow.yaml`: focused alert export and interop export review corpus
 - `.github/workflows/agentguard-shadow.yml`: GitHub Actions workflow that runs the benchmark and shadow gate
+- `.github/workflows/agentguard-export-shadow.yml`: GitHub Actions workflow for the export and interop shadow slice
 - `.github/workflows/agentguard-blocking.yml`: manual blocking workflow for the second phase
 
 ## First Run
@@ -29,7 +37,7 @@ Default behavior:
 - installs AgentGuard from the repository variable `AGENTGUARD_INSTALL_SOURCE`
 - uses the repository secret `AGENTGUARD_REPO_TOKEN` automatically when the source is a private GitHub clone URL
 - bootstraps a baseline model into `.agentguard/models/default`
-- runs the sharing shadow scenarios
+- runs the scenario set configured by the selected workflow
 - writes benchmark results and a signed report bundle as workflow artifacts
 
 Before the first run, set the AegisAIS repository variable `AGENTGUARD_INSTALL_SOURCE` to the exact install source you want the workflow to use.
@@ -107,14 +115,14 @@ Threshold guidance:
 
 ## Shadow To Blocking
 
-Do not switch this workflow to blocking until all of the following are true:
+Do not switch a slice to blocking until all of the following are true:
 
 - at least 3 consecutive shadow runs are stable
-- benign sharing and COP scenarios pass consistently
+- benign scenarios for that slice pass consistently
 - violations are limited to adversarial scenarios you intentionally model
 - the install source is pinned to a known AgentGuard ref rather than an implicit moving target
 
-When ready:
+When ready for a given slice:
 
 1. pin `agentguard_install_source` to a fixed tag or commit
 2. review or tighten `config/thresholds.blocking.yaml`
@@ -123,7 +131,7 @@ When ready:
 
 ## Blocking Workflow
 
-Use `.github/workflows/agentguard-blocking.yml` only after the shadow prerequisites are met.
+Use `.github/workflows/agentguard-blocking.yml` only after the sharing slice prerequisites are met.
 
 Differences from the shadow workflow:
 
@@ -138,6 +146,13 @@ Recommended use:
 2. run the blocking workflow manually
 3. review `gate_result.json` and `executive_summary.md`
 4. only after repeated stable blocking runs decide whether to make blocking part of normal PR enforcement
+
+## Current Slice Status
+
+- sharing and COP: shadow validated and manual blocking validated
+- export and interop review: shadow workflow added, not yet promoted to blocking
+
+The export and interop slice is intentionally shadow-first. Keep it there until the artifacts show repeated clean benign behavior and no synthetic false positives.
 
 ## Operational Notes
 
