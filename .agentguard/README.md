@@ -186,6 +186,11 @@ Recommended use:
 2. use it as the workflow-level enforcement path before changing branch protection settings
 3. make it a required status check only after it stays clean under normal PR traffic
 
+Current limitation:
+
+- this repository cannot currently use GitHub branch protection or rulesets for required checks on the current private-repository plan
+- the workflow still runs on pull requests and exposes pass or fail status, but GitHub cannot be configured here to hard-block merges until the plan changes or the repository becomes public
+
 ## Current Slice Status
 
 - sharing and COP: shadow validated and manual blocking validated
@@ -193,7 +198,7 @@ Recommended use:
 
 Both slices now have one clean manual blocking validation, but they should still stay out of broader normal PR enforcement until repeated stability sweep runs remain clean.
 
-The repository now also has a combined PR enforcement workflow for these validated slices, but branch protection still needs to be configured separately if you want GitHub to require it for merging.
+The repository now also has a combined PR enforcement workflow for these validated slices, but hard required-merge enforcement is blocked by the current GitHub plan on this private repository.
 
 ## Operational Notes
 
