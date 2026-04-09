@@ -2,17 +2,14 @@
 
 This directory contains the current AegisAIS AgentGuard rollout slices.
 
-Validated slice:
+Validated slices:
 
 - workflow: authenticated alert sharing and COP access
 - status: validated in both shadow and blocking mode
 - purpose: keep the first enforced slice narrow and stable
-
-Current shadow-first expansion:
-
 - workflow: bounded alert export and interop export review
-- status: shadow only until repeated clean runs
-- purpose: add the next tenant-safety slice without broadening the rollout all at once
+- status: validated in both shadow and blocking mode
+- purpose: add a second tenant-safety slice without broadening the rollout all at once
 
 ## Files
 
@@ -24,6 +21,7 @@ Current shadow-first expansion:
 - `.github/workflows/agentguard-export-shadow.yml`: GitHub Actions workflow for the export and interop shadow slice
 - `.github/workflows/agentguard-blocking.yml`: manual blocking workflow for the second phase
 - `.github/workflows/agentguard-export-blocking.yml`: manual blocking workflow for the export and interop slice
+- `.github/workflows/agentguard-stability-sweep.yml`: scheduled and manual drift-check workflow for the validated slices
 
 ## First Run
 
@@ -153,12 +151,29 @@ Current blocking workflow mapping:
 - sharing and COP: `.github/workflows/agentguard-blocking.yml`
 - export and interop review: `.github/workflows/agentguard-export-blocking.yml`
 
+## Stability Sweep
+
+Use `.github/workflows/agentguard-stability-sweep.yml` to re-run the currently validated slices on a schedule or on demand.
+
+Behavior:
+
+- runs the sharing/COP slice and the export/interop slice in a matrix
+- uses the current shadow thresholds for both slices
+- uploads one artifact bundle per slice
+- fails the workflow if either slice drifts beyond the current shadow thresholds
+
+Recommended use:
+
+1. keep the schedule enabled so drift appears before normal enforcement expands
+2. use `workflow_dispatch` after meaningful AgentGuard or AegisAIS security-path changes
+3. only consider broader always-on enforcement after the stability sweep stays clean over repeated runs
+
 ## Current Slice Status
 
 - sharing and COP: shadow validated and manual blocking validated
 - export and interop review: shadow validated and manual blocking validated
 
-The export and interop slice now has one clean manual blocking validation, but it should still stay out of normal PR enforcement until repeated runs remain stable.
+Both slices now have one clean manual blocking validation, but they should still stay out of broader normal PR enforcement until repeated stability sweep runs remain clean.
 
 ## Operational Notes
 
