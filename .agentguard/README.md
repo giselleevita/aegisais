@@ -24,6 +24,10 @@ Validated slices:
 - `.github/workflows/agentguard-stability-sweep.yml`: scheduled and manual drift-check workflow for the validated slices
 - `.github/workflows/agentguard-pr-enforcement.yml`: combined blocking workflow for validated slices on pull requests
 
+Local-only artifacts:
+
+- `.agentguard/last-*/`: ignored local downloads of workflow result bundles for inspection and debugging
+
 ## First Run
 
 Use `workflow_dispatch` for the first execution.
@@ -169,6 +173,8 @@ Recommended use:
 2. use `workflow_dispatch` after meaningful AgentGuard or AegisAIS security-path changes
 3. only consider broader always-on enforcement after the stability sweep stays clean over repeated runs
 
+The shadow workflows are intentionally manual now. They no longer run on pull requests because the combined PR enforcement workflow is the single PR-time AgentGuard signal.
+
 ## PR Enforcement
 
 Use `.github/workflows/agentguard-pr-enforcement.yml` when you want the currently validated slices to run in blocking mode on relevant pull requests.
@@ -185,6 +191,8 @@ Recommended use:
 1. keep this workflow scoped to the validated slices only
 2. use it as the workflow-level enforcement path before changing branch protection settings
 3. make it a required status check only after it stays clean under normal PR traffic
+
+The shadow workflows should stay out of the PR path to avoid duplicate AgentGuard runs and duplicated status noise on the same change.
 
 Current limitation:
 

@@ -62,3 +62,6 @@ frontend/build/
 *.tmp
 *.bak
 *.cache
+
+# AgentGuard local run artifacts
+.agentguard/last-*/
