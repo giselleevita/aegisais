@@ -156,9 +156,9 @@ Current blocking workflow mapping:
 ## Current Slice Status
 
 - sharing and COP: shadow validated and manual blocking validated
-- export and interop review: shadow workflow added, not yet promoted to blocking
+- export and interop review: shadow validated and manual blocking validated
 
-The export and interop slice is intentionally shadow-first. Keep it there until the artifacts show repeated clean benign behavior and no synthetic false positives.
+The export and interop slice now has one clean manual blocking validation, but it should still stay out of normal PR enforcement until repeated runs remain stable.
 
 ## Operational Notes
 
