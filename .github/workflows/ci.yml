@@ -47,7 +47,7 @@ jobs:
             frontend-sbom.cdx.json
 
       - name: Attest SBOM provenance
-        uses: actions/attest-build-provenance@v1
+        uses: actions/attest-build-provenance@v4
         with:
           subject-path: |
             backend-sbom.cdx.json
