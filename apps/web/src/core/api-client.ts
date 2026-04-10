@@ -1,6 +1,7 @@
 import { API_BASE_URL } from '@/core/config'
 import { getAccessToken, setAccessToken, setSessionUsername } from '@/core/auth-token'
 import type {
+    AuthContextResponse,
     Vessel,
     Alert,
     VesselPosition,
@@ -13,11 +14,58 @@ import type {
     ReplayStopResponse,
     WatchlistEntry,
     IntegrationFeedsResponse,
-    LayerDefinition,
+    LayerManifestResponse,
     Incident,
     AuditLogEntry,
 } from '@/shared/types/common'
 import type { ItdaeGeofenceZone } from '@/features/itdae/types'
+
+export class ApiClientError extends Error {
+    status: number
+    payload: Record<string, unknown> | null
+
+    constructor(status: number, message: string, payload: Record<string, unknown> | null = null) {
+        super(message)
+        this.name = 'ApiClientError'
+        this.status = status
+        this.payload = payload
+    }
+}
+
+function formatPolicyAwareError(
+    status: number,
+    errorData: Record<string, unknown> | null,
+    fallbackMessage: string
+): string {
+    if (!errorData) return fallbackMessage
+
+    const detail = typeof errorData.detail === 'string' ? errorData.detail : null
+    const message = typeof errorData.message === 'string' ? errorData.message : null
+    const error = typeof errorData.error === 'string' ? errorData.error : null
+    const required = typeof errorData.required === 'string' ? errorData.required : null
+    const effective = typeof errorData.effective === 'string' ? errorData.effective : null
+    const feature = typeof errorData.feature === 'string' ? errorData.feature : null
+
+    if (status === 403 && error === 'Insufficient classification clearance') {
+        return required && effective
+            ? `Access denied. ${required} clearance is required; current clearance is ${effective}.`
+            : 'Access denied. Your clearance does not meet this route requirement.'
+    }
+
+    if (status === 403 && error === 'Insufficient releasability') {
+        return required
+            ? `Access denied. ${required} releasability is required for this route.`
+            : 'Access denied. Your releasability tags do not satisfy this route.'
+    }
+
+    if (status === 403 && error === 'License required') {
+        return feature
+            ? `Access denied. ${feature} entitlement is required for this feature.`
+            : 'Access denied. Your current license does not cover this feature.'
+    }
+
+    return detail || message || error || fallbackMessage
+}
 
 class ApiClient {
     private baseUrl: string
@@ -48,13 +96,14 @@ class ApiClient {
                     throw new Error('Session expired or access denied. Sign in again.')
                 }
                 let errorMessage = `API error: ${response.statusText}`
+                let errorData: Record<string, unknown> | null = null
                 try {
-                    const errorData = await response.json()
-                    errorMessage = errorData.detail || errorData.message || errorMessage
+                    errorData = (await response.json()) as Record<string, unknown>
+                    errorMessage = formatPolicyAwareError(response.status, errorData, errorMessage)
                 } catch {
                     // If JSON parsing fails, use default message
                 }
-                throw new Error(errorMessage)
+                throw new ApiClientError(response.status, errorMessage, errorData)
             }
 
             return response.json() as Promise<T>
@@ -135,9 +184,14 @@ class ApiClient {
         return this.request<IntegrationFeedsResponse>(`/v1/integrations/feeds`)
     }
 
-    /** Globe layer catalogue (analyst workbench). */
-    async getLayers(): Promise<LayerDefinition[]> {
-        return this.request<LayerDefinition[]>(`/v1/layers`)
+    /** Authoritative frontend auth context from the BFF policy surface. */
+    async getAuthContext(): Promise<AuthContextResponse> {
+        return this.request<AuthContextResponse>(`/v1/auth/context`)
+    }
+
+    /** Globe layer catalogue manifest (analyst workbench). */
+    async getLayersManifest(): Promise<LayerManifestResponse> {
+        return this.request<LayerManifestResponse>(`/v1/layers/manifest`)
     }
 
     async uploadFile(file: File): Promise<UploadResponse> {
@@ -244,7 +298,7 @@ class ApiClient {
                 body,
             })
         } catch {
-            throw new Error('Cannot reach the API. Check the server is running and VITE_API_BASE_URL.')
+            throw new Error('Cannot reach the API policy surface. Check the server is running and VITE_API_BASE_URL.')
         }
         if (!response.ok) {
             let message = 'Login failed'

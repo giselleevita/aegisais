@@ -17,6 +17,7 @@ from sqlalchemy.orm import Session
 from app.modules.audit.services import AuditService
 
 router = APIRouter()
+MAX_ALERT_EXPORT_LIMIT = 10_000
 
 @router.get("/alerts", response_model=list[AlertOut])
 def list_alerts(
@@ -74,6 +75,7 @@ def export_alerts_csv(
     max_severity: int = Query(100, ge=0, le=100, description="Maximum severity"),
     start_time: Optional[datetime] = Query(None, description="Start timestamp filter"),
     end_time: Optional[datetime] = Query(None, description="End timestamp filter"),
+    limit: int = Query(2000, ge=1, le=MAX_ALERT_EXPORT_LIMIT, description="Maximum number of exported alerts"),
 ):
     """
     Export alerts as CSV file.
@@ -90,6 +92,7 @@ def export_alerts_csv(
         max_severity=max_severity,
         start_time=start_time,
         end_time=end_time,
+        limit=limit,
     )
 
     AuditService.log_event(
@@ -110,6 +113,7 @@ def export_alerts_csv(
                 "max_severity": max_severity,
                 "start_time": start_time.isoformat() if start_time else None,
                 "end_time": end_time.isoformat() if end_time else None,
+                "limit": limit,
             },
         },
     )
@@ -155,6 +159,7 @@ def export_alerts_json(
     max_severity: int = Query(100, ge=0, le=100, description="Maximum severity"),
     start_time: Optional[datetime] = Query(None, description="Start timestamp filter"),
     end_time: Optional[datetime] = Query(None, description="End timestamp filter"),
+    limit: int = Query(2000, ge=1, le=MAX_ALERT_EXPORT_LIMIT, description="Maximum number of exported alerts"),
 ):
     """
     Export alerts as JSON file.
@@ -171,6 +176,7 @@ def export_alerts_json(
         max_severity=max_severity,
         start_time=start_time,
         end_time=end_time,
+        limit=limit,
     )
 
     AuditService.log_event(
@@ -191,6 +197,7 @@ def export_alerts_json(
                 "max_severity": max_severity,
                 "start_time": start_time.isoformat() if start_time else None,
                 "end_time": end_time.isoformat() if end_time else None,
+                "limit": limit,
             },
         },
     )

@@ -10,6 +10,7 @@
 1. **Ensure you're using the correct Node version:**
 
    If you have nvm installed:
+
    ```bash
    nvm use
    # or explicitly:
@@ -19,11 +20,13 @@
    If you don't have nvm, make sure Node.js 20.19+ is installed and active.
 
 2. **Install dependencies:**
+
    ```bash
    npm install
    ```
 
 3. **Start the development server:**
+
    ```bash
    npm run dev
    ```
@@ -42,17 +45,20 @@
 If you see this error, you're not using the correct Node version:
 
 1. **Check your current Node version:**
+
    ```bash
    node --version
    ```
 
 2. **If it's not 20.19.0 or higher, activate nvm and use the correct version:**
+
    ```bash
    source ~/.zshrc  # or restart your terminal
    nvm use 20.19.0
    ```
 
 3. **Verify:**
+
    ```bash
    node --version  # Should show v20.19.0
    ```
@@ -67,7 +73,7 @@ If you see this error, you're not using the correct Node version:
 Create a `.env` file in the frontend directory to configure the API URL:
 
 ```
-VITE_API_BASE_URL=http://localhost:8001
+VITE_API_BASE_URL=http://localhost:8081
 ```
 
 ### UI mode

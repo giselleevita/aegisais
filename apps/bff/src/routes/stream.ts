@@ -12,6 +12,7 @@ declare module "fastify" {
 }
 import { authMiddleware } from "../middleware/auth.js";
 import { requireLicense } from "../middleware/licensing.js";
+import { requireClassification, requireReleasability } from "../middleware/policy.js";
 
 type ClientMessage = { type?: string };
 
@@ -21,7 +22,12 @@ export async function registerStreamRoutes(app: FastifyInstance): Promise<void> 
       "/v1/stream",
       {
         websocket: true,
-        preHandler: [authMiddleware, requireLicense("ports:read")]
+        preHandler: [
+          authMiddleware,
+          requireLicense("ports:read"),
+          requireClassification("CONFIDENTIAL"),
+          requireReleasability(config.policy.defaultReleasabilityTag),
+        ]
       },
       // @ts-expect-error: @fastify/websocket adds a RouteShorthandMethod overload
       // where the handler receives (socket: WebSocket) when websocket:true, but its
