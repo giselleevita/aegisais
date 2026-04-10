@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams, useNavigate } from 'react-router-dom'
 import { apiClient } from '@/core/api-client'
+import { describeApiFailure } from '@/core/api-errors'
 import type { AuditLogEntry, Incident } from '@/shared/types/common'
+import { AML_PATHS, getIncidentDetailPath } from '@/aml/amlRoutes'
 
 const STATUS_OPTIONS = ['open', 'triaged', 'investigating', 'resolved', 'dismissed']
 
@@ -33,15 +35,14 @@ export default function IncidentDetailPage() {
         setTitleDraft(row.title)
         setStatusDraft(row.status)
       } catch (err) {
-        const msg = err instanceof Error ? err.message : 'Failed to load incident'
         if (cancelled) return
         setIncident(null)
         setError(
-          msg.includes('401') ||
-            msg.toLowerCase().includes('not authenticated') ||
-            msg.toLowerCase().includes('unauthorized')
-            ? 'Sign in to view incidents.'
-            : msg
+          describeApiFailure(err, {
+            fallback: 'Unable to load incident.',
+            unauthorized: 'Sign in to view incidents.',
+            offline: 'Incident detail unavailable while the API policy surface is offline.',
+          })
         )
       } finally {
         if (!cancelled) setLoading(false)
@@ -85,10 +86,15 @@ export default function IncidentDetailPage() {
         title: titleDraft,
       })
       setIncident(updated)
-      navigate(`/incidents/${updated.id}`, { replace: true })
+      navigate(getIncidentDetailPath(updated.id), { replace: true })
     } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Failed to update incident'
-      setError(msg)
+      setError(
+        describeApiFailure(err, {
+          fallback: 'Unable to update incident.',
+          unauthorized: 'Sign in to update incidents.',
+          offline: 'Incident updates are unavailable while the API policy surface is offline.',
+        })
+      )
     } finally {
       setSaving(false)
     }
@@ -96,55 +102,67 @@ export default function IncidentDetailPage() {
 
   if (!Number.isFinite(id)) {
     return (
-      <div className="aml-page-pad">
-        <p>Invalid incident id.</p>
-        <Link to="/incidents">Back to incidents</Link>
+      <div className="aml-page-pad aml-incident-detail">
+        <div className="aml-incident-detail__state aml-incident-detail__state--error">
+          <p>Invalid incident id.</p>
+        <Link to={AML_PATHS.incidents}>Back to incidents</Link>
+        </div>
       </div>
     )
   }
 
   if (loading) {
     return (
-      <div className="aml-page-pad">
-        <p>Loading incident...</p>
+      <div className="aml-page-pad aml-incident-detail">
+        <div className="aml-incident-detail__state">
+          <p>Loading incident...</p>
+        </div>
       </div>
     )
   }
 
   if (error) {
     return (
-      <div className="aml-page-pad">
-        <p>{error}</p>
-        <Link to="/incidents">Back to incidents</Link>
+      <div className="aml-page-pad aml-incident-detail">
+        <div className="aml-incident-detail__state aml-incident-detail__state--error">
+          <p>{error}</p>
+        <Link to={AML_PATHS.incidents}>Back to incidents</Link>
+        </div>
       </div>
     )
   }
 
   if (!incident) {
     return (
-      <div className="aml-page-pad">
-        <p>Incident not found.</p>
-        <Link to="/incidents">Back to incidents</Link>
+      <div className="aml-page-pad aml-incident-detail">
+        <div className="aml-incident-detail__state">
+          <p>Incident not found.</p>
+        <Link to={AML_PATHS.incidents}>Back to incidents</Link>
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="aml-page-pad">
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', alignItems: 'baseline' }}>
-        <h2 style={{ margin: 0 }}>Incident #{incident.id}</h2>
-        <Link to="/incidents">Back to incidents</Link>
-      </div>
+    <div className="aml-page-pad aml-incident-detail">
+      <header className="aml-incident-detail__hero">
+        <div>
+          <span className="aml-operations__eyebrow">Incident</span>
+          <h2 className="aml-page-title">Incident #{incident.id}</h2>
+          <p className="aml-incidents__lead">Manage case disposition, preserve incident evidence, and review the audited timeline for this incident.</p>
+        </div>
+        <Link to={AML_PATHS.incidents} className="aml-incidents__hero-link">Back to incidents</Link>
+      </header>
 
-      <div style={{ marginTop: '1rem', display: 'grid', gridTemplateColumns: '1fr', gap: '1rem' }}>
-        <section style={{ border: '1px solid var(--border-default)', borderRadius: 8, padding: '1rem', background: 'var(--bg-surface)' }}>
-          <h3 style={{ marginTop: 0 }}>Disposition</h3>
-          <label style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', marginBottom: '0.75rem' }}>
-            Title
+      <div className="aml-incident-detail__workspace">
+        <section className="aml-incident-detail__panel">
+          <h3>Disposition</h3>
+          <label className="aml-incident-detail__field">
+            <span>Title</span>
             <input value={titleDraft} onChange={(e) => setTitleDraft(e.target.value)} />
           </label>
-          <label style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', marginBottom: '0.75rem' }}>
-            Status
+          <label className="aml-incident-detail__field">
+            <span>Status</span>
             <select value={statusDraft} onChange={(e) => setStatusDraft(e.target.value)}>
               {STATUS_OPTIONS.map((status) => (
                 <option key={status} value={status}>
@@ -153,27 +171,27 @@ export default function IncidentDetailPage() {
               ))}
             </select>
           </label>
-          <button type="button" onClick={() => void handleSave()} disabled={saving}>
+          <button type="button" className="aml-incident-detail__save" onClick={() => void handleSave()} disabled={saving}>
             {saving ? 'Saving...' : 'Save incident'}
           </button>
-          {incident.status !== statusDraft ? <div style={{ marginTop: '0.5rem', color: 'var(--text-secondary)' }}>Unsaved changes.</div> : null}
+          {incident.status !== statusDraft ? <div className="aml-incident-detail__hint">Unsaved changes.</div> : null}
         </section>
 
-        <section style={{ border: '1px solid var(--border-default)', borderRadius: 8, padding: '1rem', background: 'var(--bg-surface)' }}>
-          <h3 style={{ marginTop: 0 }}>Evidence bundle</h3>
-          <pre style={{ margin: 0, maxHeight: '50vh', overflow: 'auto' }}>{JSON.stringify(incident.evidence_bundle, null, 2)}</pre>
+        <section className="aml-incident-detail__panel aml-incident-detail__panel--wide">
+          <h3>Evidence bundle</h3>
+          <pre className="aml-incident-detail__evidence">{JSON.stringify(incident.evidence_bundle, null, 2)}</pre>
         </section>
 
-        <section style={{ border: '1px solid var(--border-default)', borderRadius: 8, padding: '1rem', background: 'var(--bg-surface)' }}>
-          <h3 style={{ marginTop: 0 }}>Activity timeline</h3>
+        <section className="aml-incident-detail__panel aml-incident-detail__panel--wide">
+          <h3>Activity timeline</h3>
           {timelineLoading ? <p>Loading activity...</p> : null}
           {!timelineLoading && timeline.length === 0 ? <p>No activity rows found.</p> : null}
           {!timelineLoading && timeline.length > 0 ? (
-            <ul style={{ margin: 0, paddingLeft: '1.1rem' }}>
+            <ul className="aml-incident-detail__timeline">
               {timeline.map((row) => (
-                <li key={row.id} style={{ marginBottom: '0.45rem' }}>
+                <li key={row.id}>
                   <strong>{row.action}</strong> - {new Date(row.timestamp).toLocaleString()}
-                  <div style={{ color: 'var(--text-secondary)' }}>{row.change_summary}</div>
+                  <div>{row.change_summary}</div>
                 </li>
               ))}
             </ul>

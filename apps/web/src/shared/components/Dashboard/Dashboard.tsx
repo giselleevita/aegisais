@@ -46,7 +46,7 @@ export default function Dashboard({ lastMessage }: DashboardProps) {
         const interval = setInterval(() => {
             void loadStats()
             void loadVesselCount()
-        }, 5000) // Refresh every 5 seconds
+        }, 5000)
 
         return () => clearInterval(interval)
     }, [loadStats, loadVesselCount])

@@ -1,7 +1,7 @@
 import { defineConfig, devices } from '@playwright/test'
 
 /**
- * E2E against the Vite dev server. API calls default to `VITE_API_BASE_URL` / localhost:8001;
+ * E2E against the Vite dev server. API calls default to `VITE_API_BASE_URL` / localhost:8081;
  * tests mock `/v1/*` routes so the real API is optional.
  *
  * Override the app URL: `BASE_URL=http://127.0.0.1:5174 npm run test:e2e` (e.g. after `vite build && vite preview`).

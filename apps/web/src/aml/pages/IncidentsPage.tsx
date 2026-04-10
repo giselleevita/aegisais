@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { apiClient } from '@/core/api-client'
+import { describeApiFailure } from '@/core/api-errors'
 import type { Incident } from '@/shared/types/common'
+import { getIncidentDetailPath } from '@/aml/amlRoutes'
 
 const STATUS_OPTIONS = ['open', 'triaged', 'investigating', 'resolved', 'dismissed']
 
@@ -21,13 +23,13 @@ export default function IncidentsPage() {
       })
       setIncidents(rows)
     } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Failed to load incidents'
       setIncidents([])
-      // Most common case: unauthenticated user visiting via UI smoke tests.
       setError(
-        msg.includes('401') || msg.toLowerCase().includes('not authenticated') || msg.toLowerCase().includes('unauthorized')
-          ? 'Sign in to view incidents.'
-          : msg
+        describeApiFailure(err, {
+          fallback: 'Unable to load incidents.',
+          unauthorized: 'Sign in to view incidents.',
+          offline: 'Incident registry unavailable while the API policy surface is offline.',
+        })
       )
     } finally {
       setLoading(false)
@@ -40,9 +42,16 @@ export default function IncidentsPage() {
 
   return (
     <div className="aml-page-pad aml-incidents">
-      <aside className="aml-incidents__list">
-        <div className="aml-incidents__header">
-          <h2 className="aml-page-title">Incidents</h2>
+      <section className="aml-incidents__hero">
+        <div>
+          <span className="aml-operations__eyebrow">Governance</span>
+          <h2 className="aml-page-title">Incident registry</h2>
+          <p className="aml-incidents__lead">
+            Track cross-alert cases, preserve incident evidence, and move incidents through triage and disposition without losing provenance.
+          </p>
+        </div>
+        <div className="aml-incidents__hero-card">
+          <span>Status filter</span>
           <label className="sr-only" htmlFor="incidents-status-filter">Filter incidents by status</label>
           <select
             id="incidents-status-filter"
@@ -58,36 +67,49 @@ export default function IncidentsPage() {
             ))}
           </select>
         </div>
-
-        {loading ? <p className="aml-incidents__message">Loading incidents...</p> : null}
-
-        {!loading && error ? <p className="aml-incidents__message aml-incidents__message--error" role="alert">{error}</p> : null}
-
-        {!loading && !error ? (
-          <ul>
-            {incidents.map((incident) => (
-              <li key={incident.id}>
-                <Link
-                  to={`/incidents/${incident.id}`}
-                  className="aml-incidents__link"
-                >
-                  <strong>#{incident.id}</strong> {incident.title}
-                  <div className="aml-incidents__status">{incident.status}</div>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        ) : null}
-
-        {!loading && !error && incidents.length === 0 ? (
-          <p className="aml-incidents__message">No incidents found.</p>
-        ) : null}
-      </aside>
-
-      <section className="aml-incidents__detail">
-        <h3>Incident details</h3>
-        <p>Open an incident from the list to view provenance and edit status.</p>
       </section>
+
+      <div className="aml-incidents__workspace">
+        <aside className="aml-incidents__list">
+          <div className="aml-incidents__header">
+            <h3>Case queue</h3>
+          </div>
+
+          {loading ? <p className="aml-incidents__message">Loading incidents...</p> : null}
+
+          {!loading && error ? <p className="aml-incidents__message aml-incidents__message--error" role="alert">{error}</p> : null}
+
+          {!loading && !error ? (
+            <ul>
+              {incidents.map((incident) => (
+                <li key={incident.id}>
+                  <Link
+                    to={getIncidentDetailPath(incident.id)}
+                    className="aml-incidents__link"
+                    aria-label={`#${incident.id} ${incident.title}`}
+                  >
+                    <div className="aml-incidents__link-top">
+                      <strong>#{incident.id}</strong>
+                      <div className="aml-incidents__status">{incident.status}</div>
+                    </div>
+                    <div className="aml-incidents__title">{incident.title}</div>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          ) : null}
+
+          {!loading && !error && incidents.length === 0 ? (
+            <p className="aml-incidents__message">No incidents found.</p>
+          ) : null}
+        </aside>
+
+        <section className="aml-incidents__detail aml-incidents__detail--idle">
+          <span className="aml-operations__eyebrow">Detail view</span>
+          <h3>Incident details</h3>
+          <p>Open an incident from the list to inspect case artifacts, review activity, and update disposition.</p>
+        </section>
+      </div>
     </div>
   )
 }
