@@ -57,7 +57,7 @@ If the install source points to a private GitHub repository, also set the reposi
 Current configured source:
 
 ```text
-git+https://github.com/giselleevita/agentguard-platform.git@v1.0.1
+git+https://github.com/giselleevita/agentguard-platform.git@v1.0.2
 ```
 
 Accepted examples:
@@ -70,7 +70,7 @@ git+https://github.com/<owner>/agentguard-platform.git@<tag-or-commit>
 Use the workflow input only when you want to override the repository default for a one-off run, for example:
 
 ```text
-git+https://github.com/giselleevita/agentguard-platform.git@v1.0.1
+git+https://github.com/giselleevita/agentguard-platform.git@v1.0.2
 ```
 
 ## Expected Artifacts
