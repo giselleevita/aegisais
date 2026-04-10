@@ -128,6 +128,47 @@
   font-size: 0.875rem;
 }
 
+.alerts-state {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.6rem;
+  padding: 1rem 1.1rem;
+  border: 1px solid rgba(42, 63, 92, 0.65);
+  border-radius: 18px;
+  background:
+    linear-gradient(180deg, rgba(18, 30, 50, 0.62), rgba(8, 14, 25, 0.92)),
+    var(--bg-card);
+  box-shadow: 0 14px 26px rgba(0, 0, 0, 0.16);
+}
+
+.alerts-state strong {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+}
+
+.alerts-state span {
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.alerts-state .btn-clear {
+  margin-top: 0.15rem;
+}
+
+.alerts-state--error {
+  border-color: var(--sev-high-border);
+  background:
+    linear-gradient(180deg, rgba(70, 24, 24, 0.46), rgba(18, 10, 12, 0.94)),
+    var(--bg-card);
+}
+
+.alerts-state--error span {
+  color: var(--sev-high-text);
+}
+
 /* ── Alert list ────────────────────────────────────────────────────── */
 .alerts-list {
   display: flex;
@@ -149,6 +190,11 @@
 
 .alert-card:hover {
   background: var(--bg-elevated);
+}
+
+.alert-card--active {
+  box-shadow: inset 0 0 0 1px var(--accent-border);
+  background: rgba(14, 26, 44, 0.78);
 }
 
 .alert-card.severity-high {
@@ -445,4 +491,93 @@
 
 .btn-aml-triage:hover {
   background: rgba(14, 165, 233, 0.15);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Alerts Queue Redesign Overrides
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.alerts-panel {
+  gap: 1rem;
+}
+
+.panel-header {
+  gap: 0.9rem;
+}
+
+.panel-header h2 {
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  letter-spacing: -0.02em;
+}
+
+.panel-subtitle {
+  max-width: 38rem;
+}
+
+.panel-controls {
+  width: 100%;
+  align-items: stretch;
+}
+
+.filter-row,
+.export-buttons {
+  width: 100%;
+}
+
+.type-filter,
+.severity-filter,
+.status-filter,
+.time-filter,
+.btn-clear,
+.btn-export {
+  min-height: 38px;
+}
+
+.alerts-list {
+  gap: 0.6rem;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  overflow: visible;
+}
+
+.alert-card {
+  border: 1px solid rgba(42, 63, 92, 0.65);
+  border-left-width: 4px;
+  border-radius: 18px;
+  padding: 1rem;
+  background:
+    linear-gradient(180deg, rgba(18, 30, 50, 0.62), rgba(8, 14, 25, 0.92)),
+    var(--bg-card);
+  box-shadow: 0 14px 26px rgba(0, 0, 0, 0.16);
+}
+
+.alert-card--active {
+  background:
+    linear-gradient(180deg, rgba(28, 51, 84, 0.72), rgba(9, 16, 29, 0.96)),
+    var(--bg-card);
+  box-shadow: inset 0 0 0 1px rgba(103, 212, 255, 0.16), 0 18px 32px rgba(0, 0, 0, 0.22);
+}
+
+.alert-type {
+  font-family: var(--font-display);
+  font-size: 0.98rem;
+}
+
+.alert-summary {
+  font-size: 0.88rem;
+}
+
+.alert-actions {
+  margin-top: 0.85rem;
+}
+
+.btn-aml-triage,
+.btn-edit,
+.btn-save,
+.btn-cancel,
+.status-select,
+.notes-input {
+  border-radius: 12px;
 }

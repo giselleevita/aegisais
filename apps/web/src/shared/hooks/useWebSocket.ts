@@ -7,13 +7,17 @@ interface UseWebSocketReturn {
   sendMessage: (message: string) => void
 }
 
-export function useWebSocket(url: string): UseWebSocketReturn {
+export function useWebSocket(url: string | null): UseWebSocketReturn {
   const [connected, setConnected] = useState(false)
   const [lastMessage, setLastMessage] = useState<WebSocketMessage | null>(null)
   const wsRef = useRef<WebSocket | null>(null)
   const pingIntervalRef = useRef<number | null>(null)
 
   useEffect(() => {
+    if (!url) {
+      return
+    }
+
     const ws = new WebSocket(url)
     wsRef.current = ws
 
@@ -61,7 +65,9 @@ export function useWebSocket(url: string): UseWebSocketReturn {
     return () => {
       if (pingIntervalRef.current) {
         clearInterval(pingIntervalRef.current)
+        pingIntervalRef.current = null
       }
+      wsRef.current = null
       ws.close()
     }
   }, [url])
@@ -72,7 +78,11 @@ export function useWebSocket(url: string): UseWebSocketReturn {
     }
   }
 
-  return { connected, lastMessage, sendMessage }
+  return {
+    connected: url ? connected : false,
+    lastMessage: url ? lastMessage : null,
+    sendMessage,
+  }
 }
 
 

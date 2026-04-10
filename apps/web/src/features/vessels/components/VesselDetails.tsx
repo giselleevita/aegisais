@@ -50,11 +50,12 @@ export default function VesselDetails({ mmsi, onClose }: VesselDetailsProps) {
     }, [mmsi])
 
     useEffect(() => {
-        if (mmsi) {
+        if (!mmsi) return
+        void loadVesselData()
+        const interval = setInterval(() => {
             void loadVesselData()
-            const interval = setInterval(loadVesselData, 10000)
-            return () => clearInterval(interval)
-        }
+        }, 10000)
+        return () => clearInterval(interval)
     }, [loadVesselData, mmsi])
 
     if (loading) {

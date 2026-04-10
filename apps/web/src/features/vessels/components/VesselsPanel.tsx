@@ -19,7 +19,9 @@ export default function VesselsPanel({ onVesselClick }: VesselsPanelProps) {
             const data = await apiClient.getVessels(minSeverity, 500)
             setVessels(data)
         } catch (error) {
-            console.error('Failed to load vessels:', error)
+            if (import.meta.env.DEV) {
+                console.error('Failed to load vessels:', error)
+            }
         } finally {
             setLoading(false)
         }
@@ -27,7 +29,9 @@ export default function VesselsPanel({ onVesselClick }: VesselsPanelProps) {
 
     useEffect(() => {
         void loadVessels()
-        const interval = setInterval(loadVessels, 5000)
+        const interval = setInterval(() => {
+            void loadVessels()
+        }, 5000)
         return () => clearInterval(interval)
     }, [loadVessels])
 

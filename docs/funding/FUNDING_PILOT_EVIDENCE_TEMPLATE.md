@@ -1,6 +1,6 @@
 # Funding Pilot Evidence Template
 
-**Version:** 1.1 | **Date:** 2026-03-31
+**Version:** 1.2 | **Date:** 2026-04-07
 
 This template operationalizes BL-017 and standardizes proof artifacts for funding submissions and procurement evaluations.
 
@@ -56,13 +56,18 @@ Complete the paths below as evidence is generated:
 - Validation report (migration): _path TBD_
 - Interoperability conformance test results: _path TBD_
   - Run: `python -m pytest apps/api/tests/test_competitor_import.py apps/api/tests/test_alert_evidence_hash.py -v && python3 scripts/check_contract_samples.py`
-- Security evidence references: `docs/security/SECURITY_EVIDENCE_PACK.md`, `docs/security/SECURITY_AND_COMPLIANCE.md`
+- Security evidence references: `docs/SECURITY_EVIDENCE_PACK.md`, `docs/security/SECURITY_AND_COMPLIANCE.md`
+- Collaboration and tenant-boundary validation:
+  - Run: `cd apps/api && ./.venv/bin/python -m pytest tests/test_sharing_api.py tests/test_websocket_auth.py tests/test_interoperability.py -q`
+  - Latest known result: `18 passed, 1 xfailed`
 - KPI calculation query / notebook: _path TBD_
 - Operator feedback summary: _path TBD_
 - ROI summary: _path TBD_
 - SBOM artifacts: `backend-sbom.cdx.json`, `frontend-sbom.cdx.json` (CI artifacts)
-- Interoperability profile: `docs/product/INTEROPERABILITY_PROFILE.md`
-- Supply chain assurance: `docs/security/SUPPLY_CHAIN_ASSURANCE.md`
+- Interoperability profile: `docs/INTEROPERABILITY_PROFILE.md`
+- Supply chain assurance: `docs/SUPPLY_CHAIN_ASSURANCE.md`
+- Current platform audit baseline: `docs/AEGISAIS_AUDIT_2026-04-07.md`
+- Current user-flow baseline: `docs/USER_FLOW_AUDIT_2026-04-07.md`
 
 ---
 
@@ -81,13 +86,15 @@ Complete the paths below as evidence is generated:
 
 ## Risks and Mitigations
 
-| Risk                                         | Impact | Mitigation                                                                                   | Owner                 |
-| -------------------------------------------- | ------ | -------------------------------------------------------------------------------------------- | --------------------- |
-| Data quality drift between ingestion sources | High   | Validation gates + retry-safe import adapter (BL-011); `confidence_score` threshold enforced | Integrations          |
-| Operational adoption lag                     | Medium | Guided onboarding (BL-012); < 30-min setup; sample data included                             | Solutions Engineering |
-| Compliance evidence delay                    | High   | Weekly evidence checkpoint; Security Engineering owns `SECURITY_EVIDENCE_PACK.md`            | Security Engineering  |
-| KPI measurement tool unavailability          | Medium | Fallback to manual count from DB queries; queries documented in evidence bundle              | Technical Owner       |
-| Pilot scope creep                            | Medium | Freeze KPI definitions and pilot scope at kickoff; formal change request required            | Program Owner         |
+| Risk                                         | Impact | Mitigation                                                                                    | Owner                 |
+| -------------------------------------------- | ------ | --------------------------------------------------------------------------------------------- | --------------------- |
+| Data quality drift between ingestion sources | High   | Validation gates + retry-safe import adapter (BL-011); `confidence_score` threshold enforced  | Integrations          |
+| Operational adoption lag                     | Medium | Guided onboarding (BL-012); < 30-min setup; sample data included                              | Solutions Engineering |
+| Compliance evidence delay                    | High   | Weekly evidence checkpoint; Security Engineering owns `SECURITY_EVIDENCE_PACK.md`             | Security Engineering  |
+| KPI measurement tool unavailability          | Medium | Fallback to manual count from DB queries; queries documented in evidence bundle               | Technical Owner       |
+| Pilot scope creep                            | Medium | Freeze KPI definitions and pilot scope at kickoff; formal change request required             | Program Owner         |
+| Environment-dependent live feed readiness    | High   | Record provider-connected vs stub-backed mode explicitly in pilot evidence and KPI notes      | Technical Owner       |
+| Procurement overclaim vs current control set | High   | Use current trust kit and audit baselines; do not claim completed IR runbook / pen test / MFA | Program Owner         |
 
 ---
 

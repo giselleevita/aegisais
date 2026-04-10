@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { apiClient } from '@/core/api-client'
+import { describeApiFailure } from '@/core/api-errors'
 import type { AuditLogEntry } from '@/shared/types/common'
 
 const ACTION_PRESETS = [
@@ -42,17 +43,14 @@ export default function AuditPage() {
       setRows(data)
       setHasMore(data.length === limit)
     } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Failed to load audit logs'
-      if (
-        msg.includes('403') ||
-        msg.toLowerCase().includes('admin') ||
-        msg.toLowerCase().includes('not authenticated') ||
-        msg.toLowerCase().includes('unauthorized')
-      ) {
-        setError('Sign in as admin to view audit logs.')
-      } else {
-        setError(msg)
-      }
+      setError(
+        describeApiFailure(err, {
+          fallback: 'Unable to load audit logs.',
+          unauthorized: 'Sign in as admin to view audit logs.',
+          forbidden: 'Sign in as admin to view audit logs.',
+          offline: 'Audit ledger unavailable while the API policy surface is offline.',
+        })
+      )
       setRows([])
     } finally {
       setLoading(false)
@@ -76,8 +74,14 @@ export default function AuditPage() {
         max_rows: 10000,
       })
     } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Failed to export audit logs'
-      setError(msg)
+      setError(
+        describeApiFailure(err, {
+          fallback: 'Unable to export audit logs.',
+          unauthorized: 'Sign in as admin to export audit logs.',
+          forbidden: 'Sign in as admin to export audit logs.',
+          offline: 'Audit export unavailable while the API policy surface is offline.',
+        })
+      )
     } finally {
       setExporting(false)
     }
@@ -85,9 +89,13 @@ export default function AuditPage() {
 
   return (
     <div className="aml-page-pad aml-audit">
-      <div className="aml-incidents__header">
-        <h2 className="aml-page-title">Audit</h2>
-        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+      <header className="aml-audit__hero">
+        <div>
+          <span className="aml-operations__eyebrow">Governance</span>
+          <h2 className="aml-page-title">Audit ledger</h2>
+          <p className="aml-incidents__lead">Filter operational events, export evidence for review, and trace incident lifecycle changes without leaving the governance deck.</p>
+        </div>
+        <div className="aml-audit__actions">
           <select
             value={action}
             onChange={(e) => {
@@ -106,16 +114,9 @@ export default function AuditPage() {
             {exporting ? 'Exporting…' : 'Export CSV'}
           </button>
         </div>
-      </div>
+      </header>
 
-      <div
-        style={{
-          display: 'grid',
-          gap: '0.5rem',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
-          marginBottom: '0.75rem',
-        }}
-      >
+      <div className="aml-audit__filters">
         <input
           placeholder="user_id"
           value={userId}
@@ -160,8 +161,8 @@ export default function AuditPage() {
         />
       </div>
 
-      {loading ? <p>Loading audit logs...</p> : null}
-      {error ? <p>{error}</p> : null}
+      {loading ? <p className="aml-audit__message">Loading audit logs...</p> : null}
+      {error ? <p className="aml-audit__message aml-audit__message--error" role="alert">{error}</p> : null}
 
       {!loading && !error ? (
         <div className="aml-audit__table-wrap">
@@ -190,9 +191,9 @@ export default function AuditPage() {
               ))}
             </tbody>
           </table>
-          {rows.length === 0 ? <p>No audit rows for current filter.</p> : null}
+          {rows.length === 0 ? <p className="aml-audit__message">No audit rows for current filter.</p> : null}
           {rows.length > 0 ? (
-            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.75rem' }}>
+            <div className="aml-audit__pager">
               <button
                 type="button"
                 onClick={() => setOffset((prev) => Math.max(0, prev - limit))}

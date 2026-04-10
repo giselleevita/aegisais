@@ -1,7 +1,7 @@
 import asyncio
 import logging
 from contextlib import contextmanager
-from typing import Generator, Set
+from typing import Generator, Optional, Set
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 import json
@@ -23,6 +23,7 @@ _ws_auth_dev_warned: bool = False
 router = APIRouter()
 
 _clients: Set[WebSocket] = set()
+_client_org_ids: dict[WebSocket, int | None] = {}
 
 # Set from FastAPI lifespan so sync code (e.g. threadpool routes) can schedule broadcasts.
 _main_loop: asyncio.AbstractEventLoop | None = None
@@ -70,16 +71,35 @@ def _scoped_db(ws: WebSocket) -> Generator[Session, None, None]:
             pass
 
 
-def _ws_token_ok(token: str, db: Session) -> bool:
-    """Return True if JWT decodes and maps to an active user."""
+def _get_ws_user(token: str, db: Session) -> Optional[User]:
+    """Return the active user mapped by the JWT, or None when invalid."""
     payload = decode_access_token(token)
     if not payload:
-        return False
+        return None
     username = payload.get("sub")
     if not username:
-        return False
+        return None
     user = db.query(User).filter(User.username == username).first()
-    return user is not None and bool(user.is_active)
+    if user is None or not bool(user.is_active):
+        return None
+    return user
+
+
+def _ws_token_ok(token: str, db: Session) -> bool:
+    """Return True if JWT decodes and maps to an active user."""
+    return _get_ws_user(token, db) is not None
+
+
+def _extract_payload_org_id(payload: dict) -> int | None:
+    raw_org_id = payload.get("organisation_id") or payload.get("org_id")
+    if raw_org_id is None:
+        data = payload.get("data")
+        if isinstance(data, dict):
+            raw_org_id = data.get("organisation_id") or data.get("org_id")
+    try:
+        return int(raw_org_id) if raw_org_id is not None else None
+    except (TypeError, ValueError):
+        return None
 
 async def broadcast(payload: dict):
     """Broadcast a message to all connected WebSocket clients."""
@@ -88,9 +108,13 @@ async def broadcast(payload: dict):
     
     dead = []
     message = json.dumps(payload, default=str)
+    target_org_id = _extract_payload_org_id(payload)
     
     for ws in list(_clients):
         try:
+            client_org_id = _client_org_ids.get(ws)
+            if target_org_id is not None and client_org_id != target_org_id:
+                continue
             await ws.send_text(message)
         except WebSocketDisconnect:
             dead.append(ws)
@@ -100,6 +124,7 @@ async def broadcast(payload: dict):
     
     for ws in dead:
         _clients.discard(ws)
+        _client_org_ids.pop(ws, None)
     
     if dead:
         log.debug("Removed %d dead WebSocket connections", len(dead))
@@ -133,16 +158,24 @@ async def stream(ws: WebSocket):
         )
     await ws.accept()
     token = ws.query_params.get("token") or None
+    viewer: User | None = None
     with _scoped_db(ws) as db:
         if settings.websocket_require_auth:
-            if not token or not _ws_token_ok(token, db):
+            if not token:
                 await ws.close(code=1008)
                 return
-        elif token and not _ws_token_ok(token, db):
-            await ws.close(code=1008)
-            return
+            viewer = _get_ws_user(token, db)
+            if viewer is None:
+                await ws.close(code=1008)
+                return
+        elif token:
+            viewer = _get_ws_user(token, db)
+            if viewer is None:
+                await ws.close(code=1008)
+                return
 
     _clients.add(ws)
+    _client_org_ids[ws] = viewer.organisation_id if viewer is not None else None
     log.info("WebSocket client connected. Total clients: %d", len(_clients))
     
     try:
@@ -158,4 +191,5 @@ async def stream(ws: WebSocket):
         log.warning("WebSocket error: %s", e, exc_info=True)
     finally:
         _clients.discard(ws)
+        _client_org_ids.pop(ws, None)
         log.info("WebSocket client disconnected. Total clients: %d", len(_clients))

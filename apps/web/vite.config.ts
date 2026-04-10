@@ -84,29 +84,21 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks(id) {
-          if (!id.includes('node_modules')) return undefined
-          const packageName = getNodeModulePackageName(id)
-          if (!packageName) return undefined
-
-          if (packageName === 'cesium' || packageName === '@cesium/engine' || packageName === '@cesium/widgets') {
+          if (id.includes('/node_modules/cesium/')) {
             return 'vendor-cesium'
           }
-
-          if (
-            packageName === 'react' ||
-            packageName === 'react-dom' ||
-            packageName === 'react-router' ||
-            packageName === 'react-router-dom' ||
-            packageName === 'scheduler' ||
-            packageName === '@remix-run/router'
-          ) {
+          if (id.includes('/node_modules/react/') || id.includes('/node_modules/react-dom/')) {
             return 'vendor-react'
           }
-
-          if (packageName === 'leaflet' || packageName === 'react-leaflet' || packageName === '@react-leaflet/core') {
+          if (id.includes('/node_modules/react-router-dom/') || id.includes('/node_modules/@remix-run/')) {
+            return 'vendor-router'
+          }
+          if (
+            id.includes('/node_modules/leaflet/') ||
+            id.includes('/node_modules/react-leaflet/')
+          ) {
             return 'vendor-maps'
           }
-
           return undefined
         },
       },

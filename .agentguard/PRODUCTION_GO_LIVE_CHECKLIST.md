@@ -7,6 +7,7 @@ Use this checklist before treating AgentGuard as a production enforcement contro
 - `AGENTGUARD_INSTALL_SOURCE` is pinned to a tagged AgentGuard release, not `main`
 - the pinned release has published release notes and a retained rollback target
 - the install source used in the last validation run matches the documented release pin
+- `PRODUCTION_EVIDENCE.md` matches the current install pin and release URL
 
 ## Policy Backend
 
@@ -19,6 +20,7 @@ Use this checklist before treating AgentGuard as a production enforcement contro
 - the latest `agentguard-production-validation.yml` run passed for all validated slices
 - the latest `agentguard-stability-sweep.yml` run passed for all validated slices
 - the latest `agentguard-pr-enforcement.yml` run passed for all validated slices
+- `PRODUCTION_EVIDENCE.md` records the exact run IDs used for sign-off
 - report bundles and OPA logs from the production validation run are retained
 
 ## Operational Readiness
@@ -31,3 +33,5 @@ Use this checklist before treating AgentGuard as a production enforcement contro
 ## Go / No-Go Rule
 
 Do not treat AgentGuard as a production enforcement control if any validated slice has not passed the external-OPA production workflow on the same tagged release that is pinned in repository configuration.
+
+Do not treat the production claim as current if `PRODUCTION_EVIDENCE.md` no longer matches the tagged release, the repository pin, or the retained artifact bundle.

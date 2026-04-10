@@ -186,3 +186,54 @@
 .aml-inv__btn-ghost:hover {
   color: var(--text-primary);
 }
+
+/* Command deck overrides */
+.aml-inv {
+  max-width: none;
+  display: grid;
+  gap: 1rem;
+}
+
+.aml-inv__toolbar {
+  padding: 0.9rem 1rem;
+  border: 1px solid rgba(42, 63, 92, 0.62);
+  border-radius: 18px;
+  background: rgba(9, 16, 29, 0.84);
+}
+
+.aml-inv__back,
+.aml-inv__link,
+.aml-inv__btn-primary,
+.aml-inv__btn-ghost,
+.aml-inv__select,
+.aml-inv__textarea {
+  border-radius: 12px;
+}
+
+.aml-inv__card {
+  border-radius: 22px;
+  padding: 1.35rem;
+  background:
+    radial-gradient(circle at top left, rgba(103, 212, 255, 0.08), transparent 28%),
+    rgba(9, 16, 29, 0.9);
+}
+
+.aml-inv__title {
+  font-family: var(--font-display);
+  font-size: 1.45rem;
+  letter-spacing: -0.03em;
+}
+
+.aml-inv__meta > div,
+.aml-inv__evidence,
+.aml-inv__notes,
+.aml-inv__actions {
+  border-radius: 16px;
+  border: 1px solid rgba(42, 63, 92, 0.55);
+  background: rgba(8, 14, 25, 0.62);
+  padding: 0.95rem;
+}
+
+.aml-inv__actions {
+  border-top: 1px solid rgba(42, 63, 92, 0.55);
+}

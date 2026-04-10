@@ -6,6 +6,7 @@ import '@/shared/map/leafletSetup'
 import MapBounds from '@/shared/map/MapBounds'
 import { createAlertDivIcon, createVesselDivIcon } from '@/shared/map/alertMarkers'
 import { apiClient } from '@/core/api-client'
+import { describeApiFailure } from '@/core/api-errors'
 import type { Vessel, Alert, VesselPosition } from '@/shared/types/common'
 import './MapView.css'
 import InfrastructureLayer from '@/features/itdae/components/InfrastructureLayer'
@@ -30,9 +31,12 @@ export default function MapView({ selectedVessel, onVesselClick, showInfrastruct
     const [envOverlay, setEnvOverlay] = useState(true)
     const [watchMmsi, setWatchMmsi] = useState<Set<string>>(new Set())
     const [controlsOpen, setControlsOpen] = useState(true)
+    const [loadError, setLoadError] = useState<string | null>(null)
+    const [trackError, setTrackError] = useState<string | null>(null)
 
     const loadData = useCallback(async () => {
         try {
+            setLoadError(null)
             const [vesselsData, alertsData, watchlistData] = await Promise.all([
                 apiClient.getVessels(0, 1000),
                 apiClient.getAlerts({ limit: 500, status: 'new' }),
@@ -42,6 +46,16 @@ export default function MapView({ selectedVessel, onVesselClick, showInfrastruct
             setAlerts(alertsData)
             setWatchMmsi(new Set(watchlistData.map((w) => w.mmsi)))
         } catch (error) {
+            setVessels([])
+            setAlerts([])
+            setWatchMmsi(new Set())
+            setLoadError(
+                describeApiFailure(error, {
+                    fallback: 'Unable to load map telemetry.',
+                    unauthorized: 'Sign in to load the common operating picture.',
+                    offline: 'Map telemetry degraded. Restore the API policy surface to repopulate vessels and alerts.',
+                })
+            )
             if (import.meta.env.DEV) {
                 console.error('Failed to load map data:', error)
             }
@@ -54,7 +68,16 @@ export default function MapView({ selectedVessel, onVesselClick, showInfrastruct
         try {
             const track = await apiClient.getVesselTrack(mmsi, undefined, undefined, 1000)
             setVesselTrack(track)
+            setTrackError(null)
         } catch (error) {
+            setVesselTrack([])
+            setTrackError(
+                describeApiFailure(error, {
+                    fallback: 'Unable to load vessel track.',
+                    unauthorized: 'Sign in to inspect vessel track history.',
+                    offline: 'Track history unavailable while the API policy surface is offline.',
+                })
+            )
             if (import.meta.env.DEV) {
                 console.error('Failed to load vessel track:', error)
             }
@@ -63,7 +86,9 @@ export default function MapView({ selectedVessel, onVesselClick, showInfrastruct
 
     useEffect(() => {
         void loadData()
-        const interval = setInterval(loadData, 10000) // Refresh every 10 seconds
+        const interval = setInterval(() => {
+            void loadData()
+        }, 10000)
         return () => clearInterval(interval)
     }, [loadData])
 
@@ -115,6 +140,18 @@ export default function MapView({ selectedVessel, onVesselClick, showInfrastruct
             <p className="sr-only" role="status" aria-live="polite">
                 {statusSummary}
             </p>
+            {loadError ? (
+                <div className="map-banner map-banner--warning" role="status">
+                    <strong>Map feed degraded.</strong>
+                    <span>{loadError}</span>
+                </div>
+            ) : null}
+            {trackError ? (
+                <div className="map-banner" role="status">
+                    <strong>Track history unavailable.</strong>
+                    <span>{trackError}</span>
+                </div>
+            ) : null}
             <details className="map-controls" open={controlsOpen} onToggle={(e) => setControlsOpen(e.currentTarget.open)}>
                 <summary className="map-controls__summary">Map Layers</summary>
                 <fieldset className="map-controls__fieldset" aria-label="Map display controls">
