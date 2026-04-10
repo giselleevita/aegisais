@@ -23,6 +23,7 @@ Validated slices:
 - `.github/workflows/agentguard-tenant-boundary-shadow.yml`: GitHub Actions workflow for the tenant-boundary shadow slice
 - `.github/workflows/agentguard-blocking.yml`: manual blocking workflow for the second phase
 - `.github/workflows/agentguard-export-blocking.yml`: manual blocking workflow for the export and interop slice
+- `.github/workflows/agentguard-tenant-boundary-blocking.yml`: manual blocking workflow for the tenant-boundary slice
 - `.github/workflows/agentguard-stability-sweep.yml`: scheduled and manual drift-check workflow for the validated slices
 - `.github/workflows/agentguard-pr-enforcement.yml`: combined blocking workflow for validated slices on pull requests
 
@@ -157,6 +158,7 @@ Current blocking workflow mapping:
 
 - sharing and COP: `.github/workflows/agentguard-blocking.yml`
 - export and interop review: `.github/workflows/agentguard-export-blocking.yml`
+- tenant boundary and org-scope misuse: `.github/workflows/agentguard-tenant-boundary-blocking.yml`
 
 ## Stability Sweep
 
@@ -205,7 +207,7 @@ Current limitation:
 
 - sharing and COP: shadow validated and manual blocking validated
 - export and interop review: shadow validated and manual blocking validated
-- tenant boundary and org-scope misuse: newly added shadow-only slice, not yet validated
+- tenant boundary and org-scope misuse: shadow validated, blocking workflow added
 
 Both slices now have one clean manual blocking validation, but they should still stay out of broader normal PR enforcement until repeated stability sweep runs remain clean.
 
