@@ -29,6 +29,10 @@ jobs:
             slice_name: export-and-interop
             scenarios_path: .agentguard/scenarios/aegisais-export-shadow.yaml
             artifact_name: agentguard-stability-export-results
+          - slice_id: tenant-boundary
+            slice_name: tenant-boundary
+            scenarios_path: .agentguard/scenarios/aegisais-tenant-boundary-shadow.yaml
+            artifact_name: agentguard-stability-tenant-boundary-results
     env:
       AGENTGUARD_ALLOW_EMBEDDED_PDP_FALLBACK: "true"
 
