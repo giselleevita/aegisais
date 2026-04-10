@@ -1,0 +1,89 @@
+{
+  "status": "pass",
+  "mode": "repo-backed receiver rehearsal",
+  "note": "This package verifies AegisAIS interop routes and receiver-facing XML structure in a lab rehearsal. External TAK Server / NATO receiver confirmation remains a separate field activity.",
+  "artifacts": [
+    {
+      "name": "cot_vessel",
+      "receiver": "TAK Server / ATAK",
+      "url": "/v1/interop/cot/vessel/123456789",
+      "status_code": 200,
+      "content_type": "application/xml",
+      "artifact": "d04_receiver_rehearsal_cot_vessel.xml",
+      "checks": {
+        "route_reachable": true,
+        "xml_parseable": true,
+        "receiver_shape_verified": true
+      },
+      "summary": {
+        "root_tag": "event",
+        "uid": "aegisais.vessel.123456789",
+        "event_type": "a-n-S-C-m",
+        "lat": "60.123400",
+        "lon": "20.567800",
+        "callsign": "TEST-VESSEL-AEGIS"
+      }
+    },
+    {
+      "name": "cot_alert",
+      "receiver": "TAK Server / ATAK",
+      "url": "/v1/interop/cot/alert/7",
+      "status_code": 200,
+      "content_type": "application/xml",
+      "artifact": "d04_receiver_rehearsal_cot_alert.xml",
+      "checks": {
+        "route_reachable": true,
+        "xml_parseable": true,
+        "receiver_shape_verified": true
+      },
+      "summary": {
+        "root_tag": "event",
+        "uid": "aegisais.alert.7",
+        "event_type": "b-m-r",
+        "lat": "60.123400",
+        "lon": "20.567800",
+        "callsign": "ALERT-identity_spoofing-123456789"
+      }
+    },
+    {
+      "name": "nffi_vessel",
+      "receiver": "NATO C2 / NFFI consumers",
+      "url": "/v1/interop/nffi/vessel/123456789",
+      "status_code": 200,
+      "content_type": "application/xml",
+      "artifact": "d04_receiver_rehearsal_nffi_vessel.xml",
+      "checks": {
+        "route_reachable": true,
+        "xml_parseable": true,
+        "receiver_shape_verified": true
+      },
+      "summary": {
+        "root_tag": "{urn:nato:stanag:5527:nffi:1:0}NFCIMessage",
+        "schema_version": "1.0",
+        "sender_id": "AEGISAIS",
+        "message_id": "aegisais-123456789-1775800156",
+        "track_number": "T-123456789"
+      }
+    },
+    {
+      "name": "nffi_alert",
+      "receiver": "NATO C2 / NFFI consumers",
+      "url": "/v1/interop/nffi/alert/7",
+      "status_code": 200,
+      "content_type": "application/xml",
+      "artifact": "d04_receiver_rehearsal_nffi_alert.xml",
+      "checks": {
+        "route_reachable": true,
+        "xml_parseable": true,
+        "receiver_shape_verified": true
+      },
+      "summary": {
+        "root_tag": "{urn:nato:stanag:5527:nffi:1:0}NFCIMessage",
+        "schema_version": "1.0",
+        "sender_id": "AEGISAIS",
+        "message_id": "aegisais-alert-7",
+        "track_number": "T-123456789"
+      }
+    }
+  ]
+}

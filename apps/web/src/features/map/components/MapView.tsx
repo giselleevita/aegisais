@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { MapContainer, TileLayer, Marker, Popup, Polyline } from 'react-leaflet'
 import type { LatLngExpression } from 'leaflet'
 import 'leaflet/dist/leaflet.css'
@@ -31,27 +31,7 @@ export default function MapView({ selectedVessel, onVesselClick, showInfrastruct
     const [watchMmsi, setWatchMmsi] = useState<Set<string>>(new Set())
     const [controlsOpen, setControlsOpen] = useState(true)
 
-    useEffect(() => {
-        loadData()
-        const interval = setInterval(loadData, 10000) // Refresh every 10 seconds
-        return () => clearInterval(interval)
-    }, [])
-
-    useEffect(() => {
-        if (selectedVessel) {
-            loadVesselTrack(selectedVessel)
-        } else {
-            setVesselTrack([])
-        }
-    }, [selectedVessel])
-
-    useEffect(() => {
-        if (typeof window === 'undefined') return
-        const compact = window.matchMedia('(max-width: 900px)')
-        setControlsOpen(!compact.matches)
-    }, [])
-
-    const loadData = async () => {
+    const loadData = useCallback(async () => {
         try {
             const [vesselsData, alertsData, watchlistData] = await Promise.all([
                 apiClient.getVessels(0, 1000),
@@ -63,25 +43,43 @@ export default function MapView({ selectedVessel, onVesselClick, showInfrastruct
             setWatchMmsi(new Set(watchlistData.map((w) => w.mmsi)))
         } catch (error) {
             if (import.meta.env.DEV) {
-                // eslint-disable-next-line no-console
                 console.error('Failed to load map data:', error)
             }
         } finally {
             setLoading(false)
         }
-    }
+    }, [])
 
-    const loadVesselTrack = async (mmsi: string) => {
+    const loadVesselTrack = useCallback(async (mmsi: string) => {
         try {
             const track = await apiClient.getVesselTrack(mmsi, undefined, undefined, 1000)
             setVesselTrack(track)
         } catch (error) {
             if (import.meta.env.DEV) {
-                // eslint-disable-next-line no-console
                 console.error('Failed to load vessel track:', error)
             }
         }
-    }
+    }, [])
+
+    useEffect(() => {
+        void loadData()
+        const interval = setInterval(loadData, 10000) // Refresh every 10 seconds
+        return () => clearInterval(interval)
+    }, [loadData])
+
+    useEffect(() => {
+        if (selectedVessel) {
+            void loadVesselTrack(selectedVessel)
+        } else {
+            setVesselTrack([])
+        }
+    }, [loadVesselTrack, selectedVessel])
+
+    useEffect(() => {
+        if (typeof window === 'undefined') return
+        const compact = window.matchMedia('(max-width: 900px)')
+        setControlsOpen(!compact.matches)
+    }, [])
 
     if (loading) {
         return <div className="map-loading">Loading map...</div>

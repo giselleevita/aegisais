@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { apiClient } from '@/core/api-client'
 import type { Vessel } from '@/shared/types/common'
 import './VesselsPanel.css'
@@ -13,13 +13,7 @@ export default function VesselsPanel({ onVesselClick }: VesselsPanelProps) {
     const [minSeverity, setMinSeverity] = useState(0)
     const [searchMmsi, setSearchMmsi] = useState('')
 
-    useEffect(() => {
-        loadVessels()
-        const interval = setInterval(loadVessels, 5000)
-        return () => clearInterval(interval)
-    }, [minSeverity])
-
-    const loadVessels = async () => {
+    const loadVessels = useCallback(async () => {
         try {
             setLoading(true)
             const data = await apiClient.getVessels(minSeverity, 500)
@@ -29,7 +23,13 @@ export default function VesselsPanel({ onVesselClick }: VesselsPanelProps) {
         } finally {
             setLoading(false)
         }
-    }
+    }, [minSeverity])
+
+    useEffect(() => {
+        void loadVessels()
+        const interval = setInterval(loadVessels, 5000)
+        return () => clearInterval(interval)
+    }, [loadVessels])
 
     const filteredVessels = vessels.filter(v =>
         !searchMmsi || v.mmsi.includes(searchMmsi)

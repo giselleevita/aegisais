@@ -245,6 +245,55 @@ class TestSanctions:
         result = detect_sts_transfer(a, b)
         assert result is None
 
+    def test_flag_hopping_detection(self):
+        from app.modules.sanctions.service import detect_flag_hopping
+
+        result = detect_flag_hopping(
+            [
+                {
+                    "mmsi": "111111111",
+                    "imo": "7654321",
+                    "vessel_name": "Shadow Fleet One",
+                    "flag_state": "PA",
+                    "timestamp": "2026-03-01T00:00:00Z",
+                },
+                {
+                    "mmsi": "222222222",
+                    "imo": "7654321",
+                    "vessel_name": "Shadow Fleet One",
+                    "flag_state": "GA",
+                    "timestamp": "2026-03-12T00:00:00Z",
+                },
+            ]
+        )
+
+        assert result is not None
+        assert result["type"] == "FLAG_HOPPING"
+        assert result["evidence"]["rapid_change"] is True
+
+    def test_dark_activity_correlation(self):
+        from app.modules.sanctions.service import correlate_dark_activity_with_sanctioned_port
+
+        result = correlate_dark_activity_with_sanctioned_port(
+            mmsi="123456789",
+            dark_duration_sec=3 * 60 * 60,
+            last_known_position={"lat": 42.31, "lon": 36.33, "timestamp": "2026-03-01T00:00:00Z"},
+            reappearance_position={"lat": 42.28, "lon": 36.38, "timestamp": "2026-03-01T03:00:00Z"},
+            sanctioned_ports=[
+                {
+                    "name": "Port Kavkaz",
+                    "lat": 42.30,
+                    "lon": 36.35,
+                    "country": "RU",
+                    "sanctions_regime": "EU oil cap",
+                }
+            ],
+        )
+
+        assert result is not None
+        assert result["type"] == "SANCTIONS_DARK_ACTIVITY"
+        assert result["severity"] >= 80
+
 
 # ──────────────────────────────────────────────────────────────────────
 # GAP-10: MFA

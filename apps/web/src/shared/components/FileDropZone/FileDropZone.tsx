@@ -2,7 +2,7 @@ import { useCallback, useState } from 'react'
 import './FileDropZone.css'
 
 interface FileDropZoneProps {
-    onFileDrop: (file: File) => void
+    onFileDrop: (file: File) => void | Promise<void>
     acceptedTypes?: string[]
     maxSizeMB?: number
 }
@@ -12,7 +12,7 @@ export default function FileDropZone({ onFileDrop, acceptedTypes = ['.csv', '.da
     const [isUploading, setIsUploading] = useState(false)
     const [uploadProgress, setUploadProgress] = useState<string>('')
 
-    const validateFile = (file: File): string | null => {
+    const validateFile = useCallback((file: File): string | null => {
         // Check file extension
         const fileName = file.name.toLowerCase()
         const hasValidExtension = acceptedTypes.some(ext => 
@@ -33,7 +33,7 @@ export default function FileDropZone({ onFileDrop, acceptedTypes = ['.csv', '.da
         }
 
         return null
-    }
+    }, [acceptedTypes, maxSizeMB])
 
     const handleDrop = useCallback(async (e: React.DragEvent<HTMLDivElement>) => {
         e.preventDefault()
@@ -54,7 +54,7 @@ export default function FileDropZone({ onFileDrop, acceptedTypes = ['.csv', '.da
         setUploadProgress(`Uploading ${file.name}...`)
 
         try {
-            onFileDrop(file)
+            await onFileDrop(file)
             setUploadProgress(`Uploaded ${file.name} successfully!`)
             setTimeout(() => setUploadProgress(''), 2000)
         } catch (err) {
@@ -64,7 +64,7 @@ export default function FileDropZone({ onFileDrop, acceptedTypes = ['.csv', '.da
         } finally {
             setIsUploading(false)
         }
-    }, [onFileDrop, acceptedTypes, maxSizeMB])
+    }, [onFileDrop, validateFile])
 
     const handleDragOver = useCallback((e: React.DragEvent<HTMLDivElement>) => {
         e.preventDefault()
@@ -92,7 +92,7 @@ export default function FileDropZone({ onFileDrop, acceptedTypes = ['.csv', '.da
         setUploadProgress(`Uploading ${file.name}...`)
 
         try {
-            onFileDrop(file)
+            await onFileDrop(file)
             setUploadProgress(`Uploaded ${file.name} successfully!`)
             setTimeout(() => setUploadProgress(''), 2000)
         } catch (err) {
@@ -104,7 +104,7 @@ export default function FileDropZone({ onFileDrop, acceptedTypes = ['.csv', '.da
             // Reset input
             e.target.value = ''
         }
-    }, [onFileDrop, acceptedTypes, maxSizeMB])
+    }, [onFileDrop, validateFile])
 
     return (
         <div

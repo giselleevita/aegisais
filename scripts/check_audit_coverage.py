@@ -21,13 +21,13 @@ PROTECTED_PATTERNS = (
 )
 
 EVIDENCE_PATTERNS = (
-    "docs/AUDIT_COVERAGE_MATRIX.md",
-    "docs/SECURITY_EVIDENCE_PACK.md",              # BL-014
+    "docs/governance/AUDIT_COVERAGE_MATRIX.md",
+    "docs/security/SECURITY_EVIDENCE_PACK.md",     # BL-014
     "docs/security/SECURITY_AND_COMPLIANCE.md",    # BL-014
-    "docs/INTEROPERABILITY_PROFILE.md",            # BL-015
-    "docs/SUPPLY_CHAIN_ASSURANCE.md",              # BL-016
-    "docs/FUNDING_PILOT_EVIDENCE_TEMPLATE.md",     # BL-017
-    "docs/CONSORTIUM_EXECUTION_MODEL.md",          # BL-018
+    "docs/product/INTEROPERABILITY_PROFILE.md",    # BL-015
+    "docs/security/SUPPLY_CHAIN_ASSURANCE.md",     # BL-016
+    "docs/funding/FUNDING_PILOT_EVIDENCE_TEMPLATE.md",  # BL-017
+    "docs/architecture/CONSORTIUM_EXECUTION_MODEL.md",  # BL-018
     "packages/contracts/schemas/ImportBundle.schema.json",  # BL-015
     "apps/api/app/modules/audit/*",
     "apps/api/tests/*audit*",

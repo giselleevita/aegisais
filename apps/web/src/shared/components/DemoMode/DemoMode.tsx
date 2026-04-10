@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { apiClient } from '@/core/api-client'
 import './DemoMode.css'
 
@@ -22,23 +22,22 @@ export default function DemoMode({ onStartDemo }: DemoModeProps) {
     const [demoFiles, setDemoFiles] = useState<Array<{ filename: string; path: string; size_mb: number }>>([])
     const [loading, setLoading] = useState(true)
 
-    useEffect(() => {
-        loadDemoFiles()
-    }, [])
-
-    const loadDemoFiles = async () => {
+    const loadDemoFiles = useCallback(async () => {
         try {
             const result = await apiClient.listUploadedFiles()
             setDemoFiles(result.files.sort((a, b) => b.size_mb - a.size_mb))
         } catch (error) {
             if (import.meta.env.DEV) {
-                // eslint-disable-next-line no-console
                 console.error('Failed to load demo files:', error)
             }
         } finally {
             setLoading(false)
         }
-    }
+    }, [])
+
+    useEffect(() => {
+        void loadDemoFiles()
+    }, [loadDemoFiles])
 
     const handleStartDemo = async (filePath: string) => {
         try {
@@ -46,7 +45,6 @@ export default function DemoMode({ onStartDemo }: DemoModeProps) {
             onStartDemo()
         } catch (error) {
             if (import.meta.env.DEV) {
-                // eslint-disable-next-line no-console
                 console.error('Failed to start demo:', error)
             }
             alert('Failed to start demo. Please check if the file exists.')

@@ -78,7 +78,7 @@ kubectl diff -k infra/k8s/profiles/sovereign-uk
 kubectl apply -k infra/k8s/profiles/sovereign-uk
 ```
 
-Full sovereignty reference architecture and tenant isolation controls are documented in `docs/SUPPLY_CHAIN_ASSURANCE.md`.
+Full sovereignty reference architecture and tenant isolation controls are documented in `docs/security/SUPPLY_CHAIN_ASSURANCE.md`.
 
 - Point-in-time rollback by revision:
 

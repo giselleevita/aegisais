@@ -10,6 +10,17 @@
   color: var(--text-primary);
 }
 
+.app-loading-shell {
+  min-height: 100%;
+  display: grid;
+  place-items: center;
+  padding: 2rem;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  letter-spacing: 0.02em;
+  text-align: center;
+}
+
 /* ── Header ────────────────────────────────────────────────────────── */
 .app-header {
   background: var(--bg-surface);

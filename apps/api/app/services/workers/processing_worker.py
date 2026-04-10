@@ -26,6 +26,12 @@ PROCESSING_LATENCY = Summary('aegisais_processing_latency_seconds', 'Time spent 
 ALERTS_GENERATED = Counter('aegisais_alerts_total', 'Total alerts generated', ['rule_type', 'severity'])
 POSITION_PROCESSED = Counter('aegisais_positions_processed_total', 'Total AIS points processed')
 
+
+def _optional_float(value: Any) -> float | None:
+    if value is None:
+        return None
+    return float(value)
+
 @PROCESSING_LATENCY.time()
 def handle_ais_point(msg_id: str, data: Dict[str, Any]):
     """
@@ -40,9 +46,9 @@ def handle_ais_point(msg_id: str, data: Dict[str, Any]):
             timestamp=timestamp,
             lat=float(data["lat"]),
             lon=float(data["lon"]),
-            sog=float(data["sog"]),
-            cog=float(data["cog"]),
-            heading=float(data.get("heading", 0))
+            sog=_optional_float(data.get("sog")),
+            cog=_optional_float(data.get("cog")),
+            heading=_optional_float(data.get("heading")),
         )
         
         # Pure logic processing (no DB)
