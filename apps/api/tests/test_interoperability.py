@@ -12,11 +12,14 @@ from datetime import datetime, timezone
 import pytest
 
 from app.modules.alerts.models import Alert
+from app.modules.auth.models import Organisation, User
+from app.modules.auth.org_scope import apply_org_filter
 from app.modules.integrations.importers_ports import PortSeedRow
 from app.modules.integrations.migration_validator import (
     MigrationValidationReport,
     validate_port_seed_rows,
 )
+from app.modules.vessels.models import VesselLatest
 from tests.conftest import TestingSessionLocal, register_and_login_as_admin
 
 # ---------------------------------------------------------------------------
@@ -160,10 +163,107 @@ def test_int002_json_export_conforms_to_alertout_schema(client):
         assert record["status"] in {"new", "reviewed", "resolved", "false_positive"}
 
 
+def test_int002_json_export_respects_limit(client):
+    token = register_and_login_as_admin(client)
+    _seed_alert()
+    _seed_alert()
+    _seed_alert()
+
+    r = client.get(
+        "/v1/alerts/export/json?limit=2",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert r.status_code == 200, r.text
+
+    payload = json.loads(r.content)
+    assert isinstance(payload, list)
+    assert len(payload) == 2
+
+
 def test_int002_export_requires_admin(client):
     """INT-002 access control: non-admin callers are rejected."""
     r = client.get("/v1/alerts/export/json")
     assert r.status_code in {401, 403}
+
+
+def _seed_vessel_and_alert_for_latest_user() -> tuple[int, str]:
+    db = TestingSessionLocal()
+    try:
+        user = db.query(User).filter(User.username.isnot(None)).order_by(User.id.desc()).first()
+        assert user is not None
+
+        vessel = VesselLatest(
+            mmsi="265503690",
+            organisation_id=user.organisation_id,
+            timestamp=datetime.now(timezone.utc),
+            lat=57.7123,
+            lon=11.9668,
+            sog=12.4,
+            cog=184.2,
+            heading=182.0,
+            last_alert_severity=81,
+        )
+        db.add(vessel)
+        db.flush()
+
+        alert = Alert(
+            organisation_id=user.organisation_id,
+            timestamp=datetime.now(timezone.utc),
+            mmsi=vessel.mmsi,
+            type="TELEPORT",
+            severity=81,
+            summary="Interop export seed alert",
+            evidence={"p2_lat": 57.7123, "p2_lon": 11.9668, "delta_km": 120},
+            status="new",
+        )
+        db.add(alert)
+        db.commit()
+        return alert.id, vessel.mmsi
+    finally:
+        db.close()
+
+
+def test_int002_cot_vessel_endpoint_uses_persisted_scoped_vessel(client):
+    token = register_and_login_as_admin(client)
+    _, mmsi = _seed_vessel_and_alert_for_latest_user()
+
+    r = client.get(
+        f"/v1/interop/cot/vessel/{mmsi}",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert r.status_code == 200, r.text
+    assert r.headers["content-type"].startswith("application/xml")
+    assert mmsi in r.text
+    assert "57.712300" in r.text
+    assert "11.966800" in r.text
+
+
+def test_int002_nffi_alert_endpoint_uses_persisted_scoped_alert(client):
+    token = register_and_login_as_admin(client)
+    alert_id, _ = _seed_vessel_and_alert_for_latest_user()
+
+    r = client.get(
+        f"/v1/interop/nffi/alert/{alert_id}",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert r.status_code == 200, r.text
+    assert r.headers["content-type"].startswith("application/xml")
+    assert "Interop export seed alert" in r.text
+    assert "TELEPORT" in r.text
+
+
+def test_org_scope_rejects_unscoped_models_for_non_super_admin(client):
+    token = register_and_login_as_admin(client)
+    assert token
+
+    db = TestingSessionLocal()
+    try:
+        user = db.query(User).filter(User.username.isnot(None)).order_by(User.id.desc()).first()
+        assert user is not None
+        with pytest.raises(ValueError, match="organisation_id"):
+            apply_org_filter(db.query(Organisation), Organisation, user)
+    finally:
+        db.close()
 
 
 # ---------------------------------------------------------------------------

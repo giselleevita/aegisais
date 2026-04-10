@@ -1,6 +1,6 @@
-import type { LayerDefinition } from '@/shared/types/common'
+import type { LayerDefinition, LayerManifestItem } from '@/shared/types/common'
 import { API_BASE_URL } from '@/core/config'
-import { apiClient } from '@/core/api-client'
+import { ApiClientError, apiClient } from '@/core/api-client'
 
 export type FlightPoint = {
   id: string
@@ -130,10 +130,48 @@ function flightSeed(): FlightPoint[] {
   ]
 }
 
+function manifestItemToLayerDefinition(item: LayerManifestItem): LayerDefinition {
+  const category =
+    item.domain === 'ports'
+      ? 'reference'
+      : item.domain === 'subsea'
+        ? 'infrastructure'
+        : 'live'
+
+  const descriptions: Record<LayerManifestItem['domain'], string> = {
+    aviation: 'Airspace and aviation overlays from the BFF policy surface.',
+    ports: 'Port and terminal reference overlays from the BFF policy surface.',
+    subsea: 'Subsea cable overlays from the BFF policy surface.',
+  }
+
+  return {
+    id: item.id,
+    name: item.name,
+    category,
+    description: descriptions[item.domain],
+    enabledByDefault: item.domain !== 'subsea',
+    restricted: item.domain === 'subsea',
+    nonCommercial: item.domain === 'subsea',
+    licensedFeature: item.licensedFeature,
+    updatedAt: item.updatedAt,
+    metadata: {
+      provenance: `BFF ${item.domain} manifest`,
+      confidence: item.domain === 'ports' ? 0.96 : 0.84,
+      source: item.source,
+      access: item.licensedFeature,
+      licence: item.licensedFeature,
+    },
+  }
+}
+
 export async function getLayerCatalogue(): Promise<LayerDefinition[]> {
   try {
-    return await apiClient.getLayers()
-  } catch {
+    const manifest = await apiClient.getLayersManifest()
+    return manifest.layers.map(manifestItemToLayerDefinition)
+  } catch (error) {
+    if (error instanceof ApiClientError && (error.status === 401 || error.status === 403)) {
+      throw error
+    }
     return FALLBACK_LAYERS
   }
 }

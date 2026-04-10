@@ -3,7 +3,7 @@
    Theme: Maritime Command & Control — Dark Navy
    ═══════════════════════════════════════════════════════════════════════ */
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&family=Space+Grotesk:wght@500;700&display=swap');
 
 /* ── Design Tokens ─────────────────────────────────────────────────── */
 :root {
@@ -13,6 +13,8 @@
   --bg-card:      #111b2d;
   --bg-elevated:  #172034;
   --bg-hover:     #1d2840;
+  --bg-panel:     rgba(8, 15, 28, 0.82);
+  --bg-panel-strong: rgba(7, 13, 25, 0.94);
 
   /* Borders */
   --border-subtle:  #172034;
@@ -29,6 +31,8 @@
   --accent:         #0ea5e9;
   --accent-dim:     rgba(14, 165, 233, 0.12);
   --accent-border:  rgba(14, 165, 233, 0.35);
+  --accent-strong:  #67d4ff;
+  --accent-glow:    rgba(103, 212, 255, 0.16);
 
   /* Severity — military standard */
   --sev-high:          #ef4444;
@@ -66,8 +70,9 @@
   --prio-low:    #22c55e;
 
   /* Typography */
-  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
-  --font-mono: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+  --font-display: 'Space Grotesk', 'IBM Plex Sans', system-ui, sans-serif;
+  --font-sans: 'IBM Plex Sans', 'Segoe UI', system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', 'JetBrains Mono', 'Consolas', monospace;
 
   /* Spacing (4px grid) */
   --sp-1: 4px;
@@ -108,7 +113,10 @@
 
 body {
   min-height: 100vh;
-  background: var(--bg-base);
+  background:
+    radial-gradient(circle at top, rgba(82, 180, 255, 0.1), transparent 28%),
+    radial-gradient(circle at 80% 20%, rgba(25, 96, 170, 0.12), transparent 24%),
+    var(--bg-base);
   color: var(--text-primary);
 }
 

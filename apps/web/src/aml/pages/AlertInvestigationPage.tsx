@@ -9,7 +9,7 @@ import {
   renderEvidence,
 } from '@/features/alerts/lib/alertEvidence'
 import type { AmlOutletContext } from '@/aml/amlOutletContext'
-import { AML_OPERATIONS_PATH } from '@/aml/amlRoutes'
+import { AML_OPERATIONS_PATH, getMapForMmsiPath } from '@/aml/amlRoutes'
 import './alert-investigation.css'
 
 export default function AlertInvestigationPage() {
@@ -107,7 +107,7 @@ export default function AlertInvestigationPage() {
           Triage
         </Link>
         <Link
-          to={`${AML_OPERATIONS_PATH}?mmsi=${encodeURIComponent(alertRecord.mmsi)}`}
+          to={getMapForMmsiPath(alertRecord.mmsi)}
           className="aml-inv__link"
         >
           Map + vessel
