@@ -171,6 +171,12 @@ Behavior:
 - uploads one artifact bundle per slice
 - fails the workflow if either slice drifts beyond the current shadow thresholds
 
+Current validated slices in the sweep:
+
+- sharing and COP
+- export and interop review
+- tenant boundary and org-scope misuse
+
 Recommended use:
 
 1. keep the schedule enabled so drift appears before normal enforcement expands
@@ -190,6 +196,12 @@ Behavior:
 - fails the workflow if either slice violates the current blocking thresholds
 - uploads one blocking artifact bundle per slice for debugging
 
+Current validated slices in PR enforcement:
+
+- sharing and COP
+- export and interop review
+- tenant boundary and org-scope misuse
+
 Recommended use:
 
 1. keep this workflow scoped to the validated slices only
@@ -207,7 +219,7 @@ Current limitation:
 
 - sharing and COP: shadow validated and manual blocking validated
 - export and interop review: shadow validated and manual blocking validated
-- tenant boundary and org-scope misuse: shadow validated, blocking workflow added
+- tenant boundary and org-scope misuse: shadow validated and manual blocking validated
 
 Both slices now have one clean manual blocking validation, but they should still stay out of broader normal PR enforcement until repeated stability sweep runs remain clean.
 
