@@ -70,4 +70,28 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes('/node_modules/cesium/')) {
+            return 'vendor-cesium'
+          }
+          if (id.includes('/node_modules/react/') || id.includes('/node_modules/react-dom/')) {
+            return 'vendor-react'
+          }
+          if (id.includes('/node_modules/react-router-dom/') || id.includes('/node_modules/@remix-run/')) {
+            return 'vendor-router'
+          }
+          if (
+            id.includes('/node_modules/leaflet/') ||
+            id.includes('/node_modules/react-leaflet/')
+          ) {
+            return 'vendor-maps'
+          }
+          return undefined
+        },
+      },
+    },
+  },
 })

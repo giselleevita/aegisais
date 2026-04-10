@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { apiClient } from '@/core/api-client'
+import { describeApiFailure } from '@/core/api-errors'
 import type { Alert, AlertFilters, WebSocketMessage } from '@/shared/types/common'
 import {
     formatAlertType,
@@ -17,12 +18,15 @@ type AlertsPanelProps = {
     linkToAlert?: (alertId: number) => string
     /** When set, links to map context for the vessel MMSI (e.g. `/map?mmsi=`). */
     linkToMapForMmsi?: (mmsi: string) => string
+    /** Apply quick triage filter presets from parent workflows. */
+    quickPreset?: 'critical-new' | 'high-open' | 'last-hour' | 'clear' | null
 }
 
 export default function AlertsPanel({
     streamMessage = null,
     linkToAlert,
     linkToMapForMmsi,
+    quickPreset = null,
 }: AlertsPanelProps) {
     const [alerts, setAlerts] = useState<Alert[]>([])
     const [loading, setLoading] = useState(true)
@@ -33,12 +37,51 @@ export default function AlertsPanel({
     const [endTime, setEndTime] = useState<string>('')
     const [editingAlert, setEditingAlert] = useState<number | null>(null)
     const [alertNotes, setAlertNotes] = useState<string>('')
+    const [activeAlertIdx, setActiveAlertIdx] = useState(0)
+    const [loadError, setLoadError] = useState<string | null>(null)
+
+    const isEditableTarget = (target: EventTarget | null): boolean => {
+        if (!(target instanceof HTMLElement)) return false
+        const tag = target.tagName.toLowerCase()
+        return target.isContentEditable || tag === 'input' || tag === 'textarea' || tag === 'select'
+    }
+
+    const loadAlerts = useCallback(async () => {
+        try {
+            setLoading(true)
+            setLoadError(null)
+            const params: AlertFilters = { limit: 100 }
+            if (filterType) params.alert_type = filterType
+            if (filterStatus) params.status = filterStatus
+            if (minSeverity > 0) params.min_severity = minSeverity
+            if (startTime) params.start_time = new Date(startTime).toISOString()
+            if (endTime) params.end_time = new Date(endTime).toISOString()
+            const data = await apiClient.getAlerts(params)
+            setAlerts(data)
+        } catch (err) {
+            setAlerts([])
+            setLoadError(
+                describeApiFailure(err, {
+                    fallback: 'Unable to load alerts.',
+                    unauthorized: 'Sign in to load the alert queue.',
+                    offline: 'Alert queue degraded. Restore the API policy surface to refresh live alerts.',
+                })
+            )
+            if (import.meta.env.DEV) {
+                console.error('Failed to load alerts:', err)
+            }
+        } finally {
+            setLoading(false)
+        }
+    }, [endTime, filterStatus, filterType, minSeverity, startTime])
 
     useEffect(() => {
-        loadAlerts()
-        const interval = setInterval(loadAlerts, 5000)
+        void loadAlerts()
+        const interval = setInterval(() => {
+            void loadAlerts()
+        }, 5000)
         return () => clearInterval(interval)
-    }, [filterType, filterStatus, minSeverity, startTime, endTime])
+    }, [loadAlerts])
 
     useEffect(() => {
         if (!streamMessage || !('type' in streamMessage)) return
@@ -49,26 +92,42 @@ export default function AlertsPanel({
         )
     }, [streamMessage])
 
-    const loadAlerts = async () => {
-        try {
-            setLoading(true)
-            const params: AlertFilters = { limit: 100 }
-            if (filterType) params.alert_type = filterType
-            if (filterStatus) params.status = filterStatus
-            if (minSeverity > 0) params.min_severity = minSeverity
-            if (startTime) params.start_time = new Date(startTime).toISOString()
-            if (endTime) params.end_time = new Date(endTime).toISOString()
-            const data = await apiClient.getAlerts(params)
-            setAlerts(data)
-        } catch (err) {
-            if (import.meta.env.DEV) {
-                // eslint-disable-next-line no-console
-                console.error('Failed to load alerts:', err)
-            }
-        } finally {
-            setLoading(false)
+    useEffect(() => {
+        if (!quickPreset) return
+        if (quickPreset === 'clear') {
+            setFilterType('')
+            setFilterStatus('')
+            setMinSeverity(0)
+            setStartTime('')
+            setEndTime('')
+            return
         }
-    }
+        if (quickPreset === 'critical-new') {
+            setFilterType('')
+            setFilterStatus('new')
+            setMinSeverity(70)
+            return
+        }
+        if (quickPreset === 'high-open') {
+            setFilterType('')
+            setFilterStatus('')
+            setMinSeverity(50)
+            return
+        }
+        if (quickPreset === 'last-hour') {
+            const now = new Date()
+            const start = new Date(now.getTime() - 60 * 60 * 1000)
+            setStartTime(start.toISOString().slice(0, 16))
+            setEndTime(now.toISOString().slice(0, 16))
+        }
+    }, [quickPreset])
+
+    useEffect(() => {
+        setActiveAlertIdx((idx) => {
+            if (alerts.length === 0) return 0
+            return Math.max(0, Math.min(idx, alerts.length - 1))
+        })
+    }, [alerts.length])
 
     const handleStatusUpdate = async (alertId: number, status: string, notes?: string) => {
         try {
@@ -79,7 +138,6 @@ export default function AlertsPanel({
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : 'Failed to update alert status'
             if (import.meta.env.DEV) {
-                // eslint-disable-next-line no-console
                 console.error('Failed to update alert status:', err)
             }
             alert(`Failed to update alert status: ${errorMessage}`)
@@ -102,7 +160,43 @@ export default function AlertsPanel({
     }
 
     return (
-        <div className="alerts-panel">
+        <div
+            className="alerts-panel"
+            tabIndex={0}
+            onKeyDown={(event) => {
+                if (isEditableTarget(event.target) || alerts.length === 0) return
+                if (event.key.toLowerCase() === 'j') {
+                    event.preventDefault()
+                    setActiveAlertIdx((idx) => Math.min(idx + 1, alerts.length - 1))
+                    return
+                }
+                if (event.key.toLowerCase() === 'k') {
+                    event.preventDefault()
+                    setActiveAlertIdx((idx) => Math.max(idx - 1, 0))
+                    return
+                }
+
+                const activeAlert = alerts[activeAlertIdx]
+                if (!activeAlert) return
+                if (event.key.toLowerCase() === 'n') {
+                    event.preventDefault()
+                    void handleStatusUpdate(activeAlert.id, 'new')
+                }
+                if (event.key.toLowerCase() === 'r') {
+                    event.preventDefault()
+                    void handleStatusUpdate(activeAlert.id, 'reviewed')
+                }
+                if (event.key.toLowerCase() === 's') {
+                    event.preventDefault()
+                    void handleStatusUpdate(activeAlert.id, 'resolved')
+                }
+                if (event.key.toLowerCase() === 'f') {
+                    event.preventDefault()
+                    void handleStatusUpdate(activeAlert.id, 'false_positive')
+                }
+            }}
+            aria-label="Alerts queue"
+        >
             <div className="panel-header">
                 <div>
                     <h2>Alerts</h2>
@@ -110,6 +204,7 @@ export default function AlertsPanel({
                         <span className="label">Integrity</span>: hard physics / data integrity violations.{" "}
                         <span className="label">Suspicious</span>: softer data‑quality or unusual behaviour signals.
                     </div>
+                    <div className="panel-subtitle">Queue hotkeys: J/K move, R reviewed, S resolved, F false positive, N new.</div>
                 </div>
                 <div className="panel-controls">
                     <div className="filter-row">
@@ -183,11 +278,26 @@ export default function AlertsPanel({
                 <div className="loading">Loading alerts...</div>
             ) : (
                 <div className="alerts-list">
-                    {alerts.length === 0 ? (
-                        <div className="empty-state">No alerts found</div>
+                    {loadError ? (
+                        <div className="alerts-state alerts-state--error" role="alert">
+                            <strong>Queue degraded.</strong>
+                            <span>{loadError}</span>
+                            <button type="button" className="btn-clear" onClick={() => void loadAlerts()}>
+                                Retry sync
+                            </button>
+                        </div>
+                    ) : alerts.length === 0 ? (
+                        <div className="alerts-state empty-state">
+                            <strong>No alerts found</strong>
+                            <span>Adjust queue filters or wait for the next ingest window.</span>
+                        </div>
                     ) : (
-                        alerts.map((alert) => (
-                            <div key={alert.id} className={`alert-card severity-${getSeverityLevel(alert.severity)}`}>
+                        alerts.map((alert, idx) => (
+                            <div
+                                key={alert.id}
+                                className={`alert-card severity-${getSeverityLevel(alert.severity)} ${idx === activeAlertIdx ? 'alert-card--active' : ''}`}
+                                onClick={() => setActiveAlertIdx(idx)}
+                            >
                                 <div className="alert-header">
                                     <div className="alert-type">
                                         {formatAlertType(alert.type)}

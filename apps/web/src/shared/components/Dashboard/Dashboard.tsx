@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { apiClient } from '@/core/api-client'
 import type { AlertStats, WebSocketMessage } from '@/shared/types/common'
 import './Dashboard.css'
@@ -13,25 +13,7 @@ export default function Dashboard({ lastMessage }: DashboardProps) {
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
 
-    useEffect(() => {
-        loadStats()
-        loadVesselCount()
-        const interval = setInterval(() => {
-            loadStats()
-            loadVesselCount()
-        }, 5000) // Refresh every 5 seconds
-
-        return () => clearInterval(interval)
-    }, [])
-
-    useEffect(() => {
-        if (lastMessage?.kind === 'alert' || lastMessage?.kind === 'tick') {
-            loadStats()
-            loadVesselCount()
-        }
-    }, [lastMessage])
-
-    const loadStats = async () => {
+    const loadStats = useCallback(async () => {
         try {
             const data = await apiClient.getAlertStats()
             setStats(data)
@@ -40,26 +22,42 @@ export default function Dashboard({ lastMessage }: DashboardProps) {
             const errorMessage = err instanceof Error ? err.message : 'Failed to load stats'
             setError(errorMessage)
             if (import.meta.env.DEV) {
-                // eslint-disable-next-line no-console
                 console.error('Failed to load stats:', err)
             }
         } finally {
             setLoading(false)
         }
-    }
+    }, [])
 
-    const loadVesselCount = async () => {
+    const loadVesselCount = useCallback(async () => {
         try {
             // Get total count by fetching with a high limit
             const allVessels = await apiClient.getVessels(0, 5000)
             setVesselCount(allVessels.length)
         } catch (err) {
             if (import.meta.env.DEV) {
-                // eslint-disable-next-line no-console
                 console.error('Failed to load vessel count:', err)
             }
         }
-    }
+    }, [])
+
+    useEffect(() => {
+        void loadStats()
+        void loadVesselCount()
+        const interval = setInterval(() => {
+            void loadStats()
+            void loadVesselCount()
+        }, 5000)
+
+        return () => clearInterval(interval)
+    }, [loadStats, loadVesselCount])
+
+    useEffect(() => {
+        if (lastMessage?.kind === 'alert' || lastMessage?.kind === 'tick') {
+            void loadStats()
+            void loadVesselCount()
+        }
+    }, [lastMessage, loadStats, loadVesselCount])
 
     if (loading) {
         return <div className="dashboard-loading">Loading dashboard...</div>
