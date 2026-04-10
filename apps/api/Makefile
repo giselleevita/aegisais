@@ -6,3 +6,6 @@ check-deps:
 
 audit-deps:
 	pip-audit -r requirements.lock
+
+smoke-llm:
+	./.venv/bin/python ./scripts/smoke_llm.py

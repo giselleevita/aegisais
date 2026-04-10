@@ -60,7 +60,7 @@
 | AC-05      | Rate limiting — BFF layer                   | A.12.6        | PR.AC-5  | CC6.6    | ✅     | `BL-008`, `apps/bff/src/services/rateLimiter.ts`                                         | BFF       |
 | AC-06      | License gate enforcement                    | A.9.1         | PR.AC-4  | CC6.3    | ✅     | `BL-008`, `apps/bff/src/middleware/licensing.ts`                                         | BFF       |
 | AU-01      | Audit log for all privileged actions        | A.12.4        | DE.CM-3  | CC7.2    | ✅     | `BL-005`, `BL-006`, `app/modules/audit/`                                                 | Security  |
-| AU-02      | Audit coverage matrix enforced in CI        | A.12.4        | DE.CM-3  | CC7.2    | ✅     | `docs/AUDIT_COVERAGE_MATRIX.md`, `scripts/check_audit_coverage.py`                       | Security  |
+| AU-02      | Audit coverage matrix enforced in CI        | A.12.4        | DE.CM-3  | CC7.2    | ✅     | `docs/governance/AUDIT_COVERAGE_MATRIX.md`, `scripts/check_audit_coverage.py`            | Security  |
 | AU-03      | Immutable audit records (no update/delete)  | A.12.4        | PR.PT-1  | CC7.2    | ✅     | `AuditLog` ORM — no update path exposed                                                  | Security  |
 | AU-04      | System-actor audit events (worker/pipeline) | A.12.4        | DE.CM-3  | CC7.2    | ✅     | `BL-005`, `test_alert_worker_audit.py`                                                   | Security  |
 | CR-01      | Secrets management — env vars only          | A.10.1        | PR.DS-1  | CC6.1    | ✅     | `app/core/config.py`                                                                     | Platform  |

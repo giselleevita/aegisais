@@ -3,8 +3,10 @@
 import os
 
 # Defaults so Sprint 1 production-style settings do not break the suite (see IMPLEMENTATION_PLAN.md).
-os.environ.setdefault("APP_ENV", "test")
-os.environ.setdefault("WEBSOCKET_REQUIRE_AUTH", "false")
+os.environ["APP_ENV"] = "test"
+os.environ["WEBSOCKET_REQUIRE_AUTH"] = "false"
+os.environ["LLM_ENABLED"] = "false"
+os.environ.pop("LLM_API_KEY", None)
 
 import uuid
 
@@ -24,10 +26,12 @@ from app.modules.auth.models import (  # noqa: F401
     User,
 )
 from app.modules.audit.models import AuditLog  # noqa: F401 — register audit_logs for create_all
+from app.modules.assets.models import Asset, AssetLink, AssetPolicy  # noqa: F401 — asset core tables
 from app.modules.integrations.models import (  # noqa: F401 — integration refs
     PortReference,
     UnlocodeReference,
 )
+from app.modules.iot.models import Device, DeviceHeartbeat, EdgeSyncBatch, TelemetryEvent  # noqa: F401 — iot registry tables
 from app.modules.itdae.models import ItdaeGeofenceZone  # noqa: F401 — itdae_geofence_zones
 from app.modules.incidents.models import Incident  # noqa: F401 — incidents
 from app.modules.vessels.models import (  # noqa: F401 — register for create_all

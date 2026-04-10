@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aegisais.dev/contracts/TelemetryEnvelope.schema.json",
+  "title": "TelemetryEnvelope",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "eventId",
+    "sourceType",
+    "sourceId",
+    "recordedAt",
+    "payload",
+    "provenance"
+  ],
+  "properties": {
+    "eventId": { "type": "string" },
+    "sourceType": {
+      "type": "string",
+      "enum": ["mqtt", "nmea", "edge_batch", "api"]
+    },
+    "sourceId": { "type": "string" },
+    "recordedAt": { "type": "string", "format": "date-time" },
+    "dedupeKey": { "type": "string" },
+    "payload": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "provenance": {
+      "$ref": "./Provenance.schema.json"
+    }
+  }
+}

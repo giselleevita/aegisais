@@ -1,7 +1,13 @@
+import { Suspense, lazy } from 'react'
 import { BrowserRouter } from 'react-router-dom'
-import LegacyApp from '@/legacy/LegacyApp'
-import AmlApp from '@/aml/AmlApp'
 import { getUiMode } from '@/core/uiMode'
+
+const LegacyApp = lazy(() => import('@/legacy/LegacyApp'))
+const AmlApp = lazy(() => import('@/aml/AmlApp'))
+
+function AppBootFallback() {
+  return <div className="app-loading-shell">Loading workspace...</div>
+}
 
 /**
  * Default: AML analyst console (fusion-to-risk workflow). Legacy tabbed UI when
@@ -10,11 +16,17 @@ import { getUiMode } from '@/core/uiMode'
 export default function App() {
   const mode = getUiMode()
   if (mode === 'legacy') {
-    return <LegacyApp />
+    return (
+      <Suspense fallback={<AppBootFallback />}>
+        <LegacyApp />
+      </Suspense>
+    )
   }
   return (
-    <BrowserRouter>
-      <AmlApp />
-    </BrowserRouter>
+    <Suspense fallback={<AppBootFallback />}>
+      <BrowserRouter>
+        <AmlApp />
+      </BrowserRouter>
+    </Suspense>
   )
 }

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { apiClient } from '@/core/api-client'
 import type { Alert, AlertFilters, WebSocketMessage } from '@/shared/types/common'
@@ -34,22 +34,7 @@ export default function AlertsPanel({
     const [editingAlert, setEditingAlert] = useState<number | null>(null)
     const [alertNotes, setAlertNotes] = useState<string>('')
 
-    useEffect(() => {
-        loadAlerts()
-        const interval = setInterval(loadAlerts, 5000)
-        return () => clearInterval(interval)
-    }, [filterType, filterStatus, minSeverity, startTime, endTime])
-
-    useEffect(() => {
-        if (!streamMessage || !('type' in streamMessage)) return
-        if (streamMessage.type !== 'alert_status_updated') return
-        const { alert_id: alertId, status } = streamMessage
-        setAlerts((prev) =>
-            prev.map((a) => (a.id === alertId ? { ...a, status } : a))
-        )
-    }, [streamMessage])
-
-    const loadAlerts = async () => {
+    const loadAlerts = useCallback(async () => {
         try {
             setLoading(true)
             const params: AlertFilters = { limit: 100 }
@@ -62,13 +47,27 @@ export default function AlertsPanel({
             setAlerts(data)
         } catch (err) {
             if (import.meta.env.DEV) {
-                // eslint-disable-next-line no-console
                 console.error('Failed to load alerts:', err)
             }
         } finally {
             setLoading(false)
         }
-    }
+    }, [endTime, filterStatus, filterType, minSeverity, startTime])
+
+    useEffect(() => {
+        void loadAlerts()
+        const interval = setInterval(loadAlerts, 5000)
+        return () => clearInterval(interval)
+    }, [loadAlerts])
+
+    useEffect(() => {
+        if (!streamMessage || !('type' in streamMessage)) return
+        if (streamMessage.type !== 'alert_status_updated') return
+        const { alert_id: alertId, status } = streamMessage
+        setAlerts((prev) =>
+            prev.map((a) => (a.id === alertId ? { ...a, status } : a))
+        )
+    }, [streamMessage])
 
     const handleStatusUpdate = async (alertId: number, status: string, notes?: string) => {
         try {
@@ -79,7 +78,6 @@ export default function AlertsPanel({
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : 'Failed to update alert status'
             if (import.meta.env.DEV) {
-                // eslint-disable-next-line no-console
                 console.error('Failed to update alert status:', err)
             }
             alert(`Failed to update alert status: ${errorMessage}`)

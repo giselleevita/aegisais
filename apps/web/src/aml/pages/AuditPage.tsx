@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { apiClient } from '@/core/api-client'
 import type { AuditLogEntry } from '@/shared/types/common'
 
@@ -25,7 +25,7 @@ export default function AuditPage() {
   const [hasMore, setHasMore] = useState(false)
   const [exporting, setExporting] = useState(false)
 
-  const load = async () => {
+  const load = useCallback(async () => {
     setLoading(true)
     setError(null)
     try {
@@ -57,11 +57,11 @@ export default function AuditPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [action, endTime, offset, resourceId, resourceType, startTime, userId])
 
   useEffect(() => {
     void load()
-  }, [action, userId, resourceType, resourceId, startTime, endTime, offset])
+  }, [load])
 
   const handleExport = async () => {
     setExporting(true)

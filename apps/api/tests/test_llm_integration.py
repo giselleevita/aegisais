@@ -60,6 +60,32 @@ class TestLLMClient:
             result = await complete("system", "user")
             assert result is None
 
+    @pytest.mark.asyncio
+    async def test_get_client_recreates_for_new_event_loop(self):
+        import asyncio
+        from app.services import llm
+
+        original_client = llm._client
+        original_loop = llm._client_loop
+
+        try:
+            first = llm._get_client()
+            assert first is not None
+            assert llm._client_loop is asyncio.get_running_loop()
+
+            fake_loop = MagicMock()
+            llm._client_loop = fake_loop
+
+            second = llm._get_client()
+            assert second is not None
+            assert second is not first
+            assert llm._client_loop is asyncio.get_running_loop()
+        finally:
+            if llm._client is not None and llm._client is not original_client:
+                await llm._client.aclose()
+            llm._client = original_client
+            llm._client_loop = original_loop
+
     def test_is_llm_enabled_false_by_default(self):
         from app.services.llm import is_llm_enabled
         # Default config has LLM_ENABLED=False
@@ -241,11 +267,50 @@ class TestAnalystChat:
         from app.main import app
 
         client = TestClient(app)
-        resp = client.get("/v1/analyst/status")
-        assert resp.status_code == 200
-        data = resp.json()
-        assert "enabled" in data
-        assert "model" in data
+        with patch(
+            "app.modules.analyst.router.get_llm_provider_status",
+            return_value={
+                "configured": True,
+                "reachable": True,
+                "authenticated": True,
+                "status": "ok",
+                "http_status": 200,
+                "error": None,
+            },
+        ):
+            resp = client.get("/v1/analyst/status")
+            assert resp.status_code == 200
+            data = resp.json()
+            assert "enabled" in data
+            assert "model" in data
+            assert "provider_status" in data
+            assert data["provider_status"]["status"] == "ok"
+
+    @pytest.mark.asyncio
+    async def test_analyst_status_reports_auth_failure(self):
+        from fastapi.testclient import TestClient
+        from app.main import app
+
+        client = TestClient(app)
+        with (
+            patch("app.modules.analyst.router.is_llm_enabled", return_value=True),
+            patch(
+                "app.modules.analyst.router.get_llm_provider_status",
+                return_value={
+                    "configured": True,
+                    "reachable": True,
+                    "authenticated": False,
+                    "status": "auth_failed",
+                    "http_status": 401,
+                    "error": "Provider rejected credentials",
+                },
+            ),
+        ):
+            resp = client.get("/v1/analyst/status")
+            assert resp.status_code == 200
+            data = resp.json()
+            assert data["provider_status"]["authenticated"] is False
+            assert data["provider_status"]["status"] == "auth_failed"
 
     @pytest.mark.asyncio
     async def test_chat_rejects_empty_messages(self):

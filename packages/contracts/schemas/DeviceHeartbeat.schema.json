@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aegisais.dev/contracts/DeviceHeartbeat.schema.json",
+  "title": "DeviceHeartbeat",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "deviceId",
+    "recordedAt",
+    "status"
+  ],
+  "properties": {
+    "deviceId": { "type": "string" },
+    "recordedAt": { "type": "string", "format": "date-time" },
+    "status": { "type": "string" },
+    "batteryLevel": { "type": "number" },
+    "queueDepth": { "type": "integer" },
+    "signalStrength": { "type": "number" },
+    "details": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  }
+}

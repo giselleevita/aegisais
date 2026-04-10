@@ -43,6 +43,16 @@ function cesiumDevServer() {
   }
 }
 
+function getNodeModulePackageName(id: string) {
+  const normalized = id.split('node_modules/')[1]
+  if (!normalized) return null
+  const segments = normalized.split('/')
+  if (segments[0]?.startsWith('@')) {
+    return segments.slice(0, 2).join('/')
+  }
+  return segments[0] ?? null
+}
+
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [
@@ -68,6 +78,38 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
+    },
+  },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (!id.includes('node_modules')) return undefined
+          const packageName = getNodeModulePackageName(id)
+          if (!packageName) return undefined
+
+          if (packageName === 'cesium' || packageName === '@cesium/engine' || packageName === '@cesium/widgets') {
+            return 'vendor-cesium'
+          }
+
+          if (
+            packageName === 'react' ||
+            packageName === 'react-dom' ||
+            packageName === 'react-router' ||
+            packageName === 'react-router-dom' ||
+            packageName === 'scheduler' ||
+            packageName === '@remix-run/router'
+          ) {
+            return 'vendor-react'
+          }
+
+          if (packageName === 'leaflet' || packageName === 'react-leaflet' || packageName === '@react-leaflet/core') {
+            return 'vendor-maps'
+          }
+
+          return undefined
+        },
+      },
     },
   },
 })

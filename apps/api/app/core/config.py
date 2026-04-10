@@ -117,8 +117,8 @@ class Settings(BaseSettings):
     LLM_API_KEY: str = ""
     LLM_BASE_URL: str = "https://api.featherless.ai/v1"
     LLM_MODEL: str = "Qwen/Qwen3-32B"
-    LLM_TEMPERATURE: float = 0.3
-    LLM_MAX_TOKENS: int = 600
+    LLM_TEMPERATURE: float = 0.2
+    LLM_MAX_TOKENS: int = 800
     LLM_TIMEOUT_SEC: int = 30
 
     # Detection thresholds

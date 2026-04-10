@@ -20,6 +20,7 @@ from app.services.llm import (
     SYSTEM_PROMPT_ANALYST,
     complete,
     complete_streaming,
+    get_llm_provider_status,
     is_llm_enabled,
 )
 
@@ -107,8 +108,10 @@ async def analyst_chat(req: ChatRequest):
 async def analyst_status():
     """Check if the analyst AI assistant is available."""
     from app.core.config import settings
+    provider_status = await get_llm_provider_status()
     return {
         "enabled": is_llm_enabled(),
         "provider": "featherless" if settings.LLM_BASE_URL and "featherless" in settings.LLM_BASE_URL else "openai-compatible",
         "model": settings.LLM_MODEL if is_llm_enabled() else None,
+        "provider_status": provider_status,
     }

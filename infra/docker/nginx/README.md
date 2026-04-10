@@ -7,6 +7,8 @@ Place TLS material in `certs/` next to this directory (see `certs/.gitkeep`):
 
 Docker Compose mounts `infra/docker/nginx/certs` read-only at `/etc/nginx/certs` inside the container.
 
+For local development, `scripts/start_full_stack.sh` will generate these files automatically if they are missing.
+
 ## Self-signed certificate (development)
 
 ```bash

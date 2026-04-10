@@ -243,6 +243,36 @@ class TestSanctionsLoader:
             assert "1234567" in result["imo"]
             assert "412345678" in result["mmsi"]
 
+        @pytest.mark.asyncio
+        async def test_fetch_un_parses_vessel_entries(self):
+                from app.modules.sanctions.official_lists import fetch_un_sanctions
+
+                xml_content = """
+                <CONSOLIDATED_LIST>
+                    <ENTITY>
+                        <FIRST_NAME>TEST SHIP</FIRST_NAME>
+                        <COMMENTS1>Sanctioned vessel. IMO 1234567 MMSI 412345678</COMMENTS1>
+                        <LIST_TYPE>Vessel</LIST_TYPE>
+                    </ENTITY>
+                </CONSOLIDATED_LIST>
+                """
+
+                mock_resp = MagicMock()
+                mock_resp.text = xml_content
+                mock_resp.raise_for_status = MagicMock()
+
+                with patch("app.modules.sanctions.official_lists.httpx.AsyncClient") as MockClient:
+                        instance = AsyncMock()
+                        instance.__aenter__ = AsyncMock(return_value=instance)
+                        instance.__aexit__ = AsyncMock(return_value=False)
+                        instance.get = AsyncMock(return_value=mock_resp)
+                        MockClient.return_value = instance
+
+                        result = await fetch_un_sanctions()
+                        assert "TEST SHIP" in result["names"]
+                        assert "1234567" in result["imo"]
+                        assert "412345678" in result["mmsi"]
+
 
 # ──────────────────────────────────────────────────────────────────────
 # Global Submarine Cable Network
