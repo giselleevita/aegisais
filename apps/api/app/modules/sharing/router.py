@@ -3,9 +3,11 @@
 from __future__ import annotations
 
 import logging
-from typing import Optional
+from typing import Optional, cast
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Query, Depends
+from app.modules.auth.dependencies import get_current_user
+from app.modules.auth.models import User
 from pydantic import BaseModel
 
 from app.modules.interop.classification import TLPMarking
@@ -40,7 +42,7 @@ class SharedWatchlistRequest(BaseModel):
 
 
 @router.post("/alerts")
-async def share_alert(req: ShareAlertRequest):
+async def share_alert(req: ShareAlertRequest, current_user: User = Depends(get_current_user)):
     """Share an alert with allied organisations."""
     tlp = TLPMarking(req.tlp) if req.tlp in [m.value for m in TLPMarking] else TLPMarking.GREEN
     return create_shared_alert(
@@ -51,7 +53,7 @@ async def share_alert(req: ShareAlertRequest):
             "summary": req.summary,
             "timestamp": req.timestamp,
         },
-        source_org_id=1,  # TODO: extract from auth context
+        source_org_id=cast(int, current_user.organisation_id),
         target_org_ids=req.target_org_ids,
         tlp=tlp,
         share_reason=req.share_reason,
@@ -59,12 +61,12 @@ async def share_alert(req: ShareAlertRequest):
 
 
 @router.post("/watchlist")
-async def share_watchlist_entry(req: SharedWatchlistRequest):
+async def share_watchlist_entry(req: SharedWatchlistRequest, current_user: User = Depends(get_current_user)):
     """Add a vessel to the shared allied watchlist."""
     tlp = TLPMarking(req.tlp) if req.tlp in [m.value for m in TLPMarking] else TLPMarking.GREEN
     return create_shared_watchlist_entry(
         mmsi=req.mmsi,
-        source_org_id=1,  # TODO: extract from auth context
+        source_org_id=cast(int, current_user.organisation_id),
         target_org_ids=req.target_org_ids,
         reason=req.reason,
         priority=req.priority,
