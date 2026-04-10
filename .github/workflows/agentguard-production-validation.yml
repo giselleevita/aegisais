@@ -1,0 +1,191 @@
+name: AgentGuard Production Validation
+
+on:
+  workflow_dispatch:
+    inputs:
+      agentguard_install_source:
+        description: Full pip install source for AgentGuard; overrides repository variable when set
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+
+jobs:
+  external-pdp-validation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - slice_id: sharing
+            slice_name: sharing-and-cop
+            scenarios_path: .agentguard/scenarios/aegisais-sharing-shadow.yaml
+            artifact_name: agentguard-production-sharing-results
+          - slice_id: export
+            slice_name: export-and-interop
+            scenarios_path: .agentguard/scenarios/aegisais-export-shadow.yaml
+            artifact_name: agentguard-production-export-results
+          - slice_id: tenant-boundary
+            slice_name: tenant-boundary
+            scenarios_path: .agentguard/scenarios/aegisais-tenant-boundary-shadow.yaml
+            artifact_name: agentguard-production-tenant-boundary-results
+    env:
+      AGENTGUARD_ALLOW_EMBEDDED_PDP_FALLBACK: "false"
+      AGENTGUARD_OPA_URL: http://127.0.0.1:8181
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Resolve AgentGuard source
+        env:
+          AGENTGUARD_INSTALL_SOURCE_INPUT: ${{ github.event.inputs.agentguard_install_source }}
+          AGENTGUARD_INSTALL_SOURCE_DEFAULT: ${{ vars.AGENTGUARD_INSTALL_SOURCE }}
+          AGENTGUARD_REPO_TOKEN: ${{ secrets.AGENTGUARD_REPO_TOKEN }}
+        run: |
+          install_source="${AGENTGUARD_INSTALL_SOURCE_INPUT:-$AGENTGUARD_INSTALL_SOURCE_DEFAULT}"
+          if [ -z "$install_source" ]; then
+            echo "AGENTGUARD_INSTALL_SOURCE is not configured." >&2
+            echo "Set the repository variable AGENTGUARD_INSTALL_SOURCE or provide workflow_dispatch input agentguard_install_source." >&2
+            exit 1
+          fi
+
+          raw_source="${install_source#git+}"
+          source_ref="${raw_source##*@}"
+          source_repo="${raw_source%@*}"
+          if [ "$source_repo" = "$raw_source" ]; then
+            source_ref="main"
+          fi
+
+          authenticated_install_source="$install_source"
+          authenticated_source_repo="$source_repo"
+          if [ -n "$AGENTGUARD_REPO_TOKEN" ]; then
+            authenticated_install_source="${install_source/https:\/\/github.com\//https:\/\/x-access-token:${AGENTGUARD_REPO_TOKEN}@github.com/}"
+            authenticated_source_repo="${source_repo/https:\/\/github.com\//https:\/\/x-access-token:${AGENTGUARD_REPO_TOKEN}@github.com/}"
+          fi
+
+          echo "AGENTGUARD_INSTALL_SOURCE=$authenticated_install_source" >> "$GITHUB_ENV"
+          echo "AGENTGUARD_SOURCE_REPO=$authenticated_source_repo" >> "$GITHUB_ENV"
+          echo "AGENTGUARD_SOURCE_REF=$source_ref" >> "$GITHUB_ENV"
+
+      - name: Clone AgentGuard source for policy bundle
+        run: |
+          git clone --depth 1 --branch "$AGENTGUARD_SOURCE_REF" "$AGENTGUARD_SOURCE_REPO" "$RUNNER_TEMP/agentguard-source"
+
+      - name: Start real OPA policy backend
+        run: |
+          docker run -d \
+            --name agentguard-opa \
+            -p 8181:8181 \
+            -v "$RUNNER_TEMP/agentguard-source/infra/opa:/policies:ro" \
+            openpolicyagent/opa:0.63.0 \
+            run --server --addr=0.0.0.0:8181 --log-format=json /policies
+
+          for attempt in $(seq 1 30); do
+            if curl --silent --fail "$AGENTGUARD_OPA_URL/health" > /dev/null; then
+              exit 0
+            fi
+            sleep 2
+          done
+
+          echo "OPA did not become ready in time." >&2
+          docker logs agentguard-opa >&2 || true
+          exit 1
+
+      - name: Install AgentGuard
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install "$AGENTGUARD_INSTALL_SOURCE"
+
+      - name: Bootstrap baseline model
+        run: agentguard bootstrap-model --out .agentguard/models/default
+
+      - name: Run AgentGuard benchmark
+        run: |
+          mkdir -p results
+          python -m agentguard.benchmark.runner \
+            --scenarios "${{ matrix.scenarios_path }}" \
+            --out results/runs.json \
+            --summary results/summary.json
+
+      - name: Run blocking gate with real OPA
+        run: |
+          python -m agentguard.ci.gate \
+            --results results/summary.json \
+            --thresholds .agentguard/config/thresholds.blocking.yaml \
+            --out results/gate_result.json \
+            --mode blocking
+
+      - name: Enforce blocking threshold
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          gate = json.loads(Path("results/gate_result.json").read_text())
+          if gate.get("gate_failed"):
+              print("Production validation detected threshold violation.")
+              for violation in gate.get("violations") or []:
+                  print(violation)
+              raise SystemExit(1)
+          print("production_validation_ok=true")
+          PY
+
+      - name: Build report bundle
+        if: always()
+        run: |
+          agentguard report-bundle \
+            --summary results/summary.json \
+            --runs results/runs.json \
+            --thresholds .agentguard/config/thresholds.blocking.yaml \
+            --out-dir results/report_bundle
+
+      - name: Capture OPA logs
+        if: always()
+        run: |
+          mkdir -p results
+          docker logs agentguard-opa > results/opa.log 2>&1 || true
+
+      - name: Print blocking outcome
+        if: always()
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          gate_path = Path("results/gate_result.json")
+          if not gate_path.exists():
+              print("gate_result_missing=true")
+              raise SystemExit(0)
+
+          gate = json.loads(gate_path.read_text())
+          print(f"slice=${{ matrix.slice_name }}")
+          print(f"gate_failed={gate.get('gate_failed')}")
+          print(f"violations={len(gate.get('violations') or [])}")
+          print(f"mode={gate.get('mode')}")
+          PY
+
+      - name: Upload AgentGuard artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact_name }}
+          path: |
+            results/summary.json
+            results/runs.json
+            results/gate_result.json
+            results/opa.log
+            results/report_bundle/executive_summary.md
+            results/report_bundle/manifest.json
+            results/report_bundle/manifest.sig
+
+      - name: Stop real OPA policy backend
+        if: always()
+        run: docker rm -f agentguard-opa || true
