@@ -26,6 +26,9 @@ Validated slices:
 - `.github/workflows/agentguard-tenant-boundary-blocking.yml`: manual blocking workflow for the tenant-boundary slice
 - `.github/workflows/agentguard-stability-sweep.yml`: scheduled and manual drift-check workflow for the validated slices
 - `.github/workflows/agentguard-pr-enforcement.yml`: combined blocking workflow for validated slices on pull requests
+- `.github/workflows/agentguard-production-validation.yml`: manual real-OPA validation workflow for tagged production candidates
+- `PRODUCTION_GO_LIVE_CHECKLIST.md`: go-live checklist for enforcing AgentGuard with an external policy backend
+- `OPERATOR_RESPONSE_RUNBOOK.md`: operator response steps for install, OPA, threshold, and rollback failures
 
 Local-only artifacts:
 
@@ -54,7 +57,7 @@ If the install source points to a private GitHub repository, also set the reposi
 Current configured source:
 
 ```text
-git+https://github.com/giselleevita/agentguard-platform.git@58995a55638a0bbe9f46a660cbc0152a98b849db
+git+https://github.com/giselleevita/agentguard-platform.git@v1.0.1
 ```
 
 Accepted examples:
@@ -67,7 +70,7 @@ git+https://github.com/<owner>/agentguard-platform.git@<tag-or-commit>
 Use the workflow input only when you want to override the repository default for a one-off run, for example:
 
 ```text
-git+https://github.com/giselleevita/agentguard-platform.git@main
+git+https://github.com/giselleevita/agentguard-platform.git@v1.0.1
 ```
 
 ## Expected Artifacts
@@ -210,6 +213,24 @@ Recommended use:
 
 The shadow workflows should stay out of the PR path to avoid duplicate AgentGuard runs and duplicated status noise on the same change.
 
+## Production Validation
+
+Use `.github/workflows/agentguard-production-validation.yml` before approving a new tagged AgentGuard release for production use in AegisAIS.
+
+Behavior:
+
+- clones the tagged AgentGuard source that matches the install source
+- starts a real OPA container from that release's `infra/opa` bundle
+- disables embedded PDP fallback for the validation path
+- runs the validated slices in blocking mode and uploads OPA logs with the normal AgentGuard evidence bundle
+
+Recommended use:
+
+1. pin `AGENTGUARD_INSTALL_SOURCE` to a release tag
+2. run the production validation workflow manually
+3. review `PRODUCTION_GO_LIVE_CHECKLIST.md` and `OPERATOR_RESPONSE_RUNBOOK.md` alongside the workflow artifacts
+4. only treat the release as production-ready after the external-OPA workflow passes for all validated slices
+
 Current limitation:
 
 - this repository cannot currently use GitHub branch protection or rulesets for required checks on the current private-repository plan
@@ -230,4 +251,4 @@ The repository now also has a combined PR enforcement workflow for these validat
 - the workflow explicitly enables embedded PDP fallback for this first pilot
 - that keeps the shadow and blocking pilot workflows usable before a dedicated OPA policy bundle rollout
 - the current pilot workflows do not start a separate OPA service container; they rely on the embedded fallback path by design
-- once you want stricter production-like behavior, remove the fallback env var and require the external policy backend to answer successfully
+- the production validation workflow is the stricter path: it removes fallback and requires the external policy backend to answer successfully
