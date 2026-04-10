@@ -17,8 +17,10 @@ Validated slices:
 - `config/thresholds.blocking.yaml`: stricter second-phase thresholds for validated slices
 - `scenarios/aegisais-sharing-shadow.yaml`: focused sharing and COP scenario corpus
 - `scenarios/aegisais-export-shadow.yaml`: focused alert export and interop export review corpus
+- `scenarios/aegisais-tenant-boundary-shadow.yaml`: focused tenant-boundary and org-scope misuse corpus
 - `.github/workflows/agentguard-shadow.yml`: GitHub Actions workflow that runs the benchmark and shadow gate
 - `.github/workflows/agentguard-export-shadow.yml`: GitHub Actions workflow for the export and interop shadow slice
+- `.github/workflows/agentguard-tenant-boundary-shadow.yml`: GitHub Actions workflow for the tenant-boundary shadow slice
 - `.github/workflows/agentguard-blocking.yml`: manual blocking workflow for the second phase
 - `.github/workflows/agentguard-export-blocking.yml`: manual blocking workflow for the export and interop slice
 - `.github/workflows/agentguard-stability-sweep.yml`: scheduled and manual drift-check workflow for the validated slices
@@ -203,6 +205,7 @@ Current limitation:
 
 - sharing and COP: shadow validated and manual blocking validated
 - export and interop review: shadow validated and manual blocking validated
+- tenant boundary and org-scope misuse: newly added shadow-only slice, not yet validated
 
 Both slices now have one clean manual blocking validation, but they should still stay out of broader normal PR enforcement until repeated stability sweep runs remain clean.
 
