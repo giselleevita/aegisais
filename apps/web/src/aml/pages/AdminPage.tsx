@@ -63,8 +63,17 @@ export default function AdminPage() {
   }, [])
 
   return (
-    <div className="aml-page-pad">
-      <h2 className="aml-page-title">Admin &amp; control plane</h2>
+    <div className="aml-page-pad aml-admin">
+      <header className="aml-admin__hero">
+        <div>
+          <span className="aml-operations__eyebrow">Control plane</span>
+          <h2 className="aml-page-title">Admin &amp; control plane</h2>
+          <p className="aml-admin-lead">
+            Coordinate organization-level controls, inspect partner feed readiness, and keep destructive actions gated behind server-side authorization.
+          </p>
+        </div>
+      </header>
+
       <div className="aml-admin-stub">
         Zones, rules, org, and user management will live here. Server-side authorization is required
         before exposing destructive actions; this route is a layout placeholder for that program of work.

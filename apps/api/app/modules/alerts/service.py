@@ -66,6 +66,7 @@ class AlertService:
         status: Optional[str] = None,
         start_time: Optional[datetime] = None,
         end_time: Optional[datetime] = None,
+        limit: Optional[int] = None,
     ) -> list[Alert]:
         query = apply_org_filter(self._db.query(Alert), Alert, user)
         query = apply_alert_filters(
@@ -79,6 +80,8 @@ class AlertService:
             end_time=end_time,
         )
         query = apply_watchlist_sort(query)
+        if limit is not None:
+            query = query.limit(limit)
         return query.all()
 
     def get_alert(self, alert_id: int, *, user: User) -> AlertOut:
@@ -171,6 +174,7 @@ class AlertService:
                 "type": "alert_status_updated",
                 "alert_id": alert_id,
                 "status": update.status,
+                "organisation_id": cast(int, alert.organisation_id),
                 "updated_by": actor_username or "unknown",
                 "timestamp": datetime.now(timezone.utc).isoformat(),
             }

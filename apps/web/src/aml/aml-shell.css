@@ -12,13 +12,23 @@
   --aml-shell-header-h: 52px;
   --aml-shell-nav-gap: 0.35rem;
   --aml-operations-queue-w: min(420px, 42vw);
+  --aml-shell-grid-line: rgba(120, 156, 206, 0.08);
 }
 
 .aml-app {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background: var(--bg-base);
+  background:
+    linear-gradient(180deg, rgba(20, 56, 102, 0.17), transparent 26%),
+    repeating-linear-gradient(
+      90deg,
+      transparent,
+      transparent 44px,
+      var(--aml-shell-grid-line) 44px,
+      var(--aml-shell-grid-line) 45px
+    ),
+    var(--bg-base);
   color: var(--text-primary);
 }
 
@@ -47,12 +57,12 @@
 .aml-shell__header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   gap: 1rem;
   min-height: var(--aml-shell-header-h);
   padding: 0 1rem;
   border-bottom: 1px solid var(--border-default);
-  background: var(--bg-surface);
+  background: linear-gradient(90deg, rgba(10, 31, 61, 0.85), rgba(13, 20, 36, 0.92));
 }
 
 .aml-shell__demo-banner {
@@ -90,20 +100,109 @@
   color: var(--text-secondary);
 }
 
+.aml-shell__mission-strip {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-left: 0.35rem;
+  margin-right: auto;
+  flex-wrap: wrap;
+}
+
+.aml-shell__mission-chip {
+  border: 1px solid var(--border-default);
+  background: rgba(8, 18, 34, 0.75);
+  color: var(--text-secondary);
+  border-radius: 999px;
+  padding: 0.18rem 0.5rem;
+  font-size: 0.67rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 600;
+}
+
+.aml-shell__mission-chip:first-child {
+  color: #9fd8ff;
+  border-color: rgba(120, 189, 255, 0.35);
+}
+
+.aml-shell__mission-chip--warn {
+  color: #fecaca;
+  border-color: rgba(239, 68, 68, 0.38);
+  background: rgba(63, 18, 18, 0.72);
+  text-transform: none;
+  letter-spacing: 0.03em;
+  font-size: 0.64rem;
+}
+
+.aml-shell__compact-toggle {
+  border: 1px solid var(--border-default);
+  background: rgba(7, 15, 29, 0.78);
+  color: var(--text-secondary);
+  border-radius: 999px;
+  padding: 0.18rem 0.5rem;
+  font-size: 0.66rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+}
+
+.aml-shell__compact-toggle[aria-pressed='true'] {
+  color: #bbf7d0;
+  border-color: rgba(74, 222, 128, 0.35);
+}
+
+.aml-shell__compact-toggle:hover {
+  color: var(--text-primary);
+}
+
 .aml-shell__nav {
   display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  gap: 0.65rem 1rem;
-  padding: 0.4rem 1rem 0.45rem;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.45rem;
+  padding: 0.45rem 1rem 0.5rem;
   border-bottom: 1px solid var(--border-subtle);
   background: var(--bg-surface);
+}
+
+.aml-shell__top-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.aml-shell__top-nav-link {
+  padding: 0.32rem 0.7rem;
+  border-radius: 999px;
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-size: 0.78rem;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+.aml-shell__top-nav-link[aria-selected='true'] {
+  box-shadow: inset 0 0 0 1px rgba(110, 186, 255, 0.15);
+}
+
+.aml-shell__top-nav-link:hover {
+  color: var(--text-primary);
+  border-color: var(--accent-border);
+}
+
+.aml-shell__top-nav-link--active {
+  color: var(--text-primary);
+  background: var(--accent-dim);
+  border-color: var(--accent-border);
 }
 
 .aml-shell__nav-section {
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-end;
+  align-items: center;
   gap: 0.35rem 0.5rem;
 }
 
@@ -147,6 +246,10 @@
   border-color: var(--accent-border);
 }
 
+.aml-shell__nav a {
+  transition: border-color 120ms ease, color 120ms ease, background-color 120ms ease;
+}
+
 @media (max-width: 920px) {
   .aml-shell__header {
     flex-wrap: wrap;
@@ -159,14 +262,26 @@
     margin-left: 0;
     order: 3;
   }
+
+  .aml-shell__mission-strip {
+    order: 2;
+    width: 100%;
+    margin: 0;
+  }
 }
 
 @media (max-width: 760px) {
   .aml-shell__nav {
-    flex-wrap: nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+    white-space: nowrap;
+    gap: 0.35rem;
+  }
+
+  .aml-shell__top-nav {
     overflow-x: auto;
     scrollbar-width: thin;
-    padding-bottom: 0.45rem;
+    padding-bottom: 0.2rem;
   }
 
   .aml-shell__nav-group {
@@ -201,6 +316,196 @@
   gap: 0.65rem 1rem;
   align-items: center;
   justify-content: space-between;
+}
+
+.aml-shell__breadcrumbs {
+  border-bottom: 1px solid var(--border-subtle);
+  background: rgba(9, 18, 30, 0.65);
+  padding: 0.3rem 1rem;
+}
+
+.aml-shell__breadcrumbs ol {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.72rem;
+}
+
+.aml-shell__breadcrumbs li {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--text-secondary);
+}
+
+.aml-shell__breadcrumbs li:not(:last-child)::after {
+  content: '›';
+  color: var(--text-muted);
+}
+
+.aml-shell__breadcrumbs a {
+  color: var(--text-secondary);
+  text-decoration: none;
+}
+
+.aml-shell__breadcrumbs a:hover {
+  color: var(--text-primary);
+}
+
+.aml-shell__palette-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1100;
+  background: rgba(2, 7, 16, 0.68);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 7vh 1rem 1rem;
+}
+
+.aml-shell__palette {
+  width: min(780px, 100%);
+  border: 1px solid var(--border-strong);
+  border-radius: 10px;
+  background: var(--bg-surface);
+  box-shadow: 0 16px 42px rgba(0, 0, 0, 0.55);
+  padding: 0.65rem;
+}
+
+.aml-shell__palette-input {
+  width: 100%;
+  border: 1px solid var(--border-default);
+  border-radius: 8px;
+  background: var(--bg-base);
+  color: var(--text-primary);
+  padding: 0.55rem 0.65rem;
+  font-size: 0.92rem;
+}
+
+.aml-shell__palette-results {
+  list-style: none;
+  margin: 0.5rem 0 0;
+  padding: 0;
+  max-height: min(46vh, 420px);
+  overflow: auto;
+  display: grid;
+  gap: 0.2rem;
+}
+
+.aml-shell__palette-results button {
+  width: 100%;
+  border: 1px solid transparent;
+  background: transparent;
+  border-radius: 6px;
+  padding: 0.42rem 0.5rem;
+  color: var(--text-secondary);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  text-align: left;
+  cursor: pointer;
+}
+
+.aml-shell__palette-results button:hover,
+.aml-shell__palette-results button.is-active {
+  color: var(--text-primary);
+  border-color: var(--accent-border);
+  background: var(--accent-dim);
+}
+
+.aml-shell__palette-results button small {
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-size: 0.64rem;
+  color: var(--text-muted);
+}
+
+.aml-shell__palette-empty {
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  padding: 0.5rem;
+}
+
+.aml-shell__palette-help {
+  margin: 0.5rem 0 0;
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+
+.aml-shell__active-strip {
+  border-top: 1px solid var(--border-subtle);
+  border-bottom: 1px solid var(--border-subtle);
+  background: rgba(8, 17, 30, 0.72);
+  padding: 0.28rem 1rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+
+.aml-shell__active-pill {
+  text-decoration: none;
+  border: 1px solid var(--border-default);
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  border-radius: 999px;
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 0.12rem 0.45rem;
+}
+
+.aml-shell__active-pill:hover {
+  color: var(--text-primary);
+  border-color: var(--accent-border);
+}
+
+.aml-shell__active-pill--idle {
+  opacity: 0.75;
+}
+
+.aml-shell__shortcuts {
+  width: 100%;
+  border: 1px solid var(--border-default);
+  border-radius: 8px;
+  background: rgba(7, 14, 26, 0.78);
+  padding: 0.55rem 0.65rem;
+}
+
+.aml-shell__shortcuts h2 {
+  margin: 0 0 0.45rem;
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.aml-shell__shortcuts ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 0.25rem;
+}
+
+.aml-shell__shortcuts li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  color: var(--text-secondary);
+}
+
+.aml-shell__shortcuts code {
+  font-size: 0.68rem;
+  border: 1px solid var(--border-default);
+  border-radius: 4px;
+  padding: 0.08rem 0.3rem;
+  color: var(--text-primary);
+  background: rgba(14, 22, 34, 0.82);
 }
 
 .aml-shell__footer-shortcuts {
@@ -291,6 +596,13 @@
   outline-offset: -2px;
 }
 
+.aml-route-loading {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
 .aml-operations {
   flex: 1;
   display: flex;
@@ -312,6 +624,62 @@
   flex-shrink: 0;
   border-bottom: 1px solid var(--border-default);
   background: var(--bg-surface);
+}
+
+.aml-operations__quick {
+  border-bottom: 1px solid var(--border-default);
+  background: rgba(9, 20, 35, 0.9);
+  padding: 0.55rem;
+}
+
+.aml-operations__quick h3 {
+  margin: 0 0 0.35rem;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--text-secondary);
+}
+
+.aml-operations__quick-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+
+.aml-operations__quick-actions button,
+.aml-operations__recent button {
+  border: 1px solid var(--border-default);
+  background: var(--bg-base);
+  color: var(--text-secondary);
+  border-radius: 999px;
+  font-size: 0.68rem;
+  padding: 0.17rem 0.45rem;
+  cursor: pointer;
+}
+
+.aml-operations__quick-actions button:hover,
+.aml-operations__recent button:hover {
+  color: var(--text-primary);
+  border-color: var(--accent-border);
+}
+
+.aml-operations__recent {
+  margin-top: 0.45rem;
+  display: grid;
+  gap: 0.22rem;
+}
+
+.aml-operations__recent > span {
+  color: var(--text-muted);
+  font-size: 0.66rem;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+}
+
+.aml-operations__recent > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
 }
 
 .aml-operations__ingest summary {
@@ -531,6 +899,743 @@
   margin: 0.15rem 0 0 0.75rem;
 }
 
+/* ═══════════════════════════════════════════════════════════════════════
+   Command Deck Redesign Overrides
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.aml-app {
+  background:
+    radial-gradient(circle at top left, rgba(94, 188, 255, 0.08), transparent 26%),
+    linear-gradient(180deg, rgba(8, 19, 37, 0.95), rgba(6, 10, 18, 0.98)),
+    var(--bg-base);
+}
+
+.aml-shell__header {
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1.5rem;
+  padding: 1.1rem 1.25rem 0.9rem;
+  min-height: unset;
+  background:
+    linear-gradient(120deg, rgba(8, 24, 49, 0.96), rgba(6, 12, 24, 0.98)),
+    var(--bg-panel-strong);
+}
+
+.aml-shell__brand-block {
+  display: grid;
+  gap: 0.35rem;
+  max-width: 42rem;
+}
+
+.aml-shell__brand {
+  gap: 0.75rem;
+}
+
+.aml-shell__brand h1 {
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  letter-spacing: 0.08em;
+}
+
+.aml-shell__brand-sub {
+  color: var(--accent-strong);
+  letter-spacing: 0.18em;
+}
+
+.aml-shell__header-copy {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  max-width: 36rem;
+}
+
+.aml-shell__header-side {
+  display: flex;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.6rem;
+  margin-left: auto;
+}
+
+.aml-shell__header .auth-bar {
+  padding: 0.3rem 0.45rem;
+  border: 1px solid var(--border-default);
+  border-radius: 999px;
+  background: rgba(11, 21, 37, 0.88);
+}
+
+.aml-shell__mission-deck {
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) repeat(3, minmax(0, 1fr));
+  gap: 0.9rem;
+  padding: 0 1.25rem 1rem;
+}
+
+.aml-shell__mission-card {
+  display: grid;
+  gap: 0.75rem;
+  padding: 1rem;
+  border-radius: 18px;
+  border: 1px solid var(--border-default);
+  background:
+    linear-gradient(180deg, rgba(18, 33, 58, 0.55), rgba(9, 16, 29, 0.92)),
+    var(--bg-panel);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03), 0 16px 32px rgba(0, 0, 0, 0.18);
+}
+
+.aml-shell__mission-card--hero h2 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.55rem;
+  letter-spacing: -0.03em;
+}
+
+.aml-shell__mission-card--hero p,
+.aml-shell__mission-note {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.86rem;
+  line-height: 1.55;
+}
+
+.aml-shell__card-eyebrow,
+.aml-shell__rail-title,
+.aml-operations__eyebrow {
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: var(--accent-strong);
+  font-weight: 700;
+}
+
+.aml-shell__card-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.aml-shell__mission-chip {
+  background: rgba(10, 20, 36, 0.92);
+  border-color: rgba(103, 212, 255, 0.18);
+  color: var(--text-secondary);
+  padding: 0.28rem 0.6rem;
+}
+
+.aml-shell__posture-list {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.aml-shell__posture-list div {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.8rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  padding-bottom: 0.45rem;
+}
+
+.aml-shell__posture-list div:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.aml-shell__posture-list dt {
+  color: var(--text-muted);
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.aml-shell__posture-list dd {
+  margin: 0;
+  color: var(--text-primary);
+  font-family: var(--font-display);
+  font-size: 0.94rem;
+  text-align: right;
+}
+
+.aml-shell__deck-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.aml-shell__compact-toggle {
+  background: rgba(10, 20, 36, 0.94);
+  border-color: rgba(103, 212, 255, 0.16);
+  color: var(--text-secondary);
+  padding: 0.42rem 0.72rem;
+  font-size: 0.7rem;
+}
+
+.aml-shell__workspace-shell {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr);
+  gap: 1rem;
+  padding: 0 1.25rem 1.25rem;
+}
+
+.aml-shell__rail {
+  display: grid;
+  align-content: start;
+  gap: 0.9rem;
+  padding: 1rem;
+  border-radius: 20px;
+  border: 1px solid var(--border-default);
+  background:
+    linear-gradient(180deg, rgba(11, 21, 38, 0.96), rgba(8, 14, 27, 0.96)),
+    var(--bg-panel);
+}
+
+.aml-shell__rail-section {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.aml-shell__top-nav,
+.aml-shell__nav-group {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.aml-shell__top-nav-link,
+.aml-shell__nav a {
+  border-radius: 12px;
+  padding: 0.62rem 0.78rem;
+  background: rgba(10, 19, 34, 0.74);
+  border: 1px solid transparent;
+  text-transform: none;
+  letter-spacing: 0.01em;
+  font-size: 0.85rem;
+}
+
+.aml-shell__top-nav-link--active,
+.aml-shell__nav a.aml-shell__nav-link--active {
+  background: linear-gradient(90deg, rgba(103, 212, 255, 0.14), rgba(14, 165, 233, 0.08));
+  border-color: var(--accent-border);
+  box-shadow: inset 0 0 0 1px rgba(103, 212, 255, 0.08);
+}
+
+.aml-shell__workspace {
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.aml-shell__workspace-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.95rem 1.05rem;
+  border-radius: 18px;
+  border: 1px solid var(--border-default);
+  background: rgba(9, 16, 28, 0.85);
+}
+
+.aml-shell__breadcrumbs {
+  border: none;
+  background: transparent;
+  padding: 0;
+}
+
+.aml-shell__workspace-notice {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.5rem 0.75rem;
+  color: var(--text-secondary);
+  font-size: 0.76rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.aml-shell__workspace-notice strong {
+  color: var(--text-primary);
+  font-family: var(--font-display);
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 0.92rem;
+}
+
+.aml-shell__main {
+  border-radius: 22px;
+  overflow: hidden;
+  background: rgba(7, 11, 19, 0.5);
+  border: 1px solid rgba(42, 63, 92, 0.52);
+}
+
+.aml-shell__shortcuts {
+  margin-top: auto;
+  border-radius: 18px;
+  background: rgba(9, 16, 29, 0.88);
+}
+
+.aml-shell__footer-shortcuts-list {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.aml-shell__footer-shortcuts-list div {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  color: var(--text-secondary);
+  font-size: 0.76rem;
+}
+
+.aml-shell__footer-shortcuts-list span {
+  color: var(--text-muted);
+}
+
+.aml-shell__footer-legacy {
+  width: 100%;
+  margin-top: 0.35rem;
+  border-radius: 12px;
+  padding: 0.65rem 0.8rem;
+}
+
+.aml-operations {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 0.9rem;
+  padding: 1rem;
+}
+
+.aml-operations__brief {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+  gap: 0.9rem;
+  padding: 1rem 1.1rem;
+  border-radius: 18px;
+  border: 1px solid var(--border-default);
+  background:
+    radial-gradient(circle at top left, rgba(103, 212, 255, 0.1), transparent 35%),
+    rgba(11, 18, 31, 0.88);
+}
+
+.aml-operations__brief-copy h2 {
+  margin: 0.2rem 0 0.45rem;
+  font-family: var(--font-display);
+  font-size: 1.45rem;
+}
+
+.aml-operations__brief-copy p {
+  margin: 0;
+  max-width: 44rem;
+  color: var(--text-secondary);
+}
+
+.aml-operations__brief-cards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.65rem;
+}
+
+.aml-operations__brief-cards article,
+.aml-operations__map-brief,
+.aml-operations__quick,
+.aml-operations__ingest,
+.aml-operations__vessel,
+.alerts-panel {
+  border-radius: 18px;
+  border: 1px solid rgba(42, 63, 92, 0.62);
+  background: rgba(9, 16, 29, 0.84);
+}
+
+.aml-operations__brief-cards article {
+  padding: 0.8rem 0.9rem;
+  display: grid;
+  gap: 0.2rem;
+}
+
+.aml-operations__brief-cards span {
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--text-muted);
+}
+
+.aml-operations__brief-cards strong {
+  font-family: var(--font-display);
+  font-size: 1rem;
+}
+
+.aml-operations__workspace {
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(340px, 430px) minmax(0, 1fr);
+  gap: 0.9rem;
+}
+
+.aml-operations__queue {
+  width: auto;
+  min-width: 0;
+  border-right: none;
+  background: transparent;
+  gap: 0.8rem;
+}
+
+.aml-operations__quick,
+.aml-operations__ingest,
+.aml-operations__vessel {
+  border-bottom: none;
+}
+
+.aml-operations__quick {
+  padding: 1rem;
+}
+
+.aml-operations__quick-head {
+  display: grid;
+  gap: 0.25rem;
+  margin-bottom: 0.8rem;
+}
+
+.aml-operations__quick-head h3,
+.aml-operations__map-brief h3,
+.aml-operations__vessel--idle h3 {
+  margin: 0.15rem 0 0;
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+  text-transform: none;
+}
+
+.aml-operations__quick-head p,
+.aml-operations__map-brief p,
+.aml-operations__vessel--idle p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.83rem;
+}
+
+.aml-operations__quick-actions button,
+.aml-operations__recent button {
+  padding: 0.42rem 0.72rem;
+  border-radius: 999px;
+  background: rgba(10, 20, 36, 0.88);
+}
+
+.aml-operations__ingest summary {
+  padding: 0.9rem 1rem;
+}
+
+.aml-operations__queue .alerts-panel {
+  padding: 0.95rem;
+  overflow: auto;
+}
+
+.aml-operations__right {
+  gap: 0.9rem;
+}
+
+.aml-operations__map-stage {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 0.8rem;
+  min-height: 0;
+}
+
+.aml-operations__map-brief {
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  gap: 1rem;
+  padding: 0.9rem 1rem;
+}
+
+.aml-operations__map {
+  border-radius: 20px;
+  overflow: hidden;
+  border: 1px solid rgba(42, 63, 92, 0.62);
+  background: rgba(7, 13, 24, 0.84);
+}
+
+.aml-operations__map .map-view {
+  padding: 0.8rem;
+}
+
+.aml-operations__map .map-view > div:not(.map-controls) {
+  height: min(60vh, 760px) !important;
+  min-height: 360px;
+  border-radius: 18px;
+}
+
+.aml-operations__vessel {
+  max-height: unset;
+  padding: 0.95rem;
+  overflow: auto;
+  background: rgba(9, 16, 29, 0.84);
+}
+
+.aml-operations__vessel--idle {
+  display: grid;
+  gap: 0.35rem;
+  align-content: center;
+  min-height: 170px;
+}
+
+@media (max-width: 1260px) {
+  .aml-shell__mission-deck,
+  .aml-operations__brief,
+  .aml-operations__workspace,
+  .aml-shell__workspace-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .aml-shell__header {
+    flex-direction: column;
+  }
+
+  .aml-shell__header-side {
+    justify-content: flex-start;
+    margin-left: 0;
+  }
+
+  .aml-shell__rail {
+    order: 2;
+  }
+}
+
+@media (max-width: 900px) {
+  .aml-shell__workspace-bar,
+  .aml-operations__map-brief {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .aml-operations__brief-cards {
+    grid-template-columns: 1fr;
+  }
+}
+
+.aml-incidents,
+.aml-audit,
+.aml-admin,
+.aml-incident-detail {
+  display: grid;
+  gap: 1rem;
+}
+
+.aml-incidents__hero,
+.aml-audit__hero,
+.aml-admin__hero,
+.aml-incident-detail__hero {
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  gap: 1rem;
+  padding: 1rem 1.1rem;
+  border-radius: 18px;
+  border: 1px solid rgba(42, 63, 92, 0.62);
+  background:
+    radial-gradient(circle at top left, rgba(103, 212, 255, 0.1), transparent 34%),
+    rgba(10, 18, 32, 0.88);
+}
+
+.aml-incidents__lead,
+.aml-admin__hero p,
+.aml-audit__hero p,
+.aml-incident-detail__hero p {
+  margin: 0.25rem 0 0;
+  color: var(--text-secondary);
+  max-width: 46rem;
+}
+
+.aml-incidents__hero-card,
+.aml-audit__actions {
+  display: grid;
+  gap: 0.4rem;
+  min-width: min(100%, 220px);
+}
+
+.aml-incidents__hero-card span {
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--text-muted);
+}
+
+.aml-incidents__workspace,
+.aml-incident-detail__workspace {
+  display: grid;
+  grid-template-columns: minmax(320px, 420px) minmax(0, 1fr);
+  gap: 1rem;
+}
+
+.aml-incidents__list,
+.aml-incidents__detail,
+.aml-incident-detail__panel,
+.aml-audit__table-wrap,
+.aml-admin-stub,
+.aml-feed-stubs,
+.aml-feed-details {
+  border-radius: 18px;
+  border: 1px solid rgba(42, 63, 92, 0.62);
+  background: rgba(9, 16, 29, 0.84);
+}
+
+.aml-incidents__list,
+.aml-incidents__detail,
+.aml-incident-detail__panel,
+.aml-admin-stub,
+.aml-feed-details {
+  padding: 1rem;
+}
+
+.aml-incidents__detail--idle {
+  align-content: center;
+  min-height: 220px;
+}
+
+.aml-incidents__header h3,
+.aml-incidents__detail h3,
+.aml-incident-detail__panel h3 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+}
+
+.aml-incidents__link {
+  display: grid;
+  gap: 0.4rem;
+  border-radius: 14px;
+  border: 1px solid rgba(42, 63, 92, 0.55);
+  background: rgba(8, 14, 25, 0.62);
+}
+
+.aml-incidents__link-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.6rem;
+  align-items: center;
+}
+
+.aml-incidents__title {
+  color: var(--text-primary);
+  font-family: var(--font-display);
+  font-size: 0.98rem;
+}
+
+.aml-incidents__hero-link,
+.aml-incident-detail__save {
+  align-self: start;
+  border: 1px solid var(--accent-border);
+  background: var(--accent-dim);
+  color: var(--accent);
+  text-decoration: none;
+  border-radius: 12px;
+  padding: 0.6rem 0.9rem;
+  font-weight: 600;
+}
+
+.aml-incident-detail__panel {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.aml-incident-detail__panel--wide {
+  grid-column: 2;
+}
+
+.aml-incident-detail__field {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.aml-incident-detail__field span {
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.aml-incident-detail__hint {
+  color: var(--text-secondary);
+  font-size: 0.82rem;
+}
+
+.aml-incident-detail__evidence {
+  margin: 0;
+  max-height: 50vh;
+  overflow: auto;
+  border-radius: 14px;
+  background: rgba(8, 14, 25, 0.8);
+  padding: 1rem;
+}
+
+.aml-incident-detail__timeline {
+  margin: 0;
+  padding-left: 1.1rem;
+  display: grid;
+  gap: 0.55rem;
+}
+
+.aml-incident-detail__timeline li div {
+  color: var(--text-secondary);
+}
+
+.aml-audit__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.aml-audit__filters {
+  display: grid;
+  gap: 0.6rem;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+}
+
+.aml-audit__table-wrap {
+  overflow: hidden;
+}
+
+.aml-audit__pager {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.9rem 1rem;
+}
+
+.aml-audit__pager button,
+.aml-audit__actions button,
+.aml-admin-stub,
+.aml-feed-stubs {
+  font-size: 0.84rem;
+}
+
+.aml-admin-stub {
+  line-height: 1.6;
+}
+
+@media (max-width: 1100px) {
+  .aml-incidents__workspace,
+  .aml-incident-detail__workspace {
+    grid-template-columns: 1fr;
+  }
+
+  .aml-incident-detail__panel--wide {
+    grid-column: auto;
+  }
+}
+
+@media (max-width: 900px) {
+  .aml-incidents__hero,
+  .aml-audit__hero,
+  .aml-admin__hero,
+  .aml-incident-detail__hero {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
 .aml-incidents {
   display: grid;
   grid-template-columns: 360px 1fr;
@@ -590,6 +1695,19 @@
   padding: 0.45rem 0.55rem;
 }
 
+.aml-audit__message {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.84rem;
+}
+
+.aml-audit__message--error,
+.aml-incident-detail__state--error {
+  color: var(--sev-high-text);
+  background: var(--sev-high-bg);
+  border: 1px solid var(--sev-high-border);
+}
+
 .aml-incidents__list li button {
   width: 100%;
   text-align: left;
@@ -644,6 +1762,28 @@
   margin-bottom: 0.9rem;
 }
 
+.aml-incident-detail__state {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  max-width: 34rem;
+  padding: 1rem 1.1rem;
+  border: 1px solid var(--border-default);
+  border-radius: 14px;
+  background: var(--bg-surface);
+}
+
+.aml-incident-detail__state p {
+  margin: 0;
+  color: inherit;
+}
+
+.aml-incident-detail__state a {
+  width: fit-content;
+  text-decoration: none;
+  color: var(--accent);
+}
+
 .aml-audit__table-wrap {
   border: 1px solid var(--border-default);
   border-radius: 8px;
@@ -671,4 +1811,115 @@
   position: sticky;
   top: 0;
   background: var(--bg-elevated);
+}
+
+.aml-app--compact {
+  --aml-shell-header-h: 46px;
+  --aml-operations-queue-w: min(360px, 46vw);
+}
+
+.aml-app--compact .aml-shell__header {
+  gap: 0.6rem;
+  padding: 0 0.7rem;
+}
+
+.aml-app--compact .aml-shell__brand h1 {
+  font-size: 1rem;
+}
+
+.aml-app--compact .aml-shell__brand-sub {
+  font-size: 0.63rem;
+}
+
+.aml-app--compact .aml-shell__nav {
+  gap: 0.3rem;
+  padding: 0.35rem 0.7rem 0.4rem;
+}
+
+.aml-app--compact .aml-shell__top-nav-link {
+  font-size: 0.72rem;
+  padding: 0.24rem 0.55rem;
+}
+
+.aml-app--compact .aml-shell__nav a {
+  font-size: 0.78rem;
+  padding: 0.28rem 0.5rem;
+}
+
+.aml-app--compact .aml-shell__mission-chip,
+.aml-app--compact .aml-shell__compact-toggle {
+  font-size: 0.61rem;
+  padding: 0.13rem 0.42rem;
+}
+
+.aml-app--compact .aml-page-pad {
+  padding: 0.7rem;
+}
+
+.aml-app--compact .aml-shell__active-strip {
+  padding: 0.2rem 0.7rem;
+}
+
+.aml-app--compact .aml-shell__active-pill {
+  font-size: 0.62rem;
+}
+
+.aml-app--compact .alerts-panel {
+  gap: 12px;
+}
+
+.aml-app--compact .panel-header h2 {
+  font-size: 0.85rem;
+}
+
+.aml-app--compact .panel-subtitle {
+  font-size: 0.74rem;
+}
+
+.aml-app--compact .alert-card {
+  padding: 9px 10px;
+}
+
+.aml-app--compact .alert-summary,
+.aml-app--compact .alert-details {
+  font-size: 0.74rem;
+}
+
+.aml-app--compact .alert-details .label,
+.aml-app--compact .status-badge {
+  font-size: 0.62rem;
+}
+
+.aml-app--compact .map-controls {
+  top: 6px;
+  right: 6px;
+  padding: 6px 8px;
+  min-width: 146px;
+  gap: 4px;
+}
+
+.aml-app--compact .map-controls__summary,
+.aml-app--compact .map-controls label {
+  font-size: 0.72rem;
+}
+
+.aml-app--compact .map-controls input[type='checkbox'] {
+  width: 12px;
+  height: 12px;
+}
+
+.aml-app--high-contrast {
+  --bg-base: #04070d;
+  --bg-surface: #090f18;
+  --bg-card: #0d1522;
+  --bg-elevated: #122036;
+  --border-subtle: #20324d;
+  --border-default: #2d4668;
+  --border-strong: #406594;
+  --text-primary: #f0f6ff;
+  --text-secondary: #b7cff1;
+  --text-muted: #84a3cc;
+  --accent: #41b4ff;
+  --accent-dim: rgba(65, 180, 255, 0.16);
+  --accent-border: rgba(65, 180, 255, 0.5);
 }

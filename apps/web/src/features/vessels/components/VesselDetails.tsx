@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { apiClient } from '@/core/api-client'
 import type { Vessel, Alert, VesselPosition } from '@/shared/types/common'
 import { getSeverityLevel } from '@/features/alerts/lib/alertEvidence'
@@ -25,15 +25,7 @@ export default function VesselDetails({ mmsi, onClose }: VesselDetailsProps) {
     const [wlLabel, setWlLabel] = useState('')
     const [wlPriority, setWlPriority] = useState<'low' | 'medium' | 'high'>('medium')
 
-    useEffect(() => {
-        if (mmsi) {
-            loadVesselData()
-            const interval = setInterval(loadVesselData, 10000)
-            return () => clearInterval(interval)
-        }
-    }, [mmsi])
-
-    const loadVesselData = async () => {
+    const loadVesselData = useCallback(async () => {
         if (!mmsi) return
         
         try {
@@ -50,13 +42,21 @@ export default function VesselDetails({ mmsi, onClose }: VesselDetailsProps) {
             setOnWatchlist(watchlistData.some((e) => e.mmsi === mmsi))
         } catch (error) {
             if (import.meta.env.DEV) {
-                // eslint-disable-next-line no-console
                 console.error('Failed to load vessel data:', error)
             }
         } finally {
             setLoading(false)
         }
-    }
+    }, [mmsi])
+
+    useEffect(() => {
+        if (!mmsi) return
+        void loadVesselData()
+        const interval = setInterval(() => {
+            void loadVesselData()
+        }, 10000)
+        return () => clearInterval(interval)
+    }, [loadVesselData, mmsi])
 
     if (loading) {
         return <div className="vessel-details-loading">Loading vessel details...</div>

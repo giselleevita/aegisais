@@ -2,6 +2,37 @@
  * Type definitions for AegisAIS frontend
  */
 
+export type ClassificationLevel =
+    | 'UNCLASSIFIED'
+    | 'RESTRICTED'
+    | 'CONFIDENTIAL'
+    | 'SECRET'
+    | 'TOP_SECRET'
+
+export type NormalizedViewerRole = 'guest' | 'analyst' | 'supervisor' | 'admin'
+
+export interface AuthViewer {
+    userId: string
+    organizationId: string
+    role: NormalizedViewerRole
+    clearances: ClassificationLevel[]
+    releasability: string[]
+    licenses: string[]
+}
+
+export interface AuthClaims {
+    role: NormalizedViewerRole
+    clearances: ClassificationLevel[]
+    releasability: string[]
+    licenses: string[]
+}
+
+export interface AuthContextResponse {
+    viewer: AuthViewer
+    claims: AuthClaims
+    timestamp: string
+}
+
 export interface AlertEvidence {
     dt_sec?: number
     distance_m?: number
@@ -186,7 +217,24 @@ export interface LayerDefinition {
     enabledByDefault?: boolean
     restricted?: boolean
     nonCommercial?: boolean
+    licensedFeature?: string
+    updatedAt?: string
     metadata: LayerMetadata
+}
+
+export interface LayerManifestItem {
+    id: string
+    name: string
+    domain: 'aviation' | 'ports' | 'subsea'
+    licensedFeature: string
+    updatedAt: string
+    source: string
+    objectKeyPrefix: string
+}
+
+export interface LayerManifestResponse {
+    layers: LayerManifestItem[]
+    generatedAt: string
 }
 
 export interface AuditLogEntry {

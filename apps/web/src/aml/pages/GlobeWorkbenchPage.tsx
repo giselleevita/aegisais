@@ -49,27 +49,31 @@ function readAutoCameraPref(): boolean {
 
 const FOCUS_PRESETS: Record<
   FocusPresetId,
-  { label: string; destination: Cartesian3; range: number }
+  { label: string; destination: Cartesian3; range: number; brief: string }
 > = {
   global: {
     label: 'Global',
-    destination: Cartesian3.fromDegrees(8, 18, 23_000_000),
-    range: 11_000_000,
+    destination: Cartesian3.fromDegrees(12, 22, 18_500_000),
+    range: 8_500_000,
+    brief: 'Balanced world framing so Atlantic, Europe, Gulf, and Indo-Pacific traffic stay readable.',
   },
   atlantic: {
     label: 'Atlantic',
     destination: Cartesian3.fromDegrees(-35, 36, 9_000_000),
     range: 5_500_000,
+    brief: 'North Atlantic corridors, Europe-US transit, and transoceanic cable posture.',
   },
   'indo-pacific': {
     label: 'Indo-Pacific',
     destination: Cartesian3.fromDegrees(112, 9, 12_000_000),
     range: 6_500_000,
+    brief: 'Dense traffic lanes around Southeast Asia, Pacific crossings, and chokepoints.',
   },
   'europe-med': {
     label: 'Europe / Med',
     destination: Cartesian3.fromDegrees(17, 42, 7_500_000),
     range: 4_200_000,
+    brief: 'European littorals, Baltic approaches, and Mediterranean operating picture.',
   },
 }
 
@@ -84,6 +88,7 @@ export default function GlobeWorkbenchPage() {
   const [autoCameraEnabled, setAutoCameraEnabled] = useState(() => readAutoCameraPref())
   const autoCameraEnabledRef = useRef(autoCameraEnabled)
   const [catalogue, setCatalogue] = useState<LayerDefinition[]>([])
+  const [catalogueError, setCatalogueError] = useState<string | null>(null)
   const [enabled, setEnabled] = useState<Record<string, boolean>>({})
   const [selectedLayerId, setSelectedLayerId] = useState<string | null>(null)
   const [activePreset, setActivePreset] = useState<FocusPresetId>('global')
@@ -95,6 +100,19 @@ export default function GlobeWorkbenchPage() {
     () => catalogue.find((layer) => layer.id === selectedLayerId) ?? null,
     [catalogue, selectedLayerId]
   )
+  const enabledLayerCount = useMemo(
+    () => catalogue.filter((layer) => enabled[layer.id]).length,
+    [catalogue, enabled]
+  )
+  const restrictedEnabledCount = useMemo(
+    () => catalogue.filter((layer) => enabled[layer.id] && layer.restricted).length,
+    [catalogue, enabled]
+  )
+  const activePresetMeta = FOCUS_PRESETS[activePreset]
+  const globeStatusText =
+    timelineMode === 'live'
+      ? 'Live global picture with continuous flight refresh and static infrastructure overlays.'
+      : 'Replay picture tuned for review, demos, and timeline walk-throughs.'
 
   useEffect(() => {
     autoCameraEnabledRef.current = autoCameraEnabled
@@ -151,16 +169,25 @@ export default function GlobeWorkbenchPage() {
 
   useEffect(() => {
     let cancelled = false
-    getLayerCatalogue().then((rows) => {
-      if (cancelled) return
-      setCatalogue(rows)
-      setSelectedLayerId(rows[0]?.id ?? null)
-      const nextEnabled: Record<string, boolean> = {}
-      rows.forEach((layer) => {
-        nextEnabled[layer.id] = layer.enabledByDefault ?? true
+    getLayerCatalogue()
+      .then((rows) => {
+        if (cancelled) return
+        setCatalogueError(null)
+        setCatalogue(rows)
+        setSelectedLayerId(rows[0]?.id ?? null)
+        const nextEnabled: Record<string, boolean> = {}
+        rows.forEach((layer) => {
+          nextEnabled[layer.id] = layer.enabledByDefault ?? true
+        })
+        setEnabled(nextEnabled)
       })
-      setEnabled(nextEnabled)
-    })
+      .catch((error) => {
+        if (cancelled) return
+        setCatalogue([])
+        setEnabled({})
+        setSelectedLayerId(null)
+        setCatalogueError(error instanceof Error ? error.message : 'Unable to load the globe layer catalogue.')
+      })
     void getPortsReference().then((rows) => !cancelled && setPorts(rows))
     void getSubseaCables().then((rows) => !cancelled && setCables(rows))
     return () => {
@@ -361,6 +388,34 @@ export default function GlobeWorkbenchPage() {
 
   return (
     <section className="globe-workbench">
+      <header className="globe-workbench__brief">
+        <div className="globe-workbench__brief-copy">
+          <span className="globe-workbench__brief-eyebrow">Intelligence</span>
+          <h1>Global picture workbench</h1>
+          <p>
+            Keep the theater view centered on live traffic, infrastructure overlays, and policy-cleared reference layers while preserving provenance at inspection speed.
+          </p>
+        </div>
+        <div className="globe-workbench__brief-cards">
+          <article>
+            <span>Mode</span>
+            <strong>{timelineMode === 'live' ? 'Live feed' : 'Replay review'}</strong>
+          </article>
+          <article>
+            <span>Layers</span>
+            <strong>{enabledLayerCount}/{catalogue.length || 0} active</strong>
+          </article>
+          <article>
+            <span>Restricted</span>
+            <strong>{restrictedEnabledCount}</strong>
+          </article>
+          <article>
+            <span>Camera</span>
+            <strong>{autoCameraEnabled ? 'Adaptive' : 'Manual'}</strong>
+          </article>
+        </div>
+      </header>
+
       <aside className="globe-workbench__catalogue">
         <h2>Data Layers</h2>
         <p className="globe-workbench__lead">
@@ -400,31 +455,54 @@ export default function GlobeWorkbenchPage() {
             Off: no automatic framing when layers load; use presets or Fit Active Data.
           </p>
         </div>
+        <div className="globe-workbench__posture">
+          <div>
+            <span className="globe-workbench__posture-label">Active layers</span>
+            <strong>{enabledLayerCount}/{catalogue.length || 0}</strong>
+          </div>
+          <div>
+            <span className="globe-workbench__posture-label">Restricted active</span>
+            <strong>{restrictedEnabledCount}</strong>
+          </div>
+          <div>
+            <span className="globe-workbench__posture-label">Camera</span>
+            <strong>{activePresetMeta.label}</strong>
+          </div>
+        </div>
+        {catalogueError ? <p className="globe-workbench__lead">{catalogueError}</p> : null}
         <ul>
           {catalogue.map((layer) => (
             <li key={layer.id} className={selectedLayerId === layer.id ? 'is-active' : undefined}>
-              <button
-                type="button"
-                onClick={() => setSelectedLayerId(layer.id)}
-                className="globe-workbench__layer"
-              >
-                <input
-                  type="checkbox"
-                  checked={Boolean(enabled[layer.id])}
-                  onChange={(event) =>
-                    setEnabled((prev) => ({
-                      ...prev,
-                      [layer.id]: event.target.checked,
-                    }))
-                  }
-                  aria-label={`toggle ${layer.name}`}
-                />
-                <span>{layer.name}</span>
+              <div className="globe-workbench__layer-row">
+                <label className="globe-workbench__layer">
+                  <input
+                    type="checkbox"
+                    checked={Boolean(enabled[layer.id])}
+                    onChange={(event) =>
+                      setEnabled((prev) => ({
+                        ...prev,
+                        [layer.id]: event.target.checked,
+                      }))
+                    }
+                    aria-label={`toggle ${layer.name}`}
+                  />
+                  <span>{layer.name}</span>
+                </label>
+                <button
+                  type="button"
+                  className="globe-workbench__inspect-trigger"
+                  onClick={() => setSelectedLayerId(layer.id)}
+                >
+                  Inspect
+                </button>
+              </div>
+              <div className="globe-workbench__layer-badges">
+                <span className="badge">{layer.category}</span>
                 {layer.restricted ? <span className="badge badge--restricted">Restricted</span> : null}
                 {layer.nonCommercial ? (
                   <span className="badge badge--non-commercial">Non-commercial</span>
                 ) : null}
-              </button>
+              </div>
               <p>{layer.description}</p>
             </li>
           ))}
@@ -432,11 +510,33 @@ export default function GlobeWorkbenchPage() {
       </aside>
 
       <div className="globe-workbench__globe">
+        <div className="globe-workbench__hud">
+          <div>
+            <span className="globe-workbench__hud-eyebrow">Global Picture</span>
+            <h2>{activePresetMeta.label}</h2>
+            <p>{activePresetMeta.brief}</p>
+          </div>
+          <div className="globe-workbench__hud-cards">
+            <div>
+              <span>Status</span>
+              <strong>{timelineMode === 'live' ? 'Live' : 'Replay'}</strong>
+            </div>
+            <div>
+              <span>Auto camera</span>
+              <strong>{autoCameraEnabled ? 'Adaptive' : 'Manual'}</strong>
+            </div>
+            <div>
+              <span>Signals</span>
+              <strong>{(enabled['flights-live'] ? flights.length : 0) + (enabled['ports-reference'] ? ports.length : 0) + (enabled['subsea-cables'] ? cables.length : 0)}</strong>
+            </div>
+          </div>
+        </div>
         <div ref={hostRef} className="globe-workbench__viewer" />
       </div>
 
       <aside className="globe-workbench__inspector">
         <h2>Inspector</h2>
+        <p className="globe-workbench__lead">{globeStatusText}</p>
         <div className="globe-workbench__metrics">
           <div>
             <span className="globe-workbench__metric-label">Flights</span>
@@ -455,6 +555,10 @@ export default function GlobeWorkbenchPage() {
           <dl>
             <dt>Layer</dt>
             <dd>{selectedLayer.name}</dd>
+            <dt>Category</dt>
+            <dd>{selectedLayer.category}</dd>
+            <dt>State</dt>
+            <dd>{enabled[selectedLayer.id] ? 'Enabled' : 'Disabled'}</dd>
             <dt>Provenance</dt>
             <dd>{selectedLayer.metadata.provenance}</dd>
             <dt>Confidence</dt>

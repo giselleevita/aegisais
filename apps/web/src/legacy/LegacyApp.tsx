@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import '../App.css'
 import WelcomePage from '@/shared/components/WelcomePage/WelcomePage'
 import Dashboard from '@/shared/components/Dashboard/Dashboard'
@@ -13,7 +13,8 @@ import ErrorBoundary from '@/shared/components/ErrorBoundary'
 import ITDAEPanel from '@/features/itdae/components/ITDAEPanel'
 import { useWebSocket } from '@/shared/hooks/useWebSocket'
 import { getStreamWebSocketUrl } from '@/core/ws-url'
-import { subscribeAuth } from '@/core/auth-token'
+import { evaluatePolicyRequirements, useAuthoritativeAuthContext } from '@/core/auth-context'
+import { getAccessToken } from '@/core/auth-token'
 import AuthBar from '@/shared/components/AuthBar/AuthBar'
 import WatchlistPanel from '@/features/vessels/components/WatchlistPanel'
 import { switchToAmlUi } from '@/core/uiMode'
@@ -22,9 +23,26 @@ export default function LegacyApp() {
   const [activeTab, setActiveTab] = useState<'home' | 'dashboard' | 'vessels' | 'alerts' | 'map' | 'itdae' | 'watchlist' | 'vessel-details'>('home')
   const [selectedVessel, setSelectedVessel] = useState<string | null>(null)
   const [showOnboarding, setShowOnboarding] = useState(false)
-  const [streamUrl, setStreamUrl] = useState(() => getStreamWebSocketUrl())
-
-  useEffect(() => subscribeAuth(() => setStreamUrl(getStreamWebSocketUrl())), [])
+  const { context: authContext, loading: authContextLoading } = useAuthoritativeAuthContext()
+  const hasSession = !!getAccessToken()
+  const streamAccess = useMemo(
+    () =>
+      evaluatePolicyRequirements(
+        authContext,
+        {
+          minClearance: 'CONFIDENTIAL',
+          requiredReleasability: ['NATO'],
+          requiredLicenses: ['ports:read'],
+        },
+        {
+          loading: authContextLoading,
+          hasSession,
+          fallbackLabel: 'live stream',
+        }
+      ),
+    [authContext, authContextLoading, hasSession]
+  )
+  const streamUrl = streamAccess.allowed ? getStreamWebSocketUrl() : null
 
   const { connected, lastMessage } = useWebSocket(streamUrl)
 
@@ -62,7 +80,7 @@ export default function LegacyApp() {
           <AuthBar />
           <div className="header-status">
             <span className={`status-indicator ${connected ? 'connected' : 'disconnected'}`}>
-              {connected ? 'Live' : 'Offline'}
+              {streamAccess.pending ? 'Syncing' : streamAccess.allowed ? (connected ? 'Live' : 'Offline') : 'Blocked'}
             </span>
             <button
               type="button"

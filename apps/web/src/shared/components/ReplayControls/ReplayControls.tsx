@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { apiClient } from '@/core/api-client'
+import { describeApiFailure } from '@/core/api-errors'
 import type { ReplayStatus, WebSocketMessage } from '@/shared/types/common'
 import FileDropZone from '@/shared/components/FileDropZone/FileDropZone'
 import './ReplayControls.css'
@@ -18,6 +19,7 @@ export default function ReplayControls({ lastMessage }: ReplayControlsProps) {
     const [batchSize, setBatchSize] = useState<string>('100')
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
+    const [statusError, setStatusError] = useState<string | null>(null)
 
     // Listen for error messages from WebSocket
     useEffect(() => {
@@ -26,23 +28,33 @@ export default function ReplayControls({ lastMessage }: ReplayControlsProps) {
         }
     }, [lastMessage])
 
-    useEffect(() => {
-        loadStatus()
-        const interval = setInterval(loadStatus, 1000)
-        return () => clearInterval(interval)
-    }, [])
-
-    const loadStatus = async () => {
+    const loadStatus = useCallback(async () => {
         try {
             const data = await apiClient.getReplayStatus()
             setStatus(data)
+            setStatusError(null)
         } catch (error) {
+            setStatus(null)
+            setStatusError(
+                describeApiFailure(error, {
+                    fallback: 'Unable to load replay status.',
+                    unauthorized: 'Sign in to access replay controls.',
+                    offline: 'Replay control link degraded. Restore the API policy surface to recover status telemetry.',
+                })
+            )
             if (import.meta.env.DEV) {
-                // eslint-disable-next-line no-console
                 console.error('Failed to load replay status:', error)
             }
         }
-    }
+    }, [])
+
+    useEffect(() => {
+        void loadStatus()
+        const interval = setInterval(() => {
+            void loadStatus()
+        }, 1000)
+        return () => clearInterval(interval)
+    }, [loadStatus])
 
     const handleStart = async () => {
         if (!filePath.trim()) {
@@ -57,8 +69,13 @@ export default function ReplayControls({ lastMessage }: ReplayControlsProps) {
             await apiClient.startReplay(filePath, speedup, useStreaming, parsedBatchSize)
             await loadStatus()
         } catch (err) {
-            const errorMessage = err instanceof Error ? err.message : 'Failed to start replay'
-            setError(`Failed to start replay: ${errorMessage}`)
+            setError(
+                describeApiFailure(err, {
+                    fallback: 'Unable to start replay.',
+                    unauthorized: 'Sign in to start replay.',
+                    offline: 'Replay start unavailable while the API policy surface is offline.',
+                })
+            )
         } finally {
             setLoading(false)
         }
@@ -70,8 +87,13 @@ export default function ReplayControls({ lastMessage }: ReplayControlsProps) {
             await apiClient.stopReplay()
             await loadStatus()
         } catch (err) {
-            const errorMessage = err instanceof Error ? err.message : 'Failed to stop replay'
-            setError(`Failed to stop replay: ${errorMessage}`)
+            setError(
+                describeApiFailure(err, {
+                    fallback: 'Unable to stop replay.',
+                    unauthorized: 'Sign in to stop replay.',
+                    offline: 'Replay stop unavailable while the API policy surface is offline.',
+                })
+            )
         }
     }
 
@@ -104,12 +126,22 @@ export default function ReplayControls({ lastMessage }: ReplayControlsProps) {
                     }
                 }, 2000)
             } catch (replayError) {
-                const errorMsg = replayError instanceof Error ? replayError.message : 'Failed to start replay'
-                setError(`Replay failed: ${errorMsg}`)
+                setError(
+                    describeApiFailure(replayError, {
+                        fallback: 'Replay failed to start.',
+                        unauthorized: 'Sign in to start replay.',
+                        offline: 'Replay start unavailable while the API policy surface is offline.',
+                    })
+                )
             }
         } catch (err) {
-            const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred'
-            setError(`Upload failed: ${errorMessage}`)
+            setError(
+                describeApiFailure(err, {
+                    fallback: 'Upload failed.',
+                    unauthorized: 'Sign in to upload a replay file.',
+                    offline: 'File ingest unavailable while the API policy surface is offline.',
+                })
+            )
         } finally {
             setLoading(false)
         }
@@ -133,6 +165,7 @@ export default function ReplayControls({ lastMessage }: ReplayControlsProps) {
                         )}
                     </div>
                 )}
+                {statusError ? <div className="replay-status__note" role="status">Status feed degraded. {statusError}</div> : null}
                 {error ? <div className="replay-error" role="alert">Warning: {error}</div> : null}
             </div>
 

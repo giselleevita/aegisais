@@ -27,6 +27,7 @@ Validated slices:
 - `.github/workflows/agentguard-stability-sweep.yml`: scheduled and manual drift-check workflow for the validated slices
 - `.github/workflows/agentguard-pr-enforcement.yml`: combined blocking workflow for validated slices on pull requests
 - `.github/workflows/agentguard-production-validation.yml`: manual real-OPA validation workflow for tagged production candidates
+- `PRODUCTION_EVIDENCE.md`: current release pin, run IDs, retained artifact path, and scope of the production claim
 - `PRODUCTION_GO_LIVE_CHECKLIST.md`: go-live checklist for enforcing AgentGuard with an external policy backend
 - `OPERATOR_RESPONSE_RUNBOOK.md`: operator response steps for install, OPA, threshold, and rollback failures
 
@@ -228,7 +229,7 @@ Recommended use:
 
 1. pin `AGENTGUARD_INSTALL_SOURCE` to a release tag
 2. run the production validation workflow manually
-3. review `PRODUCTION_GO_LIVE_CHECKLIST.md` and `OPERATOR_RESPONSE_RUNBOOK.md` alongside the workflow artifacts
+3. review `PRODUCTION_EVIDENCE.md`, `PRODUCTION_GO_LIVE_CHECKLIST.md`, and `OPERATOR_RESPONSE_RUNBOOK.md` alongside the workflow artifacts
 4. only treat the release as production-ready after the external-OPA workflow passes for all validated slices
 
 Current limitation:
@@ -245,6 +246,18 @@ Current limitation:
 Both slices now have one clean manual blocking validation, but they should still stay out of broader normal PR enforcement until repeated stability sweep runs remain clean.
 
 The repository now also has a combined PR enforcement workflow for these validated slices, but hard required-merge enforcement is blocked by the current GitHub plan on this private repository.
+
+## Production Claim Baseline
+
+The current production claim is anchored to the evidence recorded in `PRODUCTION_EVIDENCE.md`.
+
+That file must match all of the following at the same time:
+
+- the `AGENTGUARD_INSTALL_SOURCE` repository variable
+- the tagged AgentGuard release under approval
+- the latest retained `.agentguard/last-production-validation/` bundle
+
+If any of those drift, treat the production claim as stale until the evidence file is refreshed.
 
 ## Operational Notes
 
