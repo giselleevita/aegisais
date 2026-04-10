@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { Suspense, lazy, useEffect, useState } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import '@/App.css'
 import { useWebSocket } from '@/shared/hooks/useWebSocket'
@@ -11,13 +11,18 @@ import MapPage from '@/aml/pages/MapPage'
 import ItdaePage from '@/aml/pages/ItdaePage'
 import WatchlistPage from '@/aml/pages/WatchlistPage'
 import AdminPage from '@/aml/pages/AdminPage'
-import GlobeWorkbenchPage from '@/aml/pages/GlobeWorkbenchPage'
 import IncidentsPage from '@/aml/pages/IncidentsPage'
 import IncidentDetailPage from '@/aml/pages/IncidentDetailPage'
 import AuditPage from '@/aml/pages/AuditPage'
 import SanctionsPage from '@/aml/pages/SanctionsPage'
 import OnboardingTourPage from '@/aml/pages/OnboardingTourPage'
 import { AML_OPERATIONS_PATH } from '@/aml/amlRoutes'
+
+const GlobeWorkbenchPage = lazy(() => import('@/aml/pages/GlobeWorkbenchPage'))
+
+function RouteLoadingFallback() {
+  return <div className="app-loading-shell">Loading view...</div>
+}
 
 export default function AmlApp() {
   const [streamUrl, setStreamUrl] = useState(() => getStreamWebSocketUrl())
@@ -33,7 +38,14 @@ export default function AmlApp() {
         <Route path="/map" element={<MapPage />} />
         <Route path="/lab" element={<Navigate to={AML_OPERATIONS_PATH} replace />} />
         <Route path="/itdae" element={<ItdaePage />} />
-        <Route path="/globe" element={<GlobeWorkbenchPage />} />
+        <Route
+          path="/globe"
+          element={
+            <Suspense fallback={<RouteLoadingFallback />}>
+              <GlobeWorkbenchPage />
+            </Suspense>
+          }
+        />
         <Route path="/watchlist" element={<WatchlistPage />} />
         <Route path="/sanctions" element={<SanctionsPage />} />
         <Route path="/incidents" element={<IncidentsPage />} />

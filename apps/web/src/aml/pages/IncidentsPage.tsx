@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { apiClient } from '@/core/api-client'
 import type { Incident } from '@/shared/types/common'
@@ -11,7 +11,7 @@ export default function IncidentsPage() {
   const [statusFilter, setStatusFilter] = useState('')
   const [error, setError] = useState<string | null>(null)
 
-  const load = async () => {
+  const load = useCallback(async () => {
     setLoading(true)
     setError(null)
     try {
@@ -32,11 +32,11 @@ export default function IncidentsPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [statusFilter])
 
   useEffect(() => {
     void load()
-  }, [statusFilter])
+  }, [load])
 
   return (
     <div className="aml-page-pad aml-incidents">

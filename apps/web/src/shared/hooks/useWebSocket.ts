@@ -40,7 +40,6 @@ export function useWebSocket(url: string): UseWebSocketReturn {
         // Silently handle parse errors - invalid messages are ignored
         // In production, consider logging to monitoring service
         if (import.meta.env.DEV) {
-          // eslint-disable-next-line no-console
           console.warn('Failed to parse WebSocket message:', e)
         }
       }

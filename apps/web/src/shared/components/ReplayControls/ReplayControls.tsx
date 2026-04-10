@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { apiClient } from '@/core/api-client'
 import type { ReplayStatus, WebSocketMessage } from '@/shared/types/common'
 import FileDropZone from '@/shared/components/FileDropZone/FileDropZone'
@@ -19,6 +19,17 @@ export default function ReplayControls({ lastMessage }: ReplayControlsProps) {
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
 
+    const loadStatus = useCallback(async () => {
+        try {
+            const data = await apiClient.getReplayStatus()
+            setStatus(data)
+        } catch (error) {
+            if (import.meta.env.DEV) {
+                console.error('Failed to load replay status:', error)
+            }
+        }
+    }, [])
+
     // Listen for error messages from WebSocket
     useEffect(() => {
         if (lastMessage?.kind === 'error') {
@@ -27,22 +38,10 @@ export default function ReplayControls({ lastMessage }: ReplayControlsProps) {
     }, [lastMessage])
 
     useEffect(() => {
-        loadStatus()
+        void loadStatus()
         const interval = setInterval(loadStatus, 1000)
         return () => clearInterval(interval)
-    }, [])
-
-    const loadStatus = async () => {
-        try {
-            const data = await apiClient.getReplayStatus()
-            setStatus(data)
-        } catch (error) {
-            if (import.meta.env.DEV) {
-                // eslint-disable-next-line no-console
-                console.error('Failed to load replay status:', error)
-            }
-        }
-    }
+    }, [loadStatus])
 
     const handleStart = async () => {
         if (!filePath.trim()) {

@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aegisais.dev/contracts/Asset.schema.json",
+  "title": "Asset",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "organisationId",
+    "assetType",
+    "name",
+    "status",
+    "criticality",
+    "geometry",
+    "access"
+  ],
+  "properties": {
+    "id": { "type": "string" },
+    "organisationId": { "type": "string" },
+    "assetType": {
+      "type": "string",
+      "enum": ["cable_segment", "landing_station", "patrol_zone", "sensor_node"]
+    },
+    "name": { "type": "string" },
+    "description": { "type": "string" },
+    "status": { "type": "string" },
+    "criticality": {
+      "type": "string",
+      "enum": ["low", "medium", "high", "critical"]
+    },
+    "geometry": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "access": {
+      "$ref": "_common.json#/$defs/AccessMetadata"
+    }
+  }
+}

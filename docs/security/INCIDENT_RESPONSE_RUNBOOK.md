@@ -167,6 +167,28 @@ from app.modules.alerts.models import derive_evidence_hash
 - Update this runbook with lessons learned
 - Schedule tabletop exercise for similar scenarios
 
+### 7.4 Procurement Evidence Handling
+
+- Preserve incident artefacts in immutable storage for bid and audit evidence.
+- Link each incident to affected controls in `docs/security/SECURITY_EVIDENCE_PACK.md`.
+- For incidents during pilot or evaluation windows, publish a sponsor-safe incident summary within 5 business days.
+- Archive remediation verification evidence with timestamps, owners, and approvals.
+
+### 7.5 NATO RESTRICTED Communications Handling
+
+- Use approved restricted channels for incident coordination involving NATO RESTRICTED data.
+- Keep raw restricted payloads out of general-purpose chat, ticketing, and email systems.
+- Maintain two records where needed: a sanitized engineering timeline and a restricted annex.
+- Require classification review before any external sharing to pilots, partners, or evaluators.
+
+### 7.6 Defence Customer Update Template
+
+1. Incident summary and classification
+2. Affected capability and operational impact
+3. Containment status and current risk posture
+4. Data exposure assessment
+5. Next update time and accountable owner
+
 ## 8. Contact Matrix
 
 | Role               | Contact | Backup |
@@ -176,3 +198,9 @@ from app.modules.alerts.models import derive_evidence_hash
 | DevOps Lead        | [TBD]   | [TBD]  |
 | NATO NCIRC POC     | [TBD]   | [TBD]  |
 | Legal Counsel      | [TBD]   | [TBD]  |
+
+## 9. NCIA Tender Readiness Addendum
+
+- Maintain incident metrics for MTTD, MTTR, recurrence rate, and control remediation latency.
+- Attach incident trend summaries and tabletop exercise outcomes to the bid security annex.
+- Review this runbook quarterly and after every P0/P1 event.
