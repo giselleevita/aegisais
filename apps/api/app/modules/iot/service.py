@@ -14,7 +14,7 @@ from app.modules.audit.services import AuditService
 from app.modules.auth.models import User
 from app.modules.auth.org_scope import apply_org_filter
 from app.modules.alerts.models import Alert, derive_alert_idempotency_key, derive_evidence_hash
-from app.modules.detection.iot_fusion import build_fusion_alert
+from app.detection.iot_fusion import build_fusion_alert
 from app.modules.incidents.models import Incident
 from app.modules.incidents.service import create_incident_from_alert_with_flag
 from app.modules.iot.models import Device, DeviceHeartbeat, EdgeSyncBatch, TelemetryEvent
