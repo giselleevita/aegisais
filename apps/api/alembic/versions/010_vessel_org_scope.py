@@ -10,6 +10,7 @@ from typing import Sequence, Union
 
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy import inspect
 
 
 # revision identifiers, used by Alembic.
@@ -19,73 +20,92 @@ branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
 
+def column_exists(table_name: str, column_name: str) -> bool:
+    bind = op.get_bind()
+    inspector = inspect(bind)
+    columns = [col['name'] for col in inspector.get_columns(table_name)]
+    return column_name in columns
+
+
 def upgrade() -> None:
     bind = op.get_bind()
     is_sqlite = bind.dialect.name == "sqlite"
 
-    if is_sqlite:
-        with op.batch_alter_table("vessels_latest") as batch_op:
-            batch_op.add_column(sa.Column("organisation_id", sa.Integer(), nullable=False, server_default="1"))
-            batch_op.create_index("ix_vessels_latest_organisation_id", ["organisation_id"], unique=False)
-            batch_op.create_foreign_key(
+    # Check if columns already exist to prevent DuplicateColumn errors from parallel execution
+    if not column_exists("vessels_latest", "organisation_id"):
+        if is_sqlite:
+            with op.batch_alter_table("vessels_latest") as batch_op:
+                batch_op.add_column(sa.Column("organisation_id", sa.Integer(), nullable=False, server_default="1"))
+                batch_op.create_index("ix_vessels_latest_organisation_id", ["organisation_id"], unique=False)
+                batch_op.create_foreign_key(
+                    "fk_vessels_latest_org",
+                    "organisations",
+                    ["organisation_id"],
+                    ["id"],
+                    ondelete="RESTRICT",
+                )
+        else:
+            op.add_column(
+                "vessels_latest",
+                sa.Column("organisation_id", sa.Integer(), nullable=False, server_default="1"),
+            )
+            op.create_index("ix_vessels_latest_organisation_id", "vessels_latest", ["organisation_id"], unique=False)
+            op.create_foreign_key(
                 "fk_vessels_latest_org",
+                "vessels_latest",
                 "organisations",
                 ["organisation_id"],
                 ["id"],
                 ondelete="RESTRICT",
             )
 
-        with op.batch_alter_table("vessel_positions") as batch_op:
-            batch_op.add_column(sa.Column("organisation_id", sa.Integer(), nullable=False, server_default="1"))
-            batch_op.create_index("ix_vessel_positions_organisation_id", ["organisation_id"], unique=False)
-            batch_op.create_foreign_key(
+    if not column_exists("vessel_positions", "organisation_id"):
+        if is_sqlite:
+            with op.batch_alter_table("vessel_positions") as batch_op:
+                batch_op.add_column(sa.Column("organisation_id", sa.Integer(), nullable=False, server_default="1"))
+                batch_op.create_index("ix_vessel_positions_organisation_id", ["organisation_id"], unique=False)
+                batch_op.create_foreign_key(
+                    "fk_vessel_positions_org",
+                    "organisations",
+                    ["organisation_id"],
+                    ["id"],
+                    ondelete="RESTRICT",
+                )
+        else:
+            op.add_column(
+                "vessel_positions",
+                sa.Column("organisation_id", sa.Integer(), nullable=False, server_default="1"),
+            )
+            op.create_index("ix_vessel_positions_organisation_id", "vessel_positions", ["organisation_id"], unique=False)
+            op.create_foreign_key(
                 "fk_vessel_positions_org",
+                "vessel_positions",
                 "organisations",
                 ["organisation_id"],
                 ["id"],
                 ondelete="RESTRICT",
             )
-    else:
-        op.add_column(
+
+    # Create composite indices if they don't already exist
+    inspector_obj = inspect(bind)
+    existing_indices = [idx['name'] for idx in inspector_obj.get_indexes("vessels_latest")]
+
+    if "idx_vessels_org_mmsi" not in existing_indices:
+        op.create_index(
+            "idx_vessels_org_mmsi",
             "vessels_latest",
-            sa.Column("organisation_id", sa.Integer(), nullable=False, server_default="1"),
-        )
-        op.create_index("ix_vessels_latest_organisation_id", "vessels_latest", ["organisation_id"], unique=False)
-        op.create_foreign_key(
-            "fk_vessels_latest_org",
-            "vessels_latest",
-            "organisations",
-            ["organisation_id"],
-            ["id"],
-            ondelete="RESTRICT",
+            ["organisation_id", "mmsi"],
+            unique=False,
         )
 
-        op.add_column(
+    existing_indices = [idx['name'] for idx in inspector_obj.get_indexes("vessel_positions")]
+    if "idx_vessel_positions_org_mmsi_time" not in existing_indices:
+        op.create_index(
+            "idx_vessel_positions_org_mmsi_time",
             "vessel_positions",
-            sa.Column("organisation_id", sa.Integer(), nullable=False, server_default="1"),
+            ["organisation_id", "mmsi", "timestamp"],
+            unique=False,
         )
-        op.create_index("ix_vessel_positions_organisation_id", "vessel_positions", ["organisation_id"], unique=False)
-        op.create_foreign_key(
-            "fk_vessel_positions_org",
-            "vessel_positions",
-            "organisations",
-            ["organisation_id"],
-            ["id"],
-            ondelete="RESTRICT",
-        )
-
-    op.create_index(
-        "idx_vessels_org_mmsi",
-        "vessels_latest",
-        ["organisation_id", "mmsi"],
-        unique=False,
-    )
-    op.create_index(
-        "idx_vessel_positions_org_mmsi_time",
-        "vessel_positions",
-        ["organisation_id", "mmsi", "timestamp"],
-        unique=False,
-    )
 
 
 def downgrade() -> None:
