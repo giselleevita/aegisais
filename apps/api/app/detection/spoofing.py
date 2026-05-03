@@ -176,3 +176,66 @@ def check_simultaneous_mmsi(
                 },
             }
     return None
+
+
+def detect_multi_source_vessel_identity_conflict(
+    mmsi: int,
+    sources: dict[str, dict[str, Any]],
+) -> Optional[dict[str, Any]]:
+    """Detect same MMSI at >10km distance from different sources (terrestrial vs satellite).
+
+    Sources should be a dict like:
+    {
+        "aisstream": {"lat": 55.0, "lon": 10.0, "timestamp": datetime},
+        "sais": {"lat": 64.0, "lon": 25.0, "timestamp": datetime}
+    }
+    """
+    if len(sources) < 2:
+        return None
+
+    threshold_m = 10_000
+    threshold_sec = 60
+
+    sources_list = list(sources.items())
+    for i, (source1, pos1) in enumerate(sources_list):
+        for source2, pos2 in sources_list[i+1:]:
+            if not pos1.get('lat') or not pos1.get('lon') or not pos2.get('lat') or not pos2.get('lon'):
+                continue
+
+            ts1 = pos1.get('timestamp')
+            ts2 = pos2.get('timestamp')
+            if not ts1 or not ts2:
+                continue
+
+            dt = abs((ts1 - ts2).total_seconds())
+            if dt > threshold_sec:
+                continue
+
+            dist = haversine_m(pos1['lat'], pos1['lon'], pos2['lat'], pos2['lon'])
+            if dist > threshold_m:
+                return {
+                    "type": "IDENTITY_SPOOF",
+                    "severity": 95,
+                    "summary": f"MMSI {mmsi} multi-source conflict: {source1} & {source2} "
+                              f"{dist/1000:.1f}km apart within {dt:.0f}s",
+                    "evidence": {
+                        "mmsi": mmsi,
+                        "positions": {
+                            source1: {
+                                "lat": pos1['lat'],
+                                "lon": pos1['lon'],
+                                "timestamp": pos1.get('timestamp').isoformat() if pos1.get('timestamp') else None,
+                            },
+                            source2: {
+                                "lat": pos2['lat'],
+                                "lon": pos2['lon'],
+                                "timestamp": pos2.get('timestamp').isoformat() if pos2.get('timestamp') else None,
+                            }
+                        },
+                        "distance_m": dist,
+                        "dt_sec": dt,
+                        "provenance": [source1, source2],
+                    },
+                }
+
+    return None
