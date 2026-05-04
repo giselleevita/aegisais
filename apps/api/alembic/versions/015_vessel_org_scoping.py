@@ -1,7 +1,7 @@
 """Add organisation_id to vessels_latest and vessel_positions for per-tenant scoping.
 
 Revision ID: 015_vessel_org_scoping
-Revises: e7a1c9d2f301
+Revises: 014_add_user_mfa_columns
 Create Date: 2026-03-30
 
 """
@@ -11,7 +11,7 @@ from alembic import op
 import sqlalchemy as sa
 
 revision: str = "015_vessel_org_scoping"
-down_revision: Union[str, None] = "e7a1c9d2f301"
+down_revision: Union[str, None] = "014_add_user_mfa_columns"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
