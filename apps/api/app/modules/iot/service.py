@@ -191,6 +191,9 @@ def _persist_telemetry_event(db: Session, normalized: dict[str, Any], *, actor: 
     if normalized.get("device_id") is None:
         raise HTTPException(status_code=400, detail="Telemetry payload must resolve to a device")
     device = _resolve_device(db, int(normalized["device_id"]), actor)
+    recorded_at_value = normalized["recorded_at"]
+    if isinstance(recorded_at_value, str):
+        recorded_at_value = datetime.fromisoformat(recorded_at_value.replace("Z", "+00:00"))
     event = TelemetryEvent(
         organisation_id=device.organisation_id,
         device_id=device.id,
@@ -202,7 +205,7 @@ def _persist_telemetry_event(db: Session, normalized: dict[str, Any], *, actor: 
         reading_type=normalized.get("reading_type"),
         dedupe_key=normalized["dedupe_key"],
         correlation_mmsi=normalized.get("mmsi"),
-        recorded_at=normalized["recorded_at"],
+        recorded_at=recorded_at_value,
         payload_json=source_payload,
         normalized_json=normalized,
         severity_hint=int(normalized.get("threshold") is not None and normalized.get("value") is not None and float(normalized["value"]) >= float(normalized["threshold"]) and 70 or 0),
@@ -425,7 +428,7 @@ def ingest_telemetry_envelope(db: Session, body: TelemetryEnvelopeIn, *, device_
         "event_id": body.event_id,
         "source_type": body.source_type,
         "source_id": body.source_id or f"{body.source_type}:device:{device_id}",
-        "recorded_at": body.recorded_at or _now_utc(),
+        "recorded_at": (body.recorded_at or _now_utc()).isoformat(),
         "telemetry_type": body.payload.get("telemetry_type", "sensor_reading"),
         "reading_type": body.payload.get("reading_type", "generic"),
         "value": body.payload.get("value"),
