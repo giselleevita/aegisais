@@ -36,6 +36,9 @@ from app.modules.intel.router import router as intel_router
 from app.modules.sharing.router import router as sharing_router
 # AI Analyst assistant (Featherless AI)
 from app.modules.analyst.router import router as analyst_router
+# Subsea asset and IoT expansion
+from app.modules.assets.router import router as assets_router
+from app.modules.iot.router import router as iot_router
 # Geodata: EEZ, weather, bathymetry
 from app.services.geodata.router import router as geodata_router
 from prometheus_fastapi_instrumentator import Instrumentator
@@ -118,6 +121,8 @@ app.include_router(sanctions_router, prefix="/v1/sanctions", tags=["sanctions"])
 app.include_router(intel_router, prefix="/v1/intel", tags=["intel"])
 app.include_router(sharing_router, prefix="/v1/sharing", tags=["sharing"])
 app.include_router(analyst_router, prefix="/v1/analyst", tags=["analyst"])
+app.include_router(assets_router, prefix="/v1", tags=["assets"])
+app.include_router(iot_router, prefix="/v1/iot", tags=["iot"])
 app.include_router(geodata_router, prefix="/v1/geodata", tags=["geodata"])
 
 @app.get("/")

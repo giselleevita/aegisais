@@ -31,7 +31,6 @@ export default function Dashboard({ lastMessage }: DashboardProps) {
 
     const loadVesselCount = useCallback(async () => {
         try {
-            // Get total count by fetching with a high limit
             const allVessels = await apiClient.getVessels(0, 5000)
             setVesselCount(allVessels.length)
         } catch (err) {

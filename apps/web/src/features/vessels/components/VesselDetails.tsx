@@ -27,7 +27,7 @@ export default function VesselDetails({ mmsi, onClose }: VesselDetailsProps) {
 
     const loadVesselData = useCallback(async () => {
         if (!mmsi) return
-        
+
         try {
             setLoading(true)
             const [vesselData, alertsData, trackData, watchlistData] = await Promise.all([

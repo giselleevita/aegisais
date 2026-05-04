@@ -1,6 +1,7 @@
 import asyncio
 
 from app.core.logging import logger
+from app.infrastructure.iot import MqttTelemetryConsumer
 from app.services.workers.heartbeat import WorkerHeartbeat
 
 HEARTBEAT = WorkerHeartbeat("/tmp/worker_itdae_heartbeat")
@@ -17,6 +18,7 @@ class ITDAEStreamManager:
     def __init__(self):
         self.is_running = False
         self._aisstream_client = None
+        self._mqtt_consumer = MqttTelemetryConsumer()
 
     async def start(self):
         if self.is_running:
@@ -33,7 +35,7 @@ class ITDAEStreamManager:
                 asyncio.create_task(aisstream_client.connect())
                 logger.info("ITDAE stream started with live aisstream.io feed.")
             else:
-                logger.info("ITDAE stream started (no AISSTREAM_API_KEY — stub mode).")
+                logger.info("ITDAE stream started (no AISSTREAM_API_KEY — stub mode, MQTT normalizer ready).")
         except Exception as e:
             logger.warning("Failed to start AIS stream client: %s — running in stub mode", e)
 

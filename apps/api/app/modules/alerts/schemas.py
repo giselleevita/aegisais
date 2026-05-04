@@ -6,6 +6,8 @@ class AlertOut(BaseModel):
     id: int
     timestamp: datetime
     mmsi: str
+    asset_id: Optional[int] = None
+    source_device_id: Optional[int] = None
     type: str
     severity: int
     summary: str

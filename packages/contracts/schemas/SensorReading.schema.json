@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aegisais.dev/contracts/SensorReading.schema.json",
+  "title": "SensorReading",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "sensorNodeId",
+    "recordedAt",
+    "readingType",
+    "value",
+    "unit"
+  ],
+  "properties": {
+    "sensorNodeId": { "type": "string" },
+    "recordedAt": { "type": "string", "format": "date-time" },
+    "readingType": { "type": "string" },
+    "value": { "type": "number" },
+    "unit": { "type": "string" },
+    "quality": {
+      "$ref": "./Confidence.schema.json"
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  }
+}

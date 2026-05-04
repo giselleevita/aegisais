@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aegisais.dev/contracts/Device.schema.json",
+  "title": "Device",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "organisationId",
+    "deviceType",
+    "name",
+    "status",
+    "access"
+  ],
+  "properties": {
+    "id": { "type": "string" },
+    "organisationId": { "type": "string" },
+    "assetId": { "type": "string" },
+    "deviceType": {
+      "type": "string",
+      "enum": ["gateway", "sensor", "collector"]
+    },
+    "name": { "type": "string" },
+    "status": { "type": "string" },
+    "firmwareVersion": { "type": "string" },
+    "certificateRef": { "type": "string" },
+    "connectivityProfile": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "location": {
+      "$ref": "_common.json#/$defs/GeoPoint"
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "access": {
+      "$ref": "_common.json#/$defs/AccessMetadata"
+    }
+  }
+}
