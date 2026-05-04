@@ -43,6 +43,16 @@ function cesiumDevServer() {
   }
 }
 
+function getNodeModulePackageName(id: string) {
+  const normalized = id.split('node_modules/')[1]
+  if (!normalized) return null
+  const segments = normalized.split('/')
+  if (segments[0]?.startsWith('@')) {
+    return segments.slice(0, 2).join('/')
+  }
+  return segments[0] ?? null
+}
+
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [

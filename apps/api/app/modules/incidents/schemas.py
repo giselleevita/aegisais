@@ -8,6 +8,7 @@ class IncidentOut(BaseModel):
     id: int
     organisation_id: int
     alert_id: int
+    asset_id: Optional[int] = None
     created_at: datetime
     status: str
     title: str

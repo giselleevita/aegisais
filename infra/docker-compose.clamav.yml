@@ -1,0 +1,35 @@
+# Optional ClamAV service for malware scanning of uploaded files.
+# Enable by setting SCAN_UPLOADS_FOR_MALWARE=true in your .env
+# and including this file:
+#
+#   docker compose -f docker-compose.yml -f infra/docker-compose.clamav.yml up
+#
+# The api service connects via TCP (CLAMAV_HOST=clamav, CLAMAV_PORT=3310).
+
+services:
+  clamav:
+    image: clamav/clamav:stable
+    container_name: aegisais_clamav
+    restart: unless-stopped
+    environment:
+      CLAMAV_NO_FRESHCLAMD: "false"
+      CLAMAV_NO_CLAMD: "false"
+    ports:
+      - "3310:3310"
+    volumes:
+      - clamav_defs:/var/lib/clamav
+    healthcheck:
+      test: ["CMD", "clamdcheck.sh"]
+      interval: 60s
+      retries: 3
+      start_period: 120s
+      timeout: 10s
+    networks:
+      - aegisais_net
+
+volumes:
+  clamav_defs:
+
+networks:
+  aegisais_net:
+    external: true

@@ -1,7 +1,7 @@
 """add_incidents_table
 
 Revision ID: e7a1c9d2f301
-Revises: c32b98a46d40
+Revises: 008_organisations
 Create Date: 2026-03-23 12:00:00.000000
 
 Concurrency and uniqueness notes
@@ -33,7 +33,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision: str = "e7a1c9d2f301"
-down_revision: Union[str, None] = "c32b98a46d40"
+down_revision: Union[str, None] = "008_organisations"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 

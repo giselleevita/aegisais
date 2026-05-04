@@ -7,7 +7,7 @@
 
 AegisAIS is an automated data integrity and anomaly detection platform for Automatic Identification System (AIS) maritime data. It ingests AIS position reports, maintains per-vessel track history, and automatically detects physically impossible or internally inconsistent data patterns — surfacing them as prioritised, analyst-ready alerts.
 
-> See [`docs/SECURITY.md`](./docs/SECURITY.md) for scope, limitations, and responsible use guidelines.
+> See [`docs/security/SECURITY.md`](./docs/security/SECURITY.md) for scope, limitations, and responsible use guidelines.
 
 ---
 
@@ -122,8 +122,28 @@ npm run dev   # starts api + web concurrently
 ### Docker
 
 ```bash
-docker compose -f infra/docker/docker-compose.yml up --build
+bash scripts/start_full_stack.sh
 ```
+
+The helper script starts the core Docker services in parallel, auto-selects non-conflicting host ports when common defaults are already occupied, auto-generates a self-signed local TLS certificate for nginx when `infra/docker/nginx/certs/` is empty, and prints the chosen URLs at the end.
+
+If you want to invoke Docker Compose manually instead, the core processing stack needs more than the API alone:
+
+```bash
+docker compose -f infra/docker/docker-compose.yml up -d \
+	db redis api processing-worker persistence-worker alert-worker bff web nginx
+```
+
+Host-port overrides supported by the compose file:
+
+- `POSTGRES_HOST_PORT`
+- `REDIS_HOST_PORT`
+- `BFF_HOST_PORT`
+- `WEB_HOST_PORT`
+- `NGINX_HTTP_HOST_PORT`
+- `NGINX_HTTPS_HOST_PORT`
+- `PROMETHEUS_HOST_PORT`
+- `GRAFANA_HOST_PORT`
 
 ---
 
@@ -204,7 +224,7 @@ curl -X POST "http://localhost:8000/v1/replay/stop"
 
 ## API Documentation
 
-Full reference: [`docs/API_DOCUMENTATION.md`](./docs/API_DOCUMENTATION.md)
+Full reference: [`docs/product/API_DOCUMENTATION.md`](./docs/product/API_DOCUMENTATION.md)
 
 Interactive docs are served by the running API:
 
@@ -403,7 +423,7 @@ alembic upgrade head
 
 **SQLite (default local dev):** The full migration chain runs on SQLite. Organisation **foreign keys** are skipped on SQLite only (Alembic cannot `ALTER ADD CONSTRAINT`); the app still enforces tenancy in code. Use **PostgreSQL** for database-level FK parity.
 
-See [`apps/api/MIGRATION_GUIDE.md`](./apps/api/MIGRATION_GUIDE.md) and [`docs/DB_MIGRATION_SETUP.md`](./docs/DB_MIGRATION_SETUP.md) for full details.
+See [`apps/api/MIGRATION_GUIDE.md`](./apps/api/MIGRATION_GUIDE.md) and [`docs/operations/DB_MIGRATION_SETUP.md`](./docs/operations/DB_MIGRATION_SETUP.md) for full details.
 
 ### Demo Data
 
@@ -414,7 +434,7 @@ cd apps/api
 python scripts/generate_demo_data.py
 ```
 
-See [`docs/DEMO_GUIDE.md`](./docs/DEMO_GUIDE.md) for demo scenarios and expected results.
+See [`docs/operations/DEMO_GUIDE.md`](./docs/operations/DEMO_GUIDE.md) for demo scenarios and expected results.
 
 ---
 
@@ -449,10 +469,17 @@ npm run lint
 ### Docker
 
 ```bash
-docker compose -f infra/docker/docker-compose.yml up -d
+bash scripts/start_full_stack.sh
 ```
 
 The API Dockerfile automatically runs `alembic upgrade head` on container startup before launching the server. See [`apps/api/start_with_migrations.sh`](./apps/api/start_with_migrations.sh) for manual control.
+
+Notes:
+
+- The processing pipeline requires `redis`, `processing-worker`, `persistence-worker`, and `alert-worker` in addition to the API.
+- `scripts/start_full_stack.sh` generates local self-signed nginx certs on first run; browsers will warn because the issuer is not trusted.
+- The current repository does not implement offline model training or persisted model fitting. The existing `ml_scoring` module is an online statistical baseline rather than a trainable pipeline.
+- The concrete follow-on work for real training is tracked in the canonical domain docs under [`docs/architecture/`](./docs/architecture/) and [`docs/operations/`](./docs/operations/).
 
 ### Kubernetes (Recommended for Staging/Production)
 
@@ -466,20 +493,35 @@ kubectl apply -k infra/k8s/overlays/staging
 kubectl apply -k infra/k8s/overlays/production
 ```
 
-Deployment baseline, topology rationale, and rollback steps are documented in [`docs/INFRA_BASELINE_KUBERNETES.md`](./docs/INFRA_BASELINE_KUBERNETES.md).
+Deployment baseline, topology rationale, and rollback steps are documented in [`docs/architecture/INFRA_BASELINE_KUBERNETES.md`](./docs/architecture/INFRA_BASELINE_KUBERNETES.md).
 
 ---
 
 ## Documentation
 
-| Document                                                       | Description                                      |
-| -------------------------------------------------------------- | ------------------------------------------------ |
-| [`docs/API_DOCUMENTATION.md`](./docs/API_DOCUMENTATION.md)     | Complete REST and WebSocket API reference        |
-| [`docs/DEMO_GUIDE.md`](./docs/DEMO_GUIDE.md)                   | Demo datasets, scenarios, and expected results   |
-| [`docs/DB_MIGRATION_SETUP.md`](./docs/DB_MIGRATION_SETUP.md)   | Database migration system overview               |
-| [`docs/LARGE_DATASET_GUIDE.md`](./docs/LARGE_DATASET_GUIDE.md) | Performance tuning for large AIS datasets        |
-| [`docs/SECURITY.md`](./docs/SECURITY.md)                       | Security scope, limitations, and responsible use |
-| [`apps/api/MIGRATION_GUIDE.md`](./apps/api/MIGRATION_GUIDE.md) | Alembic migration developer guide                |
+All documentation is organized by domain in the `docs/` directory. **Start with [`docs/README.md`](./docs/README.md)** for a guided overview of each domain.
+
+### Quick Links by Domain
+
+| Domain           | Purpose                                        | Key Documents                                                                                                                                                                                                    |
+| ---------------- | ---------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Architecture** | System design, topology, infrastructure        | [`ARCHITECTURE.md`](./docs/architecture/ARCHITECTURE.md), [`PROJECT_STRUCTURE.md`](./docs/architecture/PROJECT_STRUCTURE.md), [`INFRA_BASELINE_KUBERNETES.md`](./docs/architecture/INFRA_BASELINE_KUBERNETES.md) |
+| **Operations**   | Runtime guides, migrations, performance tuning | [`DEMO_GUIDE.md`](./docs/operations/DEMO_GUIDE.md), [`DB_MIGRATION_SETUP.md`](./docs/operations/DB_MIGRATION_SETUP.md), [`LARGE_DATASET_GUIDE.md`](./docs/operations/LARGE_DATASET_GUIDE.md)                     |
+| **Product**      | API spec, features, integrations               | [`API_DOCUMENTATION.md`](./docs/product/API_DOCUMENTATION.md), [`FEATURES_IMPLEMENTED.md`](./docs/product/FEATURES_IMPLEMENTED.md), [`INTEROPERABILITY_PROFILE.md`](./docs/product/INTEROPERABILITY_PROFILE.md)  |
+| **Security**     | Threat model, compliance, incident procedures  | [`SECURITY.md`](./docs/security/SECURITY.md), [`SECURITY_EVIDENCE_PACK.md`](./docs/security/SECURITY_EVIDENCE_PACK.md), [`INCIDENT_RESPONSE_RUNBOOK.md`](./docs/security/INCIDENT_RESPONSE_RUNBOOK.md)           |
+| **Governance**   | Backlog, audit coverage, issue tracking        | [`BUSINESS_LOGIC_IMPLEMENTATION_BACKLOG.md`](./docs/governance/BUSINESS_LOGIC_IMPLEMENTATION_BACKLOG.md), [`AUDIT_COVERAGE_MATRIX.md`](./docs/governance/AUDIT_COVERAGE_MATRIX.md)                               |
+| **Funding**      | Financial models, evidence, business cases     | [`NATO_FUNDABILITY_GAP_ANALYSIS.md`](./docs/funding/NATO_FUNDABILITY_GAP_ANALYSIS.md), [`FUNDING_ROUTE_MATRIX.md`](./docs/funding/FUNDING_ROUTE_MATRIX.md)                                                       |
+
+### Reference Documentation
+
+| Document                                                                             | Purpose                                          |
+| ------------------------------------------------------------------------------------ | ------------------------------------------------ |
+| [`docs/product/API_DOCUMENTATION.md`](./docs/product/API_DOCUMENTATION.md)           | Complete REST and WebSocket API reference        |
+| [`docs/operations/DEMO_GUIDE.md`](./docs/operations/DEMO_GUIDE.md)                   | Demo datasets, scenarios, and expected results   |
+| [`docs/operations/DB_MIGRATION_SETUP.md`](./docs/operations/DB_MIGRATION_SETUP.md)   | Database migration system overview               |
+| [`docs/operations/LARGE_DATASET_GUIDE.md`](./docs/operations/LARGE_DATASET_GUIDE.md) | Performance tuning for large AIS datasets        |
+| [`docs/security/SECURITY.md`](./docs/security/SECURITY.md)                           | Security scope, limitations, and responsible use |
+| [`apps/api/MIGRATION_GUIDE.md`](./apps/api/MIGRATION_GUIDE.md)                       | Alembic migration developer guide                |
 
 ---
 

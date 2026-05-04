@@ -18,6 +18,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Optional
 
+from app.core.config import settings
 from app.infrastructure.ingest.loaders import AisPoint
 from app.tracking.features import haversine_m
 
@@ -31,8 +32,71 @@ _sanctioned_mmsi: set[str] = set()
 _sanctioned_imo: set[str] = set()
 _sanctioned_names: set[str] = set()
 
+FLAG_HOP_MAX_GAP_DAYS = 180
+DARK_PORT_MIN_DURATION_SEC = 15 * 60
+DARK_PORT_RADIUS_M = 25_000
 
-def load_watchlist(path: Optional[Path] = None) -> dict[str, int]:
+
+def _resolve_watchlist_path(path: Optional[Path | str] = None) -> Path:
+    if path is not None:
+        return Path(path)
+
+    configured = (settings.SANCTIONS_WATCHLIST_PATH or "").strip()
+    if configured:
+        return Path(configured)
+
+    return _WATCHLIST_PATH
+
+
+def _coerce_datetime(value: Any) -> Optional[datetime]:
+    if value is None:
+        return None
+    if isinstance(value, datetime):
+        return value if value.tzinfo else value.replace(tzinfo=timezone.utc)
+    if isinstance(value, str):
+        normalized = value.replace("Z", "+00:00")
+        try:
+            parsed = datetime.fromisoformat(normalized)
+        except ValueError:
+            return None
+        return parsed if parsed.tzinfo else parsed.replace(tzinfo=timezone.utc)
+    return None
+
+
+def _normalize_identity_text(value: Optional[str]) -> str:
+    if not value:
+        return ""
+    normalized = re.sub(r"[^A-Z0-9]+", " ", value.upper()).strip()
+    return re.sub(r"\s+", " ", normalized)
+
+
+def get_watchlist_status(path: Optional[Path | str] = None) -> dict[str, Any]:
+    """Return operational metadata for the currently configured watchlist."""
+    watchlist_path = _resolve_watchlist_path(path)
+    status: dict[str, Any] = {
+        "path": str(watchlist_path),
+        "exists": watchlist_path.exists(),
+        "mmsi_count": len(_sanctioned_mmsi),
+        "imo_count": len(_sanctioned_imo),
+        "name_count": len(_sanctioned_names),
+        "source": "local file",
+        "updated_at": None,
+    }
+
+    if not watchlist_path.exists():
+        return status
+
+    try:
+        data = json.loads(watchlist_path.read_text())
+    except (OSError, json.JSONDecodeError):
+        return status
+
+    status["source"] = data.get("_source", status["source"])
+    status["updated_at"] = data.get("_updated_at")
+    return status
+
+
+def load_watchlist(path: Optional[Path | str] = None) -> dict[str, int]:
     """Load sanctions watchlist from JSON file.
 
     Expected format:
@@ -44,17 +108,20 @@ def load_watchlist(path: Optional[Path] = None) -> dict[str, int]:
     """
     global _sanctioned_mmsi, _sanctioned_imo, _sanctioned_names
 
-    fpath = path or _WATCHLIST_PATH
+    fpath = _resolve_watchlist_path(path)
     if not fpath.exists():
         _log.info("No sanctions watchlist at %s — sanctions matching disabled", fpath)
+        _sanctioned_mmsi = set()
+        _sanctioned_imo = set()
+        _sanctioned_names = set()
         return {"mmsi": 0, "imo": 0, "names": 0}
 
-    with open(fpath, "r") as f:
+    with open(fpath, "r", encoding="utf-8") as f:
         data = json.load(f)
 
-    _sanctioned_mmsi = {str(m) for m in data.get("mmsi", [])}
-    _sanctioned_imo = {str(i) for i in data.get("imo", [])}
-    _sanctioned_names = {n.upper() for n in data.get("names", [])}
+    _sanctioned_mmsi = {str(m).strip() for m in data.get("mmsi", []) if str(m).strip()}
+    _sanctioned_imo = {str(i).strip() for i in data.get("imo", []) if str(i).strip()}
+    _sanctioned_names = {str(n).strip().upper() for n in data.get("names", []) if str(n).strip()}
 
     counts = {
         "mmsi": len(_sanctioned_mmsi),
@@ -99,6 +166,196 @@ def check_vessel_sanctions(
             "imo": imo,
             "vessel_name": vessel_name,
             "matches": matches,
+        },
+    }
+
+
+def detect_flag_hopping(identity_snapshots: list[dict[str, Any]]) -> Optional[dict[str, Any]]:
+    """Detect suspicious vessel identity changes across historical observations.
+
+    Requires either a stable IMO or a stable normalized vessel name to anchor
+    the vessel identity, then looks for MMSI and flag-state changes over time.
+    """
+    if len(identity_snapshots) < 2:
+        return None
+
+    normalized_snapshots: list[dict[str, Any]] = []
+    for snapshot in identity_snapshots:
+        timestamp = _coerce_datetime(snapshot.get("timestamp"))
+        if timestamp is None:
+            continue
+
+        normalized_snapshots.append(
+            {
+                "mmsi": str(snapshot.get("mmsi", "")).strip(),
+                "imo": str(snapshot.get("imo", "")).strip(),
+                "flag_state": _normalize_identity_text(snapshot.get("flag_state")),
+                "vessel_name": _normalize_identity_text(snapshot.get("vessel_name")),
+                "timestamp": timestamp,
+            }
+        )
+
+    if len(normalized_snapshots) < 2:
+        return None
+
+    normalized_snapshots.sort(key=lambda item: item["timestamp"])
+    first_seen = normalized_snapshots[0]["timestamp"]
+    last_seen = normalized_snapshots[-1]["timestamp"]
+    if (last_seen - first_seen) > timedelta(days=FLAG_HOP_MAX_GAP_DAYS):
+        return None
+
+    distinct_mmsi = {item["mmsi"] for item in normalized_snapshots if item["mmsi"]}
+    distinct_flags = {item["flag_state"] for item in normalized_snapshots if item["flag_state"]}
+    if len(distinct_mmsi) <= 1 and len(distinct_flags) <= 1:
+        return None
+
+    distinct_imo = {item["imo"] for item in normalized_snapshots if item["imo"]}
+    distinct_names = {item["vessel_name"] for item in normalized_snapshots if item["vessel_name"]}
+    if len(distinct_imo) > 1:
+        return None
+    if not distinct_imo and len(distinct_names) != 1:
+        return None
+
+    changes: list[dict[str, Any]] = []
+    for previous, current in zip(normalized_snapshots, normalized_snapshots[1:]):
+        changed_fields: list[str] = []
+        if previous["mmsi"] and current["mmsi"] and previous["mmsi"] != current["mmsi"]:
+            changed_fields.append("mmsi")
+        if (
+            previous["flag_state"]
+            and current["flag_state"]
+            and previous["flag_state"] != current["flag_state"]
+        ):
+            changed_fields.append("flag_state")
+
+        if not changed_fields:
+            continue
+
+        changes.append(
+            {
+                "from": {
+                    "mmsi": previous["mmsi"],
+                    "flag_state": previous["flag_state"],
+                    "timestamp": previous["timestamp"].isoformat(),
+                },
+                "to": {
+                    "mmsi": current["mmsi"],
+                    "flag_state": current["flag_state"],
+                    "timestamp": current["timestamp"].isoformat(),
+                },
+                "changed_fields": changed_fields,
+                "gap_hours": round(
+                    (current["timestamp"] - previous["timestamp"]).total_seconds() / 3600,
+                    2,
+                ),
+            }
+        )
+
+    if not changes:
+        return None
+
+    rapid_change = any(change["gap_hours"] <= 24 * 30 for change in changes)
+    severity = 78 + min(9, len(changes) * 3)
+    if len(distinct_mmsi) > 1 and len(distinct_flags) > 1:
+        severity += 8
+    if rapid_change:
+        severity += 4
+    severity = min(95, severity)
+
+    anchor = next(iter(distinct_imo), None) or next(iter(distinct_names), None)
+    anchor_kind = "imo" if distinct_imo else "vessel_name"
+
+    return {
+        "type": "FLAG_HOPPING",
+        "severity": severity,
+        "summary": (
+            f"Potential flag hopping for {anchor_kind} {anchor}: "
+            f"{len(distinct_mmsi)} MMSI(s), {len(distinct_flags)} flag state(s)"
+        ),
+        "evidence": {
+            "anchor_kind": anchor_kind,
+            "anchor": anchor,
+            "first_seen": first_seen.isoformat(),
+            "last_seen": last_seen.isoformat(),
+            "distinct_mmsi": sorted(distinct_mmsi),
+            "distinct_flags": sorted(distinct_flags),
+            "changes": changes,
+            "rapid_change": rapid_change,
+        },
+    }
+
+
+def correlate_dark_activity_with_sanctioned_port(
+    *,
+    mmsi: str,
+    dark_duration_sec: int,
+    last_known_position: dict[str, Any],
+    reappearance_position: dict[str, Any],
+    sanctioned_ports: list[dict[str, Any]],
+) -> Optional[dict[str, Any]]:
+    """Correlate an AIS dark period with sanctioned-port proximity."""
+    if dark_duration_sec < DARK_PORT_MIN_DURATION_SEC or not sanctioned_ports:
+        return None
+
+    def _match_port(position: dict[str, Any], stage: str) -> list[dict[str, Any]]:
+        lat = position.get("lat")
+        lon = position.get("lon")
+        if lat is None or lon is None:
+            return []
+
+        matches: list[dict[str, Any]] = []
+        for port in sanctioned_ports:
+            port_lat = port.get("lat")
+            port_lon = port.get("lon")
+            if port_lat is None or port_lon is None:
+                continue
+            distance_m = haversine_m(float(lat), float(lon), float(port_lat), float(port_lon))
+            if distance_m > DARK_PORT_RADIUS_M:
+                continue
+            matches.append(
+                {
+                    "stage": stage,
+                    "port_name": port.get("name", "unknown"),
+                    "country": port.get("country"),
+                    "sanctions_regime": port.get("sanctions_regime"),
+                    "distance_m": round(distance_m, 1),
+                }
+            )
+        return matches
+
+    matches = _match_port(last_known_position, "last_seen") + _match_port(
+        reappearance_position,
+        "reappeared",
+    )
+    if not matches:
+        return None
+
+    matched_stages = {match["stage"] for match in matches}
+    matched_ports = sorted({match["port_name"] for match in matches})
+    severity = 74
+    if len(matched_stages) == 2:
+        severity += 8
+    if dark_duration_sec >= 2 * 60 * 60:
+        severity += 8
+    if len(matched_ports) > 1:
+        severity += 4
+    severity = min(95, severity)
+
+    return {
+        "type": "SANCTIONS_DARK_ACTIVITY",
+        "severity": severity,
+        "summary": (
+            f"AIS dark activity for {mmsi} correlated with sanctioned port proximity: "
+            f"{', '.join(matched_ports)}"
+        ),
+        "evidence": {
+            "mmsi": mmsi,
+            "dark_duration_sec": dark_duration_sec,
+            "dark_hours": round(dark_duration_sec / 3600, 2),
+            "matched_ports": matches,
+            "last_known_position": last_known_position,
+            "reappearance_position": reappearance_position,
+            "radius_m": DARK_PORT_RADIUS_M,
         },
     }
 

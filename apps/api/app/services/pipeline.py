@@ -41,6 +41,11 @@ def enqueue_point(p: AisPoint):
         "heading": p.heading
     })
 
+
+def enqueue_telemetry_event(event: dict):
+    """Push a canonical telemetry envelope onto the generic messaging stream."""
+    publisher.publish(getattr(settings, "stream_iot_raw", "stream:iot:raw"), event)
+
 def process_point(p: AisPoint) -> dict:
     """
     Pure logic function to run detection rules.
