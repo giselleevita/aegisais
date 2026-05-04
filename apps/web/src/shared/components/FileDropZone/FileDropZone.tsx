@@ -2,7 +2,7 @@ import { useCallback, useState } from 'react'
 import './FileDropZone.css'
 
 interface FileDropZoneProps {
-    onFileDrop: (file: File) => void
+    onFileDrop: (file: File) => void | Promise<void>
     acceptedTypes?: string[]
     maxSizeMB?: number
 }
@@ -54,7 +54,7 @@ export default function FileDropZone({ onFileDrop, acceptedTypes = ['.csv', '.da
         setUploadProgress(`Uploading ${file.name}...`)
 
         try {
-            onFileDrop(file)
+            await onFileDrop(file)
             setUploadProgress(`Uploaded ${file.name} successfully!`)
             setTimeout(() => setUploadProgress(''), 2000)
         } catch (err) {
@@ -92,7 +92,7 @@ export default function FileDropZone({ onFileDrop, acceptedTypes = ['.csv', '.da
         setUploadProgress(`Uploading ${file.name}...`)
 
         try {
-            onFileDrop(file)
+            await onFileDrop(file)
             setUploadProgress(`Uploaded ${file.name} successfully!`)
             setTimeout(() => setUploadProgress(''), 2000)
         } catch (err) {

@@ -116,7 +116,9 @@ python -m app.scripts.import_ais_batch --input /diode/landing/ais_*.json
 cp /approved-media/sanctions_watchlist.json /data/sanctions/watchlist.json
 
 # Reload in running system
-curl -X POST https://aegisais.classified.local/v1/sanctions/watchlist/reload
+curl -X POST \
+	-H "Authorization: Bearer <ADMIN_JWT>" \
+	https://aegisais.classified.local/v1/sanctions/watchlist/reload
 ```
 
 ## Step 6: Classification Marking Verification
@@ -129,6 +131,21 @@ Verify with:
 curl -s https://aegisais.classified.local/v1/intel/intsum | jq ._classification
 # Expected: {"classification": "NATO RESTRICTED", "tlp": "TLP:AMBER", ...}
 ```
+
+## Step 7: Rehearsal Evidence Capture
+
+Generate the repo-backed rehearsal package before customer-side execution:
+
+```bash
+./scripts/finalize_airgap_evidence.sh
+```
+
+This writes `docs/evidence/AIR_GAPPED_REHEARSAL_EVIDENCE_FINAL.md` with:
+
+- validation of the compose baseline
+- verification that the air-gapped guide and evidence pack are present
+- SHA-256 hashes for the core deployment artefacts
+- the remaining manual steps required in a real classified environment
 
 ## Security Controls
 

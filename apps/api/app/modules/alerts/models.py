@@ -59,6 +59,8 @@ class Alert(Base):
         nullable=False,
         index=True,
     )
+    asset_id = Column(Integer, ForeignKey("assets.id", ondelete="SET NULL"), nullable=True, index=True)
+    source_device_id = Column(Integer, ForeignKey("iot_devices.id", ondelete="SET NULL"), nullable=True, index=True)
     timestamp = Column(DateTime, index=True, nullable=False)
     mmsi = Column(String, index=True, nullable=False)
 
@@ -93,6 +95,7 @@ class AlertCooldown(Base):
 
 # Composite indexes
 Index("idx_alerts_mmsi_time", Alert.mmsi, Alert.timestamp)
+Index("idx_alerts_org_asset_time", Alert.organisation_id, Alert.asset_id, Alert.timestamp)
 Index("idx_alerts_type_time", Alert.type, Alert.timestamp)
 Index("idx_alerts_severity_time", Alert.severity, Alert.timestamp)
 Index("idx_alerts_timestamp", Alert.timestamp)

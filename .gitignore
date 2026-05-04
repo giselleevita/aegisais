@@ -18,6 +18,7 @@ build/
 
 # Environment
 .env
+!.env.example
 .env.*
 .venv
 
@@ -40,6 +41,9 @@ Thumbs.db
 # Logs
 *.log
 logs/
+.coverage
+coverage.xml
+htmlcov/
 
 # Data files (keep structure, ignore content)
 data/raw/*
@@ -65,3 +69,12 @@ frontend/build/
 
 # AgentGuard local run artifacts
 .agentguard/last-*/
+
+# Local TLS certs
+infra/docker/nginx/certs/*
+!infra/docker/nginx/certs/.gitkeep
+
+# NATO execution board evidence artifacts (D-01, D-04, etc.)
+# Keep directory structure, ignore runtime captures
+docs/evidence/*
+!docs/evidence/.gitkeep

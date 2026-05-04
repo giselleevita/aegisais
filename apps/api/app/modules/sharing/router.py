@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Optional
+from typing import Optional, cast
 
 from fastapi import APIRouter, Depends, Query
 from pydantic import BaseModel

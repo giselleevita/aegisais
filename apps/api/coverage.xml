@@ -121,11 +121,11 @@
 						<line number="3" hits="1"/>
 						<line number="6" hits="1"/>
 						<line number="8" hits="1"/>
-						<line number="21" hits="1" branch="true" condition-coverage="50% (1/2)" missing-branches="22"/>
+						<line number="21" hits="0" branch="true" condition-coverage="0% (0/2)" missing-branches="22,27"/>
 						<line number="22" hits="0"/>
-						<line number="27" hits="1" branch="true" condition-coverage="50% (1/2)" missing-branches="28"/>
+						<line number="27" hits="0" branch="true" condition-coverage="0% (0/2)" missing-branches="28,33"/>
 						<line number="28" hits="0"/>
-						<line number="33" hits="1"/>
+						<line number="33" hits="0"/>
 						<line number="35" hits="1"/>
 						<line number="48" hits="0"/>
 						<line number="58" hits="0" branch="true" condition-coverage="0% (0/2)" missing-branches="59,64"/>
@@ -904,9 +904,9 @@
 						<line number="9" hits="1"/>
 						<line number="12" hits="1"/>
 						<line number="13" hits="1"/>
-						<line number="14" hits="1" branch="true" condition-coverage="50% (1/2)" missing-branches="20"/>
-						<line number="15" hits="1"/>
-						<line number="20" hits="0"/>
+						<line number="14" hits="1" branch="true" condition-coverage="50% (1/2)" missing-branches="15"/>
+						<line number="15" hits="0"/>
+						<line number="20" hits="1"/>
 						<line number="30" hits="1"/>
 						<line number="31" hits="1"/>
 						<line number="33" hits="1"/>
@@ -2394,13 +2394,13 @@
 					<methods/>
 					<lines/>
 				</class>
-				<class name="mappers.py" filename="modules/alerts/mappers.py" complexity="0" line-rate="1" branch-rate="1">
+				<class name="mappers.py" filename="modules/alerts/mappers.py" complexity="0" line-rate="0.75" branch-rate="1">
 					<methods/>
 					<lines>
 						<line number="2" hits="1"/>
 						<line number="3" hits="1"/>
 						<line number="6" hits="1"/>
-						<line number="7" hits="1"/>
+						<line number="7" hits="0"/>
 					</lines>
 				</class>
 				<class name="models.py" filename="modules/alerts/models.py" complexity="0" line-rate="0.7907" branch-rate="0">
@@ -2429,29 +2429,32 @@
 						<line number="56" hits="1"/>
 						<line number="62" hits="1"/>
 						<line number="63" hits="1"/>
+						<line number="64" hits="1"/>
 						<line number="65" hits="1"/>
-						<line number="66" hits="1"/>
+						<line number="67" hits="1"/>
 						<line number="68" hits="1"/>
-						<line number="69" hits="1"/>
-						<line number="74" hits="1"/>
-						<line number="80" hits="1"/>
-						<line number="83" hits="1"/>
-						<line number="84" hits="1"/>
+						<line number="70" hits="1"/>
+						<line number="71" hits="1"/>
+						<line number="76" hits="1"/>
+						<line number="82" hits="1"/>
+						<line number="85" hits="1"/>
 						<line number="86" hits="1"/>
 						<line number="88" hits="1"/>
 						<line number="90" hits="1"/>
-						<line number="91" hits="1"/>
 						<line number="92" hits="1"/>
-						<line number="95" hits="1"/>
-						<line number="96" hits="1"/>
+						<line number="93" hits="1"/>
+						<line number="94" hits="1"/>
 						<line number="97" hits="1"/>
 						<line number="98" hits="1"/>
 						<line number="99" hits="1"/>
 						<line number="100" hits="1"/>
 						<line number="101" hits="1"/>
+						<line number="102" hits="1"/>
+						<line number="103" hits="1"/>
+						<line number="104" hits="1"/>
 					</lines>
 				</class>
-				<class name="query_filters.py" filename="modules/alerts/query_filters.py" complexity="0" line-rate="0.7333" branch-rate="0.5">
+				<class name="query_filters.py" filename="modules/alerts/query_filters.py" complexity="0" line-rate="0.3333" branch-rate="0">
 					<methods/>
 					<lines>
 						<line number="2" hits="1"/>
@@ -2463,27 +2466,27 @@
 						<line number="11" hits="1"/>
 						<line number="12" hits="1"/>
 						<line number="15" hits="1"/>
-						<line number="27" hits="1" branch="true" condition-coverage="50% (1/2)" missing-branches="28"/>
+						<line number="27" hits="0" branch="true" condition-coverage="0% (0/2)" missing-branches="28,30"/>
 						<line number="28" hits="0"/>
 						<line number="29" hits="0"/>
-						<line number="30" hits="1" branch="true" condition-coverage="50% (1/2)" missing-branches="31"/>
+						<line number="30" hits="0" branch="true" condition-coverage="0% (0/2)" missing-branches="31,33"/>
 						<line number="31" hits="0"/>
 						<line number="32" hits="0"/>
-						<line number="33" hits="1" branch="true" condition-coverage="50% (1/2)" missing-branches="34"/>
+						<line number="33" hits="0" branch="true" condition-coverage="0% (0/2)" missing-branches="34,36"/>
 						<line number="34" hits="0"/>
 						<line number="35" hits="0"/>
-						<line number="36" hits="1"/>
-						<line number="37" hits="1"/>
-						<line number="38" hits="1" branch="true" condition-coverage="50% (1/2)" missing-branches="39"/>
+						<line number="36" hits="0"/>
+						<line number="37" hits="0"/>
+						<line number="38" hits="0" branch="true" condition-coverage="0% (0/2)" missing-branches="39,40"/>
 						<line number="39" hits="0"/>
-						<line number="40" hits="1" branch="true" condition-coverage="50% (1/2)" missing-branches="41"/>
+						<line number="40" hits="0" branch="true" condition-coverage="0% (0/2)" missing-branches="41,42"/>
 						<line number="41" hits="0"/>
-						<line number="42" hits="1"/>
+						<line number="42" hits="0"/>
 						<line number="45" hits="1"/>
-						<line number="50" hits="1"/>
-						<line number="59" hits="1"/>
-						<line number="64" hits="1"/>
-						<line number="70" hits="1"/>
+						<line number="50" hits="0"/>
+						<line number="59" hits="0"/>
+						<line number="64" hits="0"/>
+						<line number="70" hits="0"/>
 					</lines>
 				</class>
 				<class name="schemas.py" filename="modules/alerts/schemas.py" complexity="0" line-rate="1" branch-rate="1">
@@ -2503,9 +2506,11 @@
 						<line number="13" hits="1"/>
 						<line number="14" hits="1"/>
 						<line number="15" hits="1"/>
+						<line number="16" hits="1"/>
 						<line number="17" hits="1"/>
-						<line number="18" hits="1"/>
 						<line number="19" hits="1"/>
+						<line number="20" hits="1"/>
+						<line number="21" hits="1"/>
 					</lines>
 				</class>
 				<class name="service.py" filename="modules/alerts/service.py" complexity="0" line-rate="0.5417" branch-rate="0.1429">
@@ -2530,7 +2535,7 @@
 						<line number="22" hits="1"/>
 						<line number="25" hits="1"/>
 						<line number="26" hits="1"/>
-						<line number="27" hits="1"/>
+						<line number="27" hits="0"/>
 						<line number="29" hits="1"/>
 						<line number="43" hits="0"/>
 						<line number="44" hits="0"/>
@@ -2795,9 +2800,9 @@
 						<line number="46" hits="1"/>
 						<line number="48" hits="0"/>
 						<line number="51" hits="1"/>
-						<line number="52" hits="1" branch="true" condition-coverage="50% (1/2)" missing-branches="58"/>
+						<line number="52" hits="0" branch="true" condition-coverage="0% (0/2)" missing-branches="58,62"/>
 						<line number="58" hits="0"/>
-						<line number="62" hits="1"/>
+						<line number="62" hits="0"/>
 						<line number="65" hits="1"/>
 						<line number="66" hits="1" branch="true" condition-coverage="50% (1/2)" missing-branches="67"/>
 						<line number="67" hits="0"/>
@@ -2816,6 +2821,39 @@
 						<line number="98" hits="0"/>
 						<line number="102" hits="0"/>
 						<line number="104" hits="0"/>
+					</lines>
+				</class>
+				<class name="mfa.py" filename="modules/auth/mfa.py" complexity="0" line-rate="0.75" branch-rate="0.5">
+					<methods/>
+					<lines>
+						<line number="12" hits="1"/>
+						<line number="14" hits="1"/>
+						<line number="15" hits="1"/>
+						<line number="16" hits="1"/>
+						<line number="18" hits="1"/>
+						<line number="21" hits="1"/>
+						<line number="22" hits="1"/>
+						<line number="23" hits="1"/>
+						<line number="24" hits="0"/>
+						<line number="25" hits="0"/>
+						<line number="26" hits="0"/>
+						<line number="29" hits="1"/>
+						<line number="31" hits="1" branch="true" condition-coverage="50% (1/2)" missing-branches="32"/>
+						<line number="32" hits="0"/>
+						<line number="33" hits="1"/>
+						<line number="36" hits="1"/>
+						<line number="42" hits="1" branch="true" condition-coverage="50% (1/2)" missing-branches="43"/>
+						<line number="43" hits="0"/>
+						<line number="44" hits="1"/>
+						<line number="45" hits="1"/>
+						<line number="48" hits="1"/>
+						<line number="53" hits="1" branch="true" condition-coverage="50% (1/2)" missing-branches="54"/>
+						<line number="54" hits="0"/>
+						<line number="55" hits="0"/>
+						<line number="56" hits="1"/>
+						<line number="57" hits="1"/>
+						<line number="60" hits="1"/>
+						<line number="62" hits="1"/>
 					</lines>
 				</class>
 				<class name="models.py" filename="modules/auth/models.py" complexity="0" line-rate="1" branch-rate="1">
@@ -2930,8 +2968,8 @@
 						<line number="60" hits="1"/>
 						<line number="61" hits="1"/>
 						<line number="62" hits="1"/>
-						<line number="68" hits="1"/>
-						<line number="69" hits="1"/>
+						<line number="68" hits="0"/>
+						<line number="69" hits="0"/>
 						<line number="72" hits="1"/>
 						<line number="73" hits="1"/>
 						<line number="74" hits="1"/>
@@ -2944,8 +2982,8 @@
 						<line number="83" hits="1"/>
 						<line number="86" hits="1"/>
 						<line number="87" hits="1"/>
-						<line number="88" hits="1" branch="true" condition-coverage="100% (2/2)"/>
-						<line number="89" hits="1"/>
+						<line number="88" hits="1" branch="true" condition-coverage="50% (1/2)" missing-branches="89"/>
+						<line number="89" hits="0"/>
 						<line number="90" hits="1"/>
 						<line number="91" hits="1" branch="true" condition-coverage="50% (1/2)" missing-branches="105"/>
 						<line number="92" hits="1"/>
@@ -3173,16 +3211,95 @@
 						<line number="238" hits="1"/>
 						<line number="239" hits="1" branch="true" condition-coverage="50% (1/2)" missing-branches="240"/>
 						<line number="240" hits="0"/>
-						<line number="241" hits="0"/>
 						<line number="242" hits="0"/>
-						<line number="243" hits="1"/>
-						<line number="250" hits="1"/>
-						<line number="251" hits="1"/>
-						<line number="252" hits="1" branch="true" condition-coverage="50% (1/2)" missing-branches="262"/>
-						<line number="253" hits="1"/>
-						<line number="262" hits="1"/>
-						<line number="263" hits="1"/>
+						<line number="243" hits="0"/>
+						<line number="244" hits="0"/>
+						<line number="247" hits="1"/>
+						<line number="248" hits="1"/>
+						<line number="254" hits="0"/>
+						<line number="255" hits="0" branch="true" condition-coverage="0% (0/2)" missing-branches="256,260"/>
+						<line number="256" hits="0"/>
+						<line number="257" hits="0"/>
+						<line number="258" hits="0"/>
+						<line number="260" hits="0"/>
+						<line number="261" hits="0"/>
 						<line number="264" hits="1"/>
+						<line number="265" hits="1"/>
+						<line number="266" hits="0"/>
+						<line number="267" hits="0" branch="true" condition-coverage="0% (0/2)" missing-branches="268,272"/>
+						<line number="268" hits="0"/>
+						<line number="272" hits="0"/>
+						<line number="275" hits="1"/>
+						<line number="276" hits="1"/>
+						<line number="278" hits="0"/>
+						<line number="281" hits="1"/>
+						<line number="282" hits="1"/>
+						<line number="288" hits="1" branch="true" condition-coverage="50% (1/2)" missing-branches="289"/>
+						<line number="289" hits="0"/>
+						<line number="291" hits="1"/>
+						<line number="292" hits="1" branch="true" condition-coverage="50% (1/2)" missing-branches="293"/>
+						<line number="293" hits="0"/>
+						<line number="294" hits="0"/>
+						<line number="295" hits="0"/>
+						<line number="296" hits="1"/>
+						<line number="303" hits="1"/>
+						<line number="304" hits="1"/>
+						<line number="305" hits="1" branch="true" condition-coverage="50% (1/2)" missing-branches="315"/>
+						<line number="306" hits="1"/>
+						<line number="315" hits="1"/>
+						<line number="316" hits="1"/>
+						<line number="317" hits="1"/>
+						<line number="320" hits="1"/>
+						<line number="321" hits="1"/>
+						<line number="322" hits="1"/>
+						<line number="329" hits="1"/>
+						<line number="330" hits="1"/>
+						<line number="334" hits="1" branch="true" condition-coverage="50% (1/2)" missing-branches="335"/>
+						<line number="335" hits="0"/>
+						<line number="336" hits="1" branch="true" condition-coverage="50% (1/2)" missing-branches="337"/>
+						<line number="337" hits="0"/>
+						<line number="341" hits="1" branch="true" condition-coverage="50% (1/2)" missing-branches="342"/>
+						<line number="342" hits="0"/>
+						<line number="347" hits="1"/>
+						<line number="348" hits="1"/>
+						<line number="349" hits="1"/>
+						<line number="350" hits="1"/>
+						<line number="351" hits="1" branch="true" condition-coverage="50% (1/2)" missing-branches="361"/>
+						<line number="352" hits="1"/>
+						<line number="361" hits="1"/>
+						<line number="363" hits="1"/>
+						<line number="372" hits="1"/>
+						<line number="373" hits="1"/>
+						<line number="378" hits="1" branch="true" condition-coverage="50% (1/2)" missing-branches="379"/>
+						<line number="379" hits="0"/>
+						<line number="380" hits="1" branch="true" condition-coverage="50% (1/2)" missing-branches="381"/>
+						<line number="381" hits="0"/>
+						<line number="385" hits="1" branch="true" condition-coverage="50% (1/2)" missing-branches="386"/>
+						<line number="386" hits="0"/>
+						<line number="390" hits="1" branch="true" condition-coverage="50% (1/2)" missing-branches="391"/>
+						<line number="391" hits="0"/>
+						<line number="393" hits="1"/>
+						<line number="394" hits="1"/>
+						<line number="395" hits="1" branch="true" condition-coverage="50% (1/2)" missing-branches="405"/>
+						<line number="396" hits="1"/>
+						<line number="405" hits="1"/>
+						<line number="406" hits="1"/>
+						<line number="409" hits="1"/>
+						<line number="410" hits="1"/>
+						<line number="415" hits="1" branch="true" condition-coverage="50% (1/2)" missing-branches="416"/>
+						<line number="416" hits="0"/>
+						<line number="417" hits="1" branch="true" condition-coverage="50% (1/2)" missing-branches="426"/>
+						<line number="418" hits="1" branch="true" condition-coverage="50% (1/2)" missing-branches="419"/>
+						<line number="419" hits="0"/>
+						<line number="423" hits="1" branch="true" condition-coverage="50% (1/2)" missing-branches="424"/>
+						<line number="424" hits="0"/>
+						<line number="426" hits="1"/>
+						<line number="427" hits="1"/>
+						<line number="428" hits="1"/>
+						<line number="429" hits="1" branch="true" condition-coverage="50% (1/2)" missing-branches="439"/>
+						<line number="430" hits="1"/>
+						<line number="439" hits="1"/>
+						<line number="440" hits="1"/>
 					</lines>
 				</class>
 			</classes>
@@ -3333,7 +3450,9 @@
 						<line number="24" hits="1"/>
 						<line number="25" hits="1"/>
 						<line number="26" hits="1"/>
-						<line number="29" hits="1"/>
+						<line number="27" hits="1"/>
+						<line number="30" hits="1"/>
+						<line number="31" hits="1"/>
 					</lines>
 				</class>
 				<class name="schemas.py" filename="modules/incidents/schemas.py" complexity="0" line-rate="1" branch-rate="1">
@@ -3352,7 +3471,8 @@
 						<line number="14" hits="1"/>
 						<line number="17" hits="1"/>
 						<line number="18" hits="1"/>
-						<line number="22" hits="1"/>
+						<line number="19" hits="1"/>
+						<line number="23" hits="1"/>
 					</lines>
 				</class>
 				<class name="service.py" filename="modules/incidents/service.py" complexity="0" line-rate="0.4103" branch-rate="0">
@@ -4924,13 +5044,13 @@
 					<methods/>
 					<lines/>
 				</class>
-				<class name="mappers.py" filename="modules/vessels/mappers.py" complexity="0" line-rate="0.8333" branch-rate="1">
+				<class name="mappers.py" filename="modules/vessels/mappers.py" complexity="0" line-rate="0.6667" branch-rate="1">
 					<methods/>
 					<lines>
 						<line number="1" hits="1"/>
 						<line number="2" hits="1"/>
 						<line number="5" hits="1"/>
-						<line number="6" hits="1"/>
+						<line number="6" hits="0"/>
 						<line number="9" hits="1"/>
 						<line number="10" hits="0"/>
 					</lines>
@@ -5039,7 +5159,7 @@
 						<line number="17" hits="1"/>
 						<line number="20" hits="1"/>
 						<line number="21" hits="1"/>
-						<line number="22" hits="1"/>
+						<line number="22" hits="0"/>
 						<line number="24" hits="1"/>
 						<line number="32" hits="0"/>
 						<line number="39" hits="0" branch="true" condition-coverage="0% (0/2)" missing-branches="40,41"/>
@@ -5851,54 +5971,58 @@
 						<line number="25" hits="0"/>
 						<line number="26" hits="0"/>
 						<line number="27" hits="0"/>
-						<line number="29" hits="0"/>
 						<line number="30" hits="0"/>
+						<line number="31" hits="0" branch="true" condition-coverage="0% (0/2)" missing-branches="32,33"/>
+						<line number="32" hits="0"/>
+						<line number="33" hits="0"/>
 						<line number="35" hits="0"/>
-						<line number="37" hits="0"/>
-						<line number="38" hits="0"/>
-						<line number="49" hits="0"/>
-						<line number="50" hits="0"/>
-						<line number="51" hits="0"/>
-						<line number="52" hits="0" branch="true" condition-coverage="0% (0/2)" missing-branches="53,66"/>
-						<line number="53" hits="0"/>
-						<line number="54" hits="0"/>
+						<line number="36" hits="0"/>
+						<line number="41" hits="0"/>
+						<line number="43" hits="0"/>
+						<line number="44" hits="0"/>
 						<line number="55" hits="0"/>
-						<line number="56" hits="0" branch="true" condition-coverage="0% (0/2)" missing-branches="57,66"/>
+						<line number="56" hits="0"/>
 						<line number="57" hits="0"/>
-						<line number="58" hits="0" branch="true" condition-coverage="0% (0/2)" missing-branches="59,60"/>
+						<line number="58" hits="0" branch="true" condition-coverage="0% (0/2)" missing-branches="59,72"/>
 						<line number="59" hits="0"/>
 						<line number="60" hits="0"/>
-						<line number="61" hits="0" branch="true" condition-coverage="0% (0/2)" missing-branches="62,63"/>
-						<line number="62" hits="0"/>
+						<line number="61" hits="0"/>
+						<line number="62" hits="0" branch="true" condition-coverage="0% (0/2)" missing-branches="63,72"/>
 						<line number="63" hits="0"/>
+						<line number="64" hits="0" branch="true" condition-coverage="0% (0/2)" missing-branches="65,66"/>
+						<line number="65" hits="0"/>
 						<line number="66" hits="0"/>
-						<line number="69" hits="0" branch="true" condition-coverage="0% (0/2)" missing-branches="70,73"/>
-						<line number="70" hits="0"/>
-						<line number="71" hits="0"/>
-						<line number="73" hits="0"/>
-						<line number="74" hits="0"/>
-						<line number="75" hits="0"/>
+						<line number="67" hits="0" branch="true" condition-coverage="0% (0/2)" missing-branches="68,69"/>
+						<line number="68" hits="0"/>
+						<line number="69" hits="0"/>
+						<line number="72" hits="0"/>
+						<line number="75" hits="0" branch="true" condition-coverage="0% (0/2)" missing-branches="76,79"/>
+						<line number="76" hits="0"/>
+						<line number="77" hits="0"/>
+						<line number="79" hits="0"/>
+						<line number="80" hits="0"/>
 						<line number="81" hits="0"/>
-						<line number="82" hits="0"/>
-						<line number="84" hits="0"/>
-						<line number="85" hits="0"/>
 						<line number="87" hits="0"/>
 						<line number="88" hits="0"/>
+						<line number="90" hits="0"/>
 						<line number="91" hits="0"/>
+						<line number="93" hits="0"/>
+						<line number="94" hits="0"/>
 						<line number="97" hits="0"/>
-						<line number="98" hits="0"/>
-						<line number="99" hits="0"/>
-						<line number="101" hits="0"/>
-						<line number="102" hits="0"/>
+						<line number="103" hits="0"/>
 						<line number="104" hits="0"/>
 						<line number="105" hits="0"/>
-						<line number="106" hits="0"/>
+						<line number="107" hits="0"/>
 						<line number="108" hits="0"/>
-						<line number="109" hits="0"/>
 						<line number="110" hits="0"/>
 						<line number="111" hits="0"/>
-						<line number="113" hits="0" branch="true" condition-coverage="0% (0/2)" missing-branches="exit,114"/>
+						<line number="112" hits="0"/>
 						<line number="114" hits="0"/>
+						<line number="115" hits="0"/>
+						<line number="116" hits="0"/>
+						<line number="117" hits="0"/>
+						<line number="119" hits="0" branch="true" condition-coverage="0% (0/2)" missing-branches="exit,120"/>
+						<line number="120" hits="0"/>
 					</lines>
 				</class>
 			</classes>

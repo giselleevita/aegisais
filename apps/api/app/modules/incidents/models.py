@@ -20,6 +20,7 @@ class Incident(Base):
         index=True,
         unique=True,
     )
+    asset_id = Column(Integer, ForeignKey("assets.id", ondelete="SET NULL"), nullable=True, index=True)
     created_at = Column(DateTime, nullable=False, index=True)
     status = Column(String, nullable=False, default="open", index=True)
     title = Column(String, nullable=False)
@@ -27,3 +28,4 @@ class Incident(Base):
 
 
 Index("idx_incidents_org_created", Incident.organisation_id, Incident.created_at)
+Index("idx_incidents_org_asset", Incident.organisation_id, Incident.asset_id)

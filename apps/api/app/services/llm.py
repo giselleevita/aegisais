@@ -11,6 +11,7 @@ Graceful degradation: if LLM is unavailable, falls back to template strings.
 
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
 from typing import Any, Optional
@@ -21,11 +22,17 @@ _log = logging.getLogger("aegisais.llm")
 
 # Module-level client — initialized lazily
 _client: Optional[httpx.AsyncClient] = None
+_client_loop: Optional[asyncio.AbstractEventLoop] = None
 
 
 def _get_client() -> httpx.AsyncClient:
-    global _client
-    if _client is None:
+    global _client, _client_loop
+    current_loop = asyncio.get_running_loop()
+
+    # TestClient and ad-hoc scripts can execute requests on different event loops.
+    # Recreate the async client when the loop changes so httpx does not try to reuse
+    # transports bound to a closed loop.
+    if _client is None or _client.is_closed or _client_loop is not current_loop:
         from app.core.config import settings
         _client = httpx.AsyncClient(
             base_url=settings.LLM_BASE_URL.rstrip("/"),
@@ -35,6 +42,7 @@ def _get_client() -> httpx.AsyncClient:
             },
             timeout=httpx.Timeout(settings.LLM_TIMEOUT_SEC, connect=10.0),
         )
+        _client_loop = current_loop
     return _client
 
 
@@ -42,6 +50,90 @@ def is_llm_enabled() -> bool:
     """Check if LLM integration is configured and available."""
     from app.core.config import settings
     return bool(settings.LLM_ENABLED and settings.LLM_API_KEY)
+
+
+async def get_llm_provider_status() -> dict[str, Any]:
+    """Probe the configured LLM provider without exposing credentials.
+
+    Uses the OpenAI-compatible ``GET /models`` route to distinguish between:
+    - disabled / not configured
+    - network or timeout failures
+    - authentication failures
+    - successful authenticated connectivity
+    """
+    from app.core.config import settings
+
+    configured = bool(settings.LLM_ENABLED and settings.LLM_API_KEY and settings.LLM_BASE_URL)
+    if not configured:
+        return {
+            "configured": False,
+            "reachable": False,
+            "authenticated": False,
+            "status": "disabled",
+            "http_status": None,
+            "error": "LLM integration not configured",
+        }
+
+    try:
+        client = _get_client()
+        resp = await client.get("/models")
+
+        if resp.status_code in {401, 403}:
+            return {
+                "configured": True,
+                "reachable": True,
+                "authenticated": False,
+                "status": "auth_failed",
+                "http_status": resp.status_code,
+                "error": "Provider rejected credentials",
+            }
+
+        resp.raise_for_status()
+        return {
+            "configured": True,
+            "reachable": True,
+            "authenticated": True,
+            "status": "ok",
+            "http_status": resp.status_code,
+            "error": None,
+        }
+    except httpx.TimeoutException:
+        return {
+            "configured": True,
+            "reachable": False,
+            "authenticated": False,
+            "status": "timeout",
+            "http_status": None,
+            "error": "Provider request timed out",
+        }
+    except httpx.RequestError as e:
+        return {
+            "configured": True,
+            "reachable": False,
+            "authenticated": False,
+            "status": "network_error",
+            "http_status": None,
+            "error": str(e),
+        }
+    except httpx.HTTPStatusError as e:
+        return {
+            "configured": True,
+            "reachable": True,
+            "authenticated": False,
+            "status": "http_error",
+            "http_status": e.response.status_code,
+            "error": f"Provider returned HTTP {e.response.status_code}",
+        }
+    except Exception as e:
+        _log.warning("LLM provider probe failed: %s", e)
+        return {
+            "configured": True,
+            "reachable": False,
+            "authenticated": False,
+            "status": "error",
+            "http_status": None,
+            "error": str(e),
+        }
 
 
 async def complete(

@@ -1,40 +1,42 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import {
-  Cartesian3,
-  ClockRange,
-  ClockStep,
-  Color,
-  HeadingPitchRange,
-  HeightReference,
-  PolylineDashMaterialProperty,
-  ScreenSpaceEventType,
-  VerticalOrigin,
-  Viewer,
-} from 'cesium'
-import 'cesium/Build/Cesium/Widgets/widgets.css'
+import { Suspense, lazy, useCallback, useEffect, useMemo, useState } from 'react'
 import type { LayerDefinition } from '@/shared/types/common'
-import {
-  getFlightsLiveSnapshot,
-  getLayerCatalogue,
-  getPortsReference,
-  getSubseaCables,
-  subscribeFlightsLive,
-  type CableSegment,
-  type FlightPoint,
-  type PortPoint,
-} from '@/features/globe/globeData'
-import { emitGlobeCameraTelemetry } from '@/features/globe/globeCameraTelemetry'
+import type { CableSegment, FlightPoint, PortPoint } from '@/features/globe/globeData'
+import type { GlobeCameraTelemetryDetail } from '@/features/globe/globeCameraTelemetry'
+import { FOCUS_PRESETS, type CameraCommand, type FocusPresetId, type TimelineMode } from '@/features/globe/globeWorkbenchConfig'
 import './globe-workbench.css'
-
-type TimelineMode = 'live' | 'replay'
-type FocusPresetId = 'global' | 'atlantic' | 'indo-pacific' | 'europe-med'
-type CameraMoveReason = 'preset' | 'fit-visible' | 'auto-initial'
 
 const AUTO_CAMERA_STORAGE_KEY = 'aegis.globe.autoCamera'
 
-const USER_CAMERA_PRIORITY_WINDOW_MS = 5000
-const MIN_CAMERA_DISTANCE_METERS = 850_000
-const MAX_CAMERA_DISTANCE_METERS = 32_000_000
+let globeDataModulePromise: Promise<typeof import('@/features/globe/globeData')> | null = null
+let globeTelemetryModulePromise: Promise<typeof import('@/features/globe/globeCameraTelemetry')> | null = null
+const GlobeViewerRuntime = lazy(() => import('@/aml/pages/GlobeViewerRuntime'))
+
+function loadGlobeDataModule() {
+  globeDataModulePromise ??= import('@/features/globe/globeData')
+  return globeDataModulePromise
+}
+
+function loadGlobeTelemetryModule() {
+  globeTelemetryModulePromise ??= import('@/features/globe/globeCameraTelemetry')
+  return globeTelemetryModulePromise
+}
+
+function emitGlobeCameraTelemetry(detail: GlobeCameraTelemetryDetail) {
+  void loadGlobeTelemetryModule().then((module) => {
+    module.emitGlobeCameraTelemetry(detail)
+  })
+}
+
+function GlobeViewerFallback() {
+  return (
+    <div className="globe-workbench__viewer globe-workbench__viewer--loading">
+      <div className="globe-workbench__viewer-placeholder">
+        <strong>Loading 3D globe</strong>
+        <span>Cesium runtime is fetched only when this workspace is opened.</span>
+      </div>
+    </div>
+  )
+}
 
 function readAutoCameraPref(): boolean {
   try {
@@ -78,15 +80,8 @@ const FOCUS_PRESETS: Record<
 }
 
 export default function GlobeWorkbenchPage() {
-  const hostRef = useRef<HTMLDivElement | null>(null)
-  const viewerRef = useRef<Viewer | null>(null)
-  const userCameraLockRef = useRef(false)
-  const userCameraLockTimerRef = useRef<number | null>(null)
-  const autoFramedOnceRef = useRef(false)
-
   const [timelineMode, setTimelineMode] = useState<TimelineMode>('live')
   const [autoCameraEnabled, setAutoCameraEnabled] = useState(() => readAutoCameraPref())
-  const autoCameraEnabledRef = useRef(autoCameraEnabled)
   const [catalogue, setCatalogue] = useState<LayerDefinition[]>([])
   const [catalogueError, setCatalogueError] = useState<string | null>(null)
   const [enabled, setEnabled] = useState<Record<string, boolean>>({})
@@ -95,6 +90,8 @@ export default function GlobeWorkbenchPage() {
   const [flights, setFlights] = useState<FlightPoint[]>([])
   const [ports, setPorts] = useState<PortPoint[]>([])
   const [cables, setCables] = useState<CableSegment[]>([])
+  const [cameraCommand, setCameraCommand] = useState<CameraCommand | null>(null)
+  const visibleFlights = enabled['flights-live'] ? flights : []
 
   const selectedLayer = useMemo(
     () => catalogue.find((layer) => layer.id === selectedLayerId) ?? null,
@@ -114,10 +111,6 @@ export default function GlobeWorkbenchPage() {
       ? 'Live global picture with continuous flight refresh and static infrastructure overlays.'
       : 'Replay picture tuned for review, demos, and timeline walk-throughs.'
 
-  useEffect(() => {
-    autoCameraEnabledRef.current = autoCameraEnabled
-  }, [autoCameraEnabled])
-
   const setAutoCameraEnabledPersisted = useCallback((next: boolean) => {
     setAutoCameraEnabled(next)
     try {
@@ -128,44 +121,15 @@ export default function GlobeWorkbenchPage() {
     emitGlobeCameraTelemetry({ type: 'auto_camera_changed', enabled: next })
   }, [])
 
-  const markUserInteraction = useCallback(() => {
-    userCameraLockRef.current = true
-    if (userCameraLockTimerRef.current !== null) {
-      window.clearTimeout(userCameraLockTimerRef.current)
-    }
-    userCameraLockTimerRef.current = window.setTimeout(() => {
-      userCameraLockRef.current = false
-      userCameraLockTimerRef.current = null
-    }, USER_CAMERA_PRIORITY_WINDOW_MS)
+  const queueCameraCommand = useCallback((next: { type: 'preset'; presetId: FocusPresetId } | { type: 'fit-visible' }) => {
+    setCameraCommand((previous) => {
+      const sequence = (previous?.sequence ?? 0) + 1
+      if (next.type === 'preset') {
+        return { type: 'preset', presetId: next.presetId, sequence }
+      }
+      return { type: 'fit-visible', sequence }
+    })
   }, [])
-
-  const moveCamera = useCallback(
-    (reason: CameraMoveReason, runMove: (viewer: Viewer) => void, options?: { force?: boolean }) => {
-      const viewer = viewerRef.current
-      if (!viewer) return false
-      const passive = reason === 'auto-initial'
-      if (passive && !options?.force && !autoCameraEnabledRef.current) {
-        emitGlobeCameraTelemetry({
-          type: 'camera_move_blocked',
-          reason: 'auto_disabled',
-          attempted: reason,
-        })
-        return false
-      }
-      if (passive && !options?.force && userCameraLockRef.current) {
-        emitGlobeCameraTelemetry({
-          type: 'camera_move_blocked',
-          reason: 'user_lock',
-          attempted: reason,
-        })
-        return false
-      }
-      runMove(viewer)
-      emitGlobeCameraTelemetry({ type: 'camera_move_applied', reason })
-      return true
-    },
-    []
-  )
 
   useEffect(() => {
     let cancelled = false
@@ -197,194 +161,34 @@ export default function GlobeWorkbenchPage() {
 
   const moveCameraToPreset = useCallback((presetId: FocusPresetId) => {
     setActivePreset(presetId)
-    const preset = FOCUS_PRESETS[presetId]
-    void moveCamera('preset', (viewer) => {
-      viewer.camera.flyTo({
-        destination: preset.destination,
-        duration: 1.1,
-        orientation: {
-          heading: 0,
-          pitch: -0.95,
-          roll: 0,
-        },
-      })
-    })
-  }, [moveCamera])
+    queueCameraCommand({ type: 'preset', presetId })
+  }, [queueCameraCommand])
 
   const focusOnVisibleEntities = useCallback(() => {
     setActivePreset('global')
-    void moveCamera('fit-visible', (viewer) => {
-      void viewer.flyTo(viewer.entities.values, {
-        duration: 1.15,
-        maximumHeight: MAX_CAMERA_DISTANCE_METERS,
-        offset: new HeadingPitchRange(0, -0.95, 4_000_000),
-      })
-    })
-  }, [moveCamera])
+    queueCameraCommand({ type: 'fit-visible' })
+  }, [queueCameraCommand])
 
   useEffect(() => {
     let stop: () => void = () => {}
     if (!enabled['flights-live']) return
-    if (timelineMode === 'live') {
-      void getFlightsLiveSnapshot().then(setFlights)
-      stop = subscribeFlightsLive(setFlights)
-    } else {
-      void getFlightsLiveSnapshot().then((rows) => setFlights(rows.slice(0, 2)))
-    }
-    return () => stop()
-  }, [enabled, timelineMode])
-
-  useEffect(() => {
-    if (!hostRef.current || viewerRef.current) return
-    viewerRef.current = new Viewer(hostRef.current, {
-      animation: false,
-      timeline: false,
-      baseLayerPicker: false,
-      geocoder: false,
-      homeButton: true,
-      infoBox: false,
-      selectionIndicator: false,
-      sceneModePicker: false,
-      navigationHelpButton: false,
-      fullscreenButton: false,
+    let cancelled = false
+    void loadGlobeDataModule().then((module) => {
+      if (cancelled) return
+      if (timelineMode === 'live') {
+        void module.getFlightsLiveSnapshot().then(setFlights)
+        stop = module.subscribeFlightsLive((next) => {
+          if (!cancelled) setFlights(next)
+        })
+      } else {
+        void module.getFlightsLiveSnapshot().then((rows) => setFlights(rows.slice(0, 2)))
+      }
     })
-    const viewer = viewerRef.current
-    viewer.scene.globe.enableLighting = true
-    viewer.trackedEntity = undefined
-
-    const cameraController = viewer.scene.screenSpaceCameraController
-    cameraController.inertiaZoom = 0.45
-    cameraController.minimumZoomDistance = MIN_CAMERA_DISTANCE_METERS
-    cameraController.maximumZoomDistance = MAX_CAMERA_DISTANCE_METERS
-
-    // Reduce accidental zoom jumps from double-click interactions.
-    viewer.cesiumWidget.screenSpaceEventHandler.removeInputAction(ScreenSpaceEventType.LEFT_DOUBLE_CLICK)
-
-    const canvas = viewer.scene.canvas
-    const onWheel = () => markUserInteraction()
-    const onPointerDown = () => markUserInteraction()
-    const onTouchStart = () => markUserInteraction()
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (['+', '=', '-', '_', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key)) {
-        markUserInteraction()
-      }
-    }
-
-    canvas.addEventListener('wheel', onWheel, { passive: true })
-    canvas.addEventListener('pointerdown', onPointerDown)
-    canvas.addEventListener('touchstart', onTouchStart, { passive: true })
-    window.addEventListener('keydown', onKeyDown)
-
     return () => {
-      canvas.removeEventListener('wheel', onWheel)
-      canvas.removeEventListener('pointerdown', onPointerDown)
-      canvas.removeEventListener('touchstart', onTouchStart)
-      window.removeEventListener('keydown', onKeyDown)
-      if (userCameraLockTimerRef.current !== null) {
-        window.clearTimeout(userCameraLockTimerRef.current)
-        userCameraLockTimerRef.current = null
-      }
-      viewerRef.current?.destroy()
-      viewerRef.current = null
+      cancelled = true
+      stop()
     }
-  }, [markUserInteraction])
-
-  useEffect(() => {
-    const viewer = viewerRef.current
-    if (!viewer) return
-    viewer.entities.removeAll()
-
-    if (enabled['ports-reference']) {
-      ports.forEach((port) => {
-        viewer.entities.add({
-          id: `port-${port.id}`,
-          position: Cartesian3.fromDegrees(port.lon, port.lat),
-          point: {
-            pixelSize: 8,
-            color: Color.CYAN.withAlpha(0.85),
-            heightReference: HeightReference.CLAMP_TO_GROUND,
-          },
-          label: {
-            text: port.name,
-            fillColor: Color.WHITE,
-            outlineColor: Color.BLACK,
-            outlineWidth: 2,
-            verticalOrigin: VerticalOrigin.TOP,
-            pixelOffset: new Cartesian3(0, 20, 0),
-            scale: 0.45,
-          },
-        })
-      })
-    }
-
-    if (enabled['subsea-cables']) {
-      cables.forEach((cable) => {
-        const positions = cable.path.flatMap(([lat, lon]) => [lon, lat])
-        viewer.entities.add({
-          id: `cable-${cable.id}`,
-          polyline: {
-            positions: Cartesian3.fromDegreesArray(positions),
-            width: cable.placeholder ? 2 : 3,
-            material: cable.placeholder
-              ? new PolylineDashMaterialProperty({
-                  color: Color.ORANGE.withAlpha(0.85),
-                })
-              : Color.DEEPSKYBLUE.withAlpha(0.8),
-          },
-          description: cable.placeholder ? 'Placeholder route (no live cable data)' : cable.label,
-        })
-      })
-    }
-
-    if (enabled['flights-live']) {
-      flights.forEach((flight) => {
-        viewer.entities.add({
-          id: `flight-${flight.id}`,
-          position: Cartesian3.fromDegrees(flight.lon, flight.lat, flight.altitudeM),
-          point: {
-            pixelSize: 7,
-            color: timelineMode === 'live' ? Color.LIME : Color.GOLD,
-          },
-          label: {
-            text: `${flight.label} ${Math.round(flight.altitudeM / 100)}FL`,
-            fillColor: Color.WHITE,
-            verticalOrigin: VerticalOrigin.BOTTOM,
-            scale: 0.45,
-          },
-        })
-      })
-    }
-
-    if (timelineMode === 'replay') {
-      viewer.clock.multiplier = 120
-      viewer.clock.clockStep = ClockStep.SYSTEM_CLOCK_MULTIPLIER
-      viewer.clock.clockRange = ClockRange.CLAMPED
-    } else {
-      viewer.clock.multiplier = 1
-      viewer.clock.clockStep = ClockStep.SYSTEM_CLOCK
-      viewer.clock.clockRange = ClockRange.UNBOUNDED
-    }
-    viewer.clock.shouldAnimate = true
-  }, [cables, enabled, flights, ports, timelineMode])
-
-  useEffect(() => {
-    const viewer = viewerRef.current
-    if (!viewer || autoFramedOnceRef.current) return
-    if (!autoCameraEnabled) return
-    if (viewer.entities.values.length === 0) return
-    const moved = moveCamera(
-      'auto-initial',
-      (activeViewer) => {
-        void activeViewer.flyTo(activeViewer.entities.values, {
-          duration: 1.2,
-          maximumHeight: MAX_CAMERA_DISTANCE_METERS,
-          offset: new HeadingPitchRange(0, -0.95, 6_000_000),
-        })
-      },
-      { force: false }
-    )
-    if (moved) autoFramedOnceRef.current = true
-  }, [autoCameraEnabled, cables, enabled, flights, moveCamera, ports])
+  }, [enabled, timelineMode])
 
   return (
     <section className="globe-workbench">
@@ -540,7 +344,7 @@ export default function GlobeWorkbenchPage() {
         <div className="globe-workbench__metrics">
           <div>
             <span className="globe-workbench__metric-label">Flights</span>
-            <span className="globe-workbench__metric-value">{enabled['flights-live'] ? flights.length : 0}</span>
+            <span className="globe-workbench__metric-value">{visibleFlights.length}</span>
           </div>
           <div>
             <span className="globe-workbench__metric-label">Ports</span>

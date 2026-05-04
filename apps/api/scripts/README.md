@@ -1,3 +1,24 @@
+## Utility Scripts
+
+### `smoke_llm.py`
+
+Runs a live smoke test against the configured LLM integration.
+
+It checks:
+
+- direct provider connectivity to the configured OpenAI-compatible endpoint
+- in-app analyst provider status via `/v1/analyst/status`
+- end-to-end analyst chat via `/v1/analyst/chat`
+
+Usage:
+
+```bash
+cd apps/api
+make smoke-llm
+```
+
+The script reads configuration from the local environment and never prints the API key.
+
 # Scripts Directory
 
 This directory contains utility scripts for AegisAIS.
@@ -41,6 +62,7 @@ Creates CSV files in `data/raw/` with sample AIS data that triggers:
 ### Customization
 
 Edit the script to:
+
 - Change vessel MMSIs
 - Adjust anomaly severity
 - Modify time gaps

@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aegisais.dev/contracts/SensorNode.schema.json",
+  "title": "SensorNode",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "assetId",
+    "deviceId",
+    "sensorType",
+    "location",
+    "status"
+  ],
+  "properties": {
+    "id": { "type": "string" },
+    "assetId": { "type": "string" },
+    "deviceId": { "type": "string" },
+    "sensorType": { "type": "string" },
+    "status": { "type": "string" },
+    "location": {
+      "$ref": "_common.json#/$defs/GeoPoint"
+    },
+    "capabilities": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "calibration": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  }
+}

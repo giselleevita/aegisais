@@ -1,0 +1,45 @@
+{
+  "generated_at": "2026-04-10T05:49:15.158902+00:00",
+  "samples": {
+    "cot_vessel": {
+      "mmsi": "123456789",
+      "name": "TEST-VESSEL-AEGIS",
+      "lat": 60.1234,
+      "lon": 20.5678,
+      "sog_knots": 12.5,
+      "cog_degrees": 45.0,
+      "format": "CoT 2.0 (MIL-STD-6040)",
+      "purpose": "Vessel position export test"
+    },
+    "cot_alert": {
+      "alert_id": 1,
+      "type": "identity_spoofing",
+      "severity": 3,
+      "mmsi": "123456789",
+      "summary": "AIS identity inconsistency detected",
+      "format": "CoT 2.0 (MIL-STD-6040)",
+      "purpose": "Alert export test"
+    },
+    "nffi_vessel": {
+      "mmsi": "123456789",
+      "name": "TEST-VESSEL-AEGIS",
+      "lat": 60.1234,
+      "lon": 20.5678,
+      "sog_knots": 12.5,
+      "cog_degrees": 45.0,
+      "flag_state": "SE",
+      "format": "STANAG 5527 / NFFI 1.0",
+      "purpose": "Vessel position export test"
+    },
+    "nffi_alert": {
+      "alert_id": 1,
+      "type": "identity_spoofing",
+      "severity": 3,
+      "mmsi": "123456789",
+      "summary": "AIS identity inconsistency detected",
+      "format": "STANAG 5527 / NFFI 1.0",
+      "purpose": "Alert export test"
+    }
+  },
+  "notes": "These samples are for D-04 receiver conformance validation. Real production data should be exported from live alerts via API endpoints."
+}

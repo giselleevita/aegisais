@@ -74,6 +74,7 @@ class Settings(BaseSettings):
     SAIS_PROVIDER: str = "none"  # spire | orbcomm | exactearth | none
     SAIS_API_KEY: str = ""
     SAIS_API_BASE_URL: str = ""
+    MARINETRAFFIC_API_KEY: str = ""
     OPENSKY_API_BASE_URL: str = "https://opensky-network.org"
     OPENSKY_USERNAME: str = ""
     OPENSKY_PASSWORD: str = ""
@@ -117,8 +118,8 @@ class Settings(BaseSettings):
     LLM_API_KEY: str = ""
     LLM_BASE_URL: str = "https://api.featherless.ai/v1"
     LLM_MODEL: str = "Qwen/Qwen3-32B"
-    LLM_TEMPERATURE: float = 0.3
-    LLM_MAX_TOKENS: int = 600
+    LLM_TEMPERATURE: float = 0.2
+    LLM_MAX_TOKENS: int = 800
     LLM_TIMEOUT_SEC: int = 30
 
     # Detection thresholds
@@ -220,7 +221,7 @@ class Settings(BaseSettings):
     @field_validator("SAIS_PROVIDER")
     @classmethod
     def validate_sais_provider(cls, v: str) -> str:
-        allowed = {"spire", "orbcomm", "exactearth", "none"}
+        allowed = {"spire", "orbcomm", "exactearth", "marinetraffic", "none"}
         low = (v or "").strip().lower()
         if low not in allowed:
             raise ValueError(

@@ -25,6 +25,12 @@ function RouteLoader() {
   return <div className="aml-page-pad aml-route-loading">Loading workspace…</div>
 }
 
+const GlobeWorkbenchPage = lazy(() => import('@/aml/pages/GlobeWorkbenchPage'))
+
+function RouteLoadingFallback() {
+  return <div className="app-loading-shell">Loading view...</div>
+}
+
 export default function AmlApp() {
   const {
     context: authContext,
