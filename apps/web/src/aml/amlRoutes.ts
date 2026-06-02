@@ -5,7 +5,6 @@ export const AML_PATHS = {
 	home: AML_OPERATIONS_PATH,
 	map: '/map',
 	itdae: '/itdae',
-	globe: '/globe',
 	watchlist: '/watchlist',
 	sanctions: '/sanctions',
 	incidents: '/incidents',
