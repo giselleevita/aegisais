@@ -1,6 +1,9 @@
 # AegisAIS
 
 [![CI](https://github.com/giselleevita/aegisais/actions/workflows/ci.yml/badge.svg)](https://github.com/giselleevita/aegisais/actions/workflows/ci.yml)
+[![Images](https://github.com/giselleevita/aegisais/actions/workflows/images.yml/badge.svg)](https://github.com/giselleevita/aegisais/actions/workflows/images.yml)
+[![AgentGuard](https://github.com/giselleevita/aegisais/actions/workflows/agentguard-blocking.yml/badge.svg?label=agentguard)](https://github.com/giselleevita/aegisais/actions/workflows/agentguard-blocking.yml)
+[![AgentGuard PR](https://github.com/giselleevita/aegisais/actions/workflows/agentguard-pr-enforcement.yml/badge.svg)](https://github.com/giselleevita/aegisais/actions/workflows/agentguard-pr-enforcement.yml)
 [![codecov](https://codecov.io/gh/giselleevita/aegisais/branch/main/graph/badge.svg)](https://codecov.io/gh/giselleevita/aegisais)
 
 **AIS Data Integrity and Anomaly Detection — Maritime Intelligence Platform**
@@ -8,6 +11,22 @@
 AegisAIS is an automated data integrity and anomaly detection platform for Automatic Identification System (AIS) maritime data. It ingests AIS position reports, maintains per-vessel track history, and automatically detects physically impossible or internally inconsistent data patterns — surfacing them as prioritised, analyst-ready alerts.
 
 > See [`docs/security/SECURITY.md`](./docs/security/SECURITY.md) for scope, limitations, and responsible use guidelines.
+
+---
+
+## Quick Start (Docker)
+
+```bash
+git clone https://github.com/giselleevita/aegisais.git && cd aegisais
+bash scripts/start_full_stack.sh
+```
+
+| Service | URL |
+|---|---|
+| Frontend | http://localhost:5173 |
+| API + Swagger | http://localhost:8000/docs |
+| BFF Geospatial API | http://localhost:8080 |
+| Prometheus metrics | http://localhost:8000/metrics |
 
 ---
 
@@ -21,6 +40,7 @@ AegisAIS is an automated data integrity and anomaly detection platform for Autom
 - **Track History** — Replay and inspect per-vessel position history over any time window
 - **Alert Management** — Update status, add analyst notes, filter by type/severity, and export as CSV or JSON
 - **Prometheus Metrics** — Built-in instrumentation at `/metrics` for observability integration
+- **BFF Geospatial Gateway** — Contract-first Fastify BFF with JWT auth, licence gating, rate limiting, and OpenAPI 3.0 spec ([`apps/bff/openapi.yaml`](./apps/bff/openapi.yaml))
 - **Demo & Onboarding** — Interactive guided tour and pre-built demo datasets covering every alert type
 
 ---
@@ -66,15 +86,15 @@ aegisais/
 
 ---
 
-## Quick Start
+## Installation
 
 ### Prerequisites
 
-| Tool       | Version                                         |
-| ---------- | ----------------------------------------------- |
-| Python     | 3.11+                                           |
-| Node.js    | 20.19+                                          |
-| npm        | 10.8+                                           |
+| Tool | Version |
+| --- | --- |
+| Python | 3.11+ |
+| Node.js | 20.19+ |
+| npm | 10.8+ |
 | PostgreSQL | 14+ _(optional — SQLite works for development)_ |
 
 ### Local Development
@@ -110,15 +130,6 @@ npm install   # install root devDependencies (turbo)
 npm run dev   # starts api + web concurrently
 ```
 
-| Service            | URL                           |
-| ------------------ | ----------------------------- |
-| Frontend           | http://localhost:5173         |
-| Backend API        | http://localhost:8000         |
-| Swagger UI         | http://localhost:8000/docs    |
-| ReDoc              | http://localhost:8000/redoc   |
-| Prometheus metrics | http://localhost:8000/metrics |
-| BFF Geospatial API | http://localhost:8080         |
-
 ### Docker
 
 ```bash
@@ -147,28 +158,6 @@ Host-port overrides supported by the compose file:
 
 ---
 
-## Installation
-
-### Backend (`apps/api`)
-
-```bash
-cd apps/api
-python -m venv .venv
-source .venv/bin/activate
-pip install -e .
-alembic upgrade head
-```
-
-### Frontend (`apps/web`)
-
-```bash
-cd apps/web
-nvm use          # uses .nvmrc — Node 20.19.0
-npm install
-```
-
----
-
 ## Usage
 
 ### 1. Provide AIS Data
@@ -177,24 +166,24 @@ Place AIS data files in `data/raw/` or upload them via the web interface.
 
 **Supported formats:**
 
-| Format     | Description              |
-| ---------- | ------------------------ |
-| `.csv`     | Comma-delimited CSV      |
-| `.dat`     | Tab- or space-delimited  |
+| Format | Description |
+| --- | --- |
+| `.csv` | Comma-delimited CSV |
+| `.dat` | Tab- or space-delimited |
 | `.csv.zst` | Zstandard-compressed CSV |
 | `.dat.zst` | Zstandard-compressed DAT |
 
 **Required columns** (flexible name matching):
 
-| Field                | Accepted column names                 |
-| -------------------- | ------------------------------------- |
-| MMSI                 | `mmsi`, `MMSI`                        |
-| Timestamp            | `timestamp`, `base_date_time`, `time` |
-| Latitude             | `lat`, `latitude`                     |
-| Longitude            | `lon`, `longitude`                    |
-| SOG _(optional)_     | `sog`                                 |
-| COG _(optional)_     | `cog`                                 |
-| Heading _(optional)_ | `heading`                             |
+| Field | Accepted column names |
+| --- | --- |
+| MMSI | `mmsi`, `MMSI` |
+| Timestamp | `timestamp`, `base_date_time`, `time` |
+| Latitude | `lat`, `latitude` |
+| Longitude | `lon`, `longitude` |
+| SOG _(optional)_ | `sog` |
+| COG _(optional)_ | `cog` |
+| Heading _(optional)_ | `heading` |
 
 ### 2. Process Data
 
@@ -213,12 +202,12 @@ curl -X POST "http://localhost:8000/v1/replay/stop"
 
 ### 3. View Results
 
-| View          | Description                                                  |
-| ------------- | ------------------------------------------------------------ |
-| **Dashboard** | Processing progress and system metrics                       |
-| **Alerts**    | Filter, annotate, and export detected anomalies              |
-| **Vessels**   | Browse tracked vessels and their latest positions            |
-| **Map**       | Interactive Leaflet map with vessel tracks and alert markers |
+| View | Description |
+| --- | --- |
+| **Dashboard** | Processing progress and system metrics |
+| **Alerts** | Filter, annotate, and export detected anomalies |
+| **Vessels** | Browse tracked vessels and their latest positions |
+| **Map** | Interactive Leaflet map with vessel tracks and alert markers |
 
 ---
 
@@ -230,29 +219,30 @@ Interactive docs are served by the running API:
 
 - **Swagger UI**: http://localhost:8000/docs
 - **ReDoc**: http://localhost:8000/redoc
+- **BFF OpenAPI spec**: [`apps/bff/openapi.yaml`](./apps/bff/openapi.yaml)
 
 ### Key Endpoints
 
-| Method  | Path                       | Description                                              |
-| ------- | -------------------------- | -------------------------------------------------------- |
-| `GET`   | `/v1/health`               | Basic health check                                       |
-| `GET`   | `/v1/health/detailed`      | Health check including database connectivity             |
-| `GET`   | `/v1/metrics`              | System metrics (vessel and alert counts)                 |
-| `GET`   | `/v1/vessels`              | List vessels (filterable by min severity)                |
-| `GET`   | `/v1/vessels/{mmsi}`       | Get vessel by MMSI                                       |
-| `GET`   | `/v1/vessels/{mmsi}/track` | Get historical track positions                           |
-| `GET`   | `/v1/alerts`               | List alerts (filterable by type, status, severity, time) |
-| `PATCH` | `/v1/alerts/{id}/status`   | Update alert status and/or analyst notes                 |
-| `GET`   | `/v1/alerts/stats/summary` | Alert statistics summary                                 |
-| `GET`   | `/v1/alerts/export/csv`    | Export alerts as CSV                                     |
-| `GET`   | `/v1/alerts/export/json`   | Export alerts as JSON                                    |
-| `POST`  | `/v1/upload`               | Upload AIS data file (max 5 GB)                          |
-| `GET`   | `/v1/upload/list`          | List uploaded files                                      |
-| `POST`  | `/v1/replay/start`         | Start data replay                                        |
-| `POST`  | `/v1/replay/stop`          | Stop current replay                                      |
-| `GET`   | `/v1/replay/status`        | Get replay progress                                      |
-| `WS`    | `/v1/stream`               | WebSocket stream for real-time alerts and progress ticks |
-| `GET`   | `/metrics`                 | Prometheus metrics endpoint                              |
+| Method | Path | Description |
+| --- | --- | --- |
+| `GET` | `/v1/health` | Basic health check |
+| `GET` | `/v1/health/detailed` | Health check including database connectivity |
+| `GET` | `/v1/metrics` | System metrics (vessel and alert counts) |
+| `GET` | `/v1/vessels` | List vessels (filterable by min severity) |
+| `GET` | `/v1/vessels/{mmsi}` | Get vessel by MMSI |
+| `GET` | `/v1/vessels/{mmsi}/track` | Get historical track positions |
+| `GET` | `/v1/alerts` | List alerts (filterable by type, status, severity, time) |
+| `PATCH` | `/v1/alerts/{id}/status` | Update alert status and/or analyst notes |
+| `GET` | `/v1/alerts/stats/summary` | Alert statistics summary |
+| `GET` | `/v1/alerts/export/csv` | Export alerts as CSV |
+| `GET` | `/v1/alerts/export/json` | Export alerts as JSON |
+| `POST` | `/v1/upload` | Upload AIS data file (max 5 GB) |
+| `GET` | `/v1/upload/list` | List uploaded files |
+| `POST` | `/v1/replay/start` | Start data replay |
+| `POST` | `/v1/replay/stop` | Stop current replay |
+| `GET` | `/v1/replay/status` | Get replay progress |
+| `WS` | `/v1/stream` | WebSocket stream for real-time alerts and progress ticks |
+| `GET` | `/metrics` | Prometheus metrics endpoint |
 
 ---
 
@@ -296,33 +286,26 @@ apps/api/app/
 
 ### BFF — Geospatial API Gateway (`apps/bff`)
 
-A contract-first [Fastify](https://fastify.dev/) Backend-for-Frontend, designed via OpenAPI 3.0, that sits between the React client and the core Python API. It provides JWT-authenticated, rate-limited, license-gated geospatial endpoints with in-memory response caching.
+A contract-first [Fastify](https://fastify.dev/) Backend-for-Frontend designed via OpenAPI 3.0. See [`apps/bff/README.md`](./apps/bff/README.md) and [`apps/bff/openapi.yaml`](./apps/bff/openapi.yaml).
 
-| Endpoint                  | Auth                       | Description                                          |
-| ------------------------- | -------------------------- | ---------------------------------------------------- |
-| `GET /health`             | —                          | Liveness probe — returns env and status              |
-| `GET /v1/storage/status`  | —                          | Object storage provider configuration check          |
-| `GET /v1/layers/manifest` | JWT + licence              | License-filtered layer catalogue; Redis-backed cache |
-| `WS /v1/stream`           | JWT + `ports:read` licence | Real-time heartbeat stream with ping/pong protocol   |
-
-**Key design properties:**
-
-- **OpenAPI-first** — full contract in `openapi.yaml` before any implementation
-- **License-gated** — per-feature licence flags enforced at the route layer
-- **Rate limited** — sliding-window per-identity limiter on all read endpoints
-- **In-process cache** — configurable TTL cache on the layer manifest to reduce upstream load
+| Endpoint | Auth | Description |
+| --- | --- | --- |
+| `GET /health` | — | Liveness probe |
+| `GET /v1/storage/status` | — | Object storage provider check |
+| `GET /v1/layers/manifest` | JWT + licence | License-filtered layer catalogue; Redis-backed cache |
+| `WS /v1/stream` | JWT + `ports:read` licence | Real-time heartbeat stream |
 
 ### Frontend — Feature-Based (`apps/web`)
 
 ```text
 apps/web/src/
-├── core/                 # API client config and global constants
+├── core/                 # API client config, global constants, ErrorBoundary
 ├── features/
 │   ├── alerts/           # Alerts panel and alert management UI
+│   ├── geodata/          # EEZ boundaries and environmental overlays
 │   ├── itdae/            # ITDAE-specific map layers and components
 │   ├── map/              # Leaflet map view and vessel track visualisation
 │   └── vessels/          # Vessel details panel and vessel list
-├── layouts/              # Application-wide layout wrappers
 ├── shared/
 │   ├── components/       # FileDropZone, Dashboard, DemoMode, WelcomePage, Onboarding, ReplayControls
 │   ├── hooks/            # useWebSocket and other shared hooks
@@ -339,15 +322,15 @@ apps/web/src/
 
 **Backend (`apps/api`)**
 
-| Variable       | Default                   | Description                           |
-| -------------- | ------------------------- | ------------------------------------- |
+| Variable | Default | Description |
+| --- | --- | --- |
 | `DATABASE_URL` | `sqlite:///./aegisais.db` | SQLAlchemy database connection string |
-| `LOG_LEVEL`    | `INFO`                    | Logging verbosity                     |
+| `LOG_LEVEL` | `INFO` | Logging verbosity |
 
 **Frontend (`apps/web`)**
 
-| Variable            | Default                 | Description          |
-| ------------------- | ----------------------- | -------------------- |
+| Variable | Default | Description |
+| --- | --- | --- |
 | `VITE_API_BASE_URL` | `http://localhost:8000` | Backend API base URL |
 
 Create a `.env` file in `apps/web/` to override:
@@ -360,38 +343,24 @@ VITE_API_BASE_URL=http://localhost:8000
 
 ## Detection Rules
 
-AegisAIS applies two tiers of detection rules to every incoming AIS position update.
-
 ### Tier 1 — Integrity Violations
 
-| Alert Type  | Trigger                                                                                       |
-| ----------- | --------------------------------------------------------------------------------------------- |
-| `TELEPORT`  | Implied speed between consecutive positions exceeds the physical speed limit for the time gap |
-| `TURN_RATE` | Heading change rate exceeds the maximum physically possible for the reported speed            |
+| Alert Type | Trigger |
+| --- | --- |
+| `TELEPORT` | Implied speed between consecutive positions exceeds the physical speed limit for the time gap |
+| `TURN_RATE` | Heading change rate exceeds the maximum physically possible for the reported speed |
 
 ### Tier 2 — Suspicious Behaviour
 
-| Alert Type                | Trigger                                                                   |
-| ------------------------- | ------------------------------------------------------------------------- |
-| `TELEPORT_T2`             | Implied speed is high but not outright impossible — warrants review       |
-| `TURN_RATE_T2`            | Turn rate is elevated but below the hard physical threshold               |
-| `POSITION_INVALID`        | Coordinates fall outside valid geographic range (lat > ±90°, lon > ±180°) |
-| `ACCELERATION`            | Speed change between positions exceeds physical limits                    |
-| `HEADING_COG_CONSISTENCY` | Heading and COG diverge significantly at a reportable speed               |
+| Alert Type | Trigger |
+| --- | --- |
+| `TELEPORT_T2` | Implied speed is high but not outright impossible — warrants review |
+| `TURN_RATE_T2` | Turn rate is elevated but below the hard physical threshold |
+| `POSITION_INVALID` | Coordinates fall outside valid geographic range |
+| `ACCELERATION` | Speed change between positions exceeds physical limits |
+| `HEADING_COG_CONSISTENCY` | Heading and COG diverge significantly at a reportable speed |
 
-All alerts carry a **severity score (0–100)** and structured **evidence fields** (implied speed, distance, time delta, tier, etc.).
-
-### Configuring Thresholds
-
-Thresholds are defined in `apps/api/app/modules/itdae/settings.py`:
-
-```python
-teleport_speed_knots_short   = 60.0    # Threshold for time gaps ≤ 120 s
-teleport_speed_knots_medium  = 100.0   # Threshold for time gaps 120 s–30 min
-max_turn_rate_deg_per_sec    = 3.0
-min_speed_for_turn_check_kn  = 10.0
-alert_cooldown_sec           = 300     # 5-minute cooldown per vessel per rule
-```
+Thresholds are defined in `apps/api/app/modules/itdae/settings.py`.
 
 ---
 
@@ -399,42 +368,20 @@ alert_cooldown_sec           = 300     # 5-minute cooldown per vessel per rule
 
 ### Database Migrations
 
-AegisAIS uses [Alembic](https://alembic.sqlalchemy.org/) for schema version control.
-
 ```bash
 cd apps/api
-
-# Apply all pending migrations
-alembic upgrade head
-
-# Check current migration state
-alembic current
-
-# Auto-generate a migration after changing models
+alembic upgrade head          # Apply all pending migrations
+alembic current               # Check current state
 alembic revision --autogenerate -m "describe your change"
-
-# Roll back one step
-alembic downgrade -1
-
-# If you see "Multiple head revisions", the repo includes a merge revision — upgrade to the single head:
-alembic heads   # should show one head after pulling latest
-alembic upgrade head
+alembic downgrade -1          # Roll back one step
 ```
 
-**SQLite (default local dev):** The full migration chain runs on SQLite. Organisation **foreign keys** are skipped on SQLite only (Alembic cannot `ALTER ADD CONSTRAINT`); the app still enforces tenancy in code. Use **PostgreSQL** for database-level FK parity.
-
-See [`apps/api/MIGRATION_GUIDE.md`](./apps/api/MIGRATION_GUIDE.md) and [`docs/operations/DB_MIGRATION_SETUP.md`](./docs/operations/DB_MIGRATION_SETUP.md) for full details.
-
 ### Demo Data
-
-Pre-built demo files covering every alert type live in `data/raw/`. To regenerate:
 
 ```bash
 cd apps/api
 python scripts/generate_demo_data.py
 ```
-
-See [`docs/operations/DEMO_GUIDE.md`](./docs/operations/DEMO_GUIDE.md) for demo scenarios and expected results.
 
 ---
 
@@ -442,12 +389,10 @@ See [`docs/operations/DEMO_GUIDE.md`](./docs/operations/DEMO_GUIDE.md) for demo 
 
 ```bash
 # Backend unit and integration tests
-cd apps/api
-pytest tests/ -v
+cd apps/api && pytest tests/ -v
 
 # Frontend linting
-cd apps/web
-npm run lint
+cd apps/web && npm run lint
 ```
 
 ---
@@ -458,85 +403,42 @@ npm run lint
 
 - [ ] Use PostgreSQL — set `DATABASE_URL` to a Postgres connection string
 - [ ] Run `alembic upgrade head` before starting the API
-- [ ] Configure authentication — the `auth` module is included; enable and secure it appropriately
-- [ ] Restrict CORS origins to your production domain in `apps/api/app/main.py`
+- [ ] Restrict CORS origins to your production domain
 - [ ] Configure rate limiting for public-facing deployments
 - [ ] Set up Prometheus scraping against `/metrics`
-- [ ] Enable structured logging and forward to your observability stack
 - [ ] Store all secrets in environment variables — never commit `.env` files
-- [ ] Implement a database backup and recovery strategy
 
-### Docker
-
-```bash
-bash scripts/start_full_stack.sh
-```
-
-The API Dockerfile automatically runs `alembic upgrade head` on container startup before launching the server. See [`apps/api/start_with_migrations.sh`](./apps/api/start_with_migrations.sh) for manual control.
-
-Notes:
-
-- The processing pipeline requires `redis`, `processing-worker`, `persistence-worker`, and `alert-worker` in addition to the API.
-- `scripts/start_full_stack.sh` generates local self-signed nginx certs on first run; browsers will warn because the issuer is not trusted.
-- The current repository does not implement offline model training or persisted model fitting. The existing `ml_scoring` module is an online statistical baseline rather than a trainable pipeline.
-- The concrete follow-on work for real training is tracked in the canonical domain docs under [`docs/architecture/`](./docs/architecture/) and [`docs/operations/`](./docs/operations/).
-
-### Kubernetes (Recommended for Staging/Production)
-
-Use the Kubernetes-first baseline in [`infra/k8s/`](./infra/k8s/) with environment overlays:
+### Kubernetes
 
 ```bash
-# Staging
 kubectl apply -k infra/k8s/overlays/staging
-
-# Production
 kubectl apply -k infra/k8s/overlays/production
 ```
-
-Deployment baseline, topology rationale, and rollback steps are documented in [`docs/architecture/INFRA_BASELINE_KUBERNETES.md`](./docs/architecture/INFRA_BASELINE_KUBERNETES.md).
 
 ---
 
 ## Documentation
 
-All documentation is organized by domain in the `docs/` directory. **Start with [`docs/README.md`](./docs/README.md)** for a guided overview of each domain.
-
-### Quick Links by Domain
-
-| Domain           | Purpose                                        | Key Documents                                                                                                                                                                                                    |
-| ---------------- | ---------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Architecture** | System design, topology, infrastructure        | [`ARCHITECTURE.md`](./docs/architecture/ARCHITECTURE.md), [`PROJECT_STRUCTURE.md`](./docs/architecture/PROJECT_STRUCTURE.md), [`INFRA_BASELINE_KUBERNETES.md`](./docs/architecture/INFRA_BASELINE_KUBERNETES.md) |
-| **Operations**   | Runtime guides, migrations, performance tuning | [`DEMO_GUIDE.md`](./docs/operations/DEMO_GUIDE.md), [`DB_MIGRATION_SETUP.md`](./docs/operations/DB_MIGRATION_SETUP.md), [`LARGE_DATASET_GUIDE.md`](./docs/operations/LARGE_DATASET_GUIDE.md)                     |
-| **Product**      | API spec, features, integrations               | [`API_DOCUMENTATION.md`](./docs/product/API_DOCUMENTATION.md), [`FEATURES_IMPLEMENTED.md`](./docs/product/FEATURES_IMPLEMENTED.md), [`INTEROPERABILITY_PROFILE.md`](./docs/product/INTEROPERABILITY_PROFILE.md)  |
-| **Security**     | Threat model, compliance, incident procedures  | [`SECURITY.md`](./docs/security/SECURITY.md), [`SECURITY_EVIDENCE_PACK.md`](./docs/security/SECURITY_EVIDENCE_PACK.md), [`INCIDENT_RESPONSE_RUNBOOK.md`](./docs/security/INCIDENT_RESPONSE_RUNBOOK.md)           |
-| **Governance**   | Backlog, audit coverage, issue tracking        | [`BUSINESS_LOGIC_IMPLEMENTATION_BACKLOG.md`](./docs/governance/BUSINESS_LOGIC_IMPLEMENTATION_BACKLOG.md), [`AUDIT_COVERAGE_MATRIX.md`](./docs/governance/AUDIT_COVERAGE_MATRIX.md)                               |
-| **Funding**      | Financial models, evidence, business cases     | [`NATO_FUNDABILITY_GAP_ANALYSIS.md`](./docs/funding/NATO_FUNDABILITY_GAP_ANALYSIS.md), [`FUNDING_ROUTE_MATRIX.md`](./docs/funding/FUNDING_ROUTE_MATRIX.md)                                                       |
-
-### Reference Documentation
-
-| Document                                                                             | Purpose                                          |
-| ------------------------------------------------------------------------------------ | ------------------------------------------------ |
-| [`docs/product/API_DOCUMENTATION.md`](./docs/product/API_DOCUMENTATION.md)           | Complete REST and WebSocket API reference        |
-| [`docs/operations/DEMO_GUIDE.md`](./docs/operations/DEMO_GUIDE.md)                   | Demo datasets, scenarios, and expected results   |
-| [`docs/operations/DB_MIGRATION_SETUP.md`](./docs/operations/DB_MIGRATION_SETUP.md)   | Database migration system overview               |
-| [`docs/operations/LARGE_DATASET_GUIDE.md`](./docs/operations/LARGE_DATASET_GUIDE.md) | Performance tuning for large AIS datasets        |
-| [`docs/security/SECURITY.md`](./docs/security/SECURITY.md)                           | Security scope, limitations, and responsible use |
-| [`apps/api/MIGRATION_GUIDE.md`](./apps/api/MIGRATION_GUIDE.md)                       | Alembic migration developer guide                |
+| Domain | Key Documents |
+| --- | --- |
+| **Architecture** | [`ARCHITECTURE.md`](./docs/architecture/ARCHITECTURE.md), [`INFRA_BASELINE_KUBERNETES.md`](./docs/architecture/INFRA_BASELINE_KUBERNETES.md) |
+| **Operations** | [`DEMO_GUIDE.md`](./docs/operations/DEMO_GUIDE.md), [`DB_MIGRATION_SETUP.md`](./docs/operations/DB_MIGRATION_SETUP.md) |
+| **Product** | [`API_DOCUMENTATION.md`](./docs/product/API_DOCUMENTATION.md), [`FEATURES_IMPLEMENTED.md`](./docs/product/FEATURES_IMPLEMENTED.md) |
+| **Security** | [`SECURITY.md`](./docs/security/SECURITY.md), [`INCIDENT_RESPONSE_RUNBOOK.md`](./docs/security/INCIDENT_RESPONSE_RUNBOOK.md) |
+| **BFF** | [`apps/bff/README.md`](./apps/bff/README.md), [`apps/bff/openapi.yaml`](./apps/bff/openapi.yaml) |
 
 ---
 
 ## Troubleshooting
 
-| Symptom                                              | Resolution                                                                              |
-| ---------------------------------------------------- | --------------------------------------------------------------------------------------- |
-| `"File not found"` during replay                     | Ensure the file is in `data/raw/` and the path is relative to the project root          |
-| No alerts generated                                  | Check thresholds in `settings.py`; verify the data contains anomalies; inspect API logs |
-| Alerts not appearing in UI                           | Refresh the page; clear active filters; confirm WebSocket shows "Connected"             |
-| Database errors on startup                           | Run `alembic upgrade head`; verify `DATABASE_URL`; check database permissions           |
-| `Multiple head revisions` from Alembic               | Pull latest migrations, then `alembic upgrade head` (merge revisions unify branches)    |
-| ITDAE geofence seed / missing `itdae_geofence_zones` | Apply migrations; until then the API skips seed cleanly when the table is absent        |
-| `"Vite requires Node.js 20.19+"`                     | Run `nvm use` inside `apps/web/` or install Node.js 20.19+                              |
-| Processing too slow on large files                   | Increase the `speedup` parameter; ensure `use_streaming=true`                           |
+| Symptom | Resolution |
+| --- | --- |
+| `"File not found"` during replay | Ensure the file is in `data/raw/` and the path is relative to the project root |
+| No alerts generated | Check thresholds in `settings.py`; verify the data contains anomalies |
+| Alerts not appearing in UI | Refresh the page; clear active filters; confirm WebSocket shows "Connected" |
+| Database errors on startup | Run `alembic upgrade head`; verify `DATABASE_URL` |
+| `Multiple head revisions` from Alembic | Pull latest migrations, then `alembic upgrade head` |
+| `"Vite requires Node.js 20.19+"` | Run `nvm use` inside `apps/web/` |
 
 ---
 
@@ -545,8 +447,7 @@ All documentation is organized by domain in the `docs/` directory. **Start with 
 1. Branch from `main` and use conventional commit messages
 2. Add tests for any new detection rules or API endpoints
 3. Update the relevant documentation in `docs/`
-4. Ensure TypeScript strict types pass (`npm run lint`) and Python type hints are present
-5. Open a pull request using the provided [PR template](./.github/PULL_REQUEST_TEMPLATE.md)
+4. Open a pull request using the provided [PR template](./.github/PULL_REQUEST_TEMPLATE.md)
 
 ---
 
