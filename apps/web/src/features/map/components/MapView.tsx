@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { MapContainer, TileLayer, Marker, Popup, Polyline } from 'react-leaflet'
 import type { LatLngExpression } from 'leaflet'
 import 'leaflet/dist/leaflet.css'
@@ -12,6 +12,22 @@ import './MapView.css'
 import InfrastructureLayer from '@/features/itdae/components/InfrastructureLayer'
 import EezLayer from '@/features/geodata/EezLayer'
 import EnvironmentalOverlay from '@/features/geodata/EnvironmentalOverlay'
+
+// Baltic Sea — sensible default for a maritime threat-detection tool
+const BALTIC_CENTER: LatLngExpression = [57.0, 18.0]
+const BALTIC_ZOOM = 5
+
+function computeCentroid(points: LatLngExpression[]): LatLngExpression {
+    if (points.length === 0) return BALTIC_CENTER
+    const [sumLat, sumLon] = points.reduce(
+        ([la, lo], p) => {
+            const [lat, lon] = p as [number, number]
+            return [la + lat, lo + lon]
+        },
+        [0, 0]
+    )
+    return [sumLat / points.length, sumLon / points.length]
+}
 
 interface MapViewProps {
     selectedVessel?: string | null
@@ -33,8 +49,10 @@ export default function MapView({ selectedVessel, onVesselClick, showInfrastruct
     const [controlsOpen, setControlsOpen] = useState(true)
     const [loadError, setLoadError] = useState<string | null>(null)
     const [trackError, setTrackError] = useState<string | null>(null)
+    const pausedRef = useRef(false)
 
     const loadData = useCallback(async () => {
+        if (pausedRef.current) return
         try {
             setLoadError(null)
             const [vesselsData, alertsData, watchlistData] = await Promise.all([
@@ -56,9 +74,7 @@ export default function MapView({ selectedVessel, onVesselClick, showInfrastruct
                     offline: 'Map telemetry degraded. Restore the API policy surface to repopulate vessels and alerts.',
                 })
             )
-            if (import.meta.env.DEV) {
-                console.error('Failed to load map data:', error)
-            }
+            if (import.meta.env.DEV) console.error('Failed to load map data:', error)
         } finally {
             setLoading(false)
         }
@@ -78,26 +94,29 @@ export default function MapView({ selectedVessel, onVesselClick, showInfrastruct
                     offline: 'Track history unavailable while the API policy surface is offline.',
                 })
             )
-            if (import.meta.env.DEV) {
-                console.error('Failed to load vessel track:', error)
-            }
+            if (import.meta.env.DEV) console.error('Failed to load vessel track:', error)
         }
     }, [])
 
+    // Pause polling when tab is hidden, resume when visible
+    useEffect(() => {
+        const handleVisibility = () => {
+            pausedRef.current = document.hidden
+            if (!document.hidden) void loadData()
+        }
+        document.addEventListener('visibilitychange', handleVisibility)
+        return () => document.removeEventListener('visibilitychange', handleVisibility)
+    }, [loadData])
+
     useEffect(() => {
         void loadData()
-        const interval = setInterval(() => {
-            void loadData()
-        }, 10000)
+        const interval = setInterval(() => { void loadData() }, 10000)
         return () => clearInterval(interval)
     }, [loadData])
 
     useEffect(() => {
-        if (selectedVessel) {
-            void loadVesselTrack(selectedVessel)
-        } else {
-            setVesselTrack([])
-        }
+        if (selectedVessel) void loadVesselTrack(selectedVessel)
+        else setVesselTrack([])
     }, [loadVesselTrack, selectedVessel])
 
     useEffect(() => {
@@ -106,108 +125,80 @@ export default function MapView({ selectedVessel, onVesselClick, showInfrastruct
         setControlsOpen(!compact.matches)
     }, [])
 
-    if (loading) {
-        return <div className="map-loading">Loading map...</div>
-    }
+    if (loading) return <div className="map-loading">Loading map...</div>
 
-    // Calculate bounds from vessels
     const bounds: LatLngExpression[] = vessels
         .filter(v => v.lat && v.lon)
         .map(v => [v.lat, v.lon] as LatLngExpression)
 
-    // Get alert positions from evidence
-    const alertPositions = alerts
-        .filter(a => a.evidence?.p2_lat && a.evidence?.p2_lon)
-        .map(a => ({
-            alert: a,
-            lat: a.evidence.p2_lat,
-            lon: a.evidence.p2_lon,
-        }))
+    // Use geographic centroid, not first vessel
+    const mapCenter = computeCentroid(bounds)
 
-    // Get track polyline for selected vessel
+    // Null-safe alert positions: guard against missing or malformed evidence
+    const alertPositions = alerts.flatMap(a => {
+        const lat = a.evidence?.p2_lat
+        const lon = a.evidence?.p2_lon
+        if (typeof lat !== 'number' || typeof lon !== 'number') return []
+        return [{ alert: a, lat, lon }]
+    })
+
     const trackPolyline: LatLngExpression[] = vesselTrack
         .filter(p => p.lat && p.lon)
         .map(p => [p.lat, p.lon] as LatLngExpression)
-
-    const defaultCenter: LatLngExpression = bounds.length > 0
-        ? bounds[0]
-        : [40.7128, -74.0060] // Default to NYC
 
     const statusSummary = `${vessels.length} vessels, ${alertPositions.length} alerts, ${selectedVessel ? 'selected vessel active' : 'no vessel selected'}`
 
     return (
         <div className="map-view">
-            <p className="sr-only" role="status" aria-live="polite">
-                {statusSummary}
-            </p>
-            {loadError ? (
+            <p className="sr-only" role="status" aria-live="polite">{statusSummary}</p>
+            {loadError && (
                 <div className="map-banner map-banner--warning" role="status">
                     <strong>Map feed degraded.</strong>
                     <span>{loadError}</span>
                 </div>
-            ) : null}
-            {trackError ? (
+            )}
+            {trackError && (
                 <div className="map-banner" role="status">
                     <strong>Track history unavailable.</strong>
                     <span>{trackError}</span>
                 </div>
-            ) : null}
+            )}
             <details className="map-controls" open={controlsOpen} onToggle={(e) => setControlsOpen(e.currentTarget.open)}>
                 <summary className="map-controls__summary">Map Layers</summary>
                 <fieldset className="map-controls__fieldset" aria-label="Map display controls">
                     <legend className="sr-only">Map display controls</legend>
                     <label htmlFor="map-show-alerts">
-                        <input
-                            id="map-show-alerts"
-                            type="checkbox"
-                            checked={showAlerts}
-                            onChange={(e) => setShowAlerts(e.target.checked)}
-                        />
+                        <input id="map-show-alerts" type="checkbox" checked={showAlerts} onChange={(e) => setShowAlerts(e.target.checked)} />
                         Show Alerts
                     </label>
                     <label htmlFor="map-show-cables">
-                        <input
-                            id="map-show-cables"
-                            type="checkbox"
-                            checked={infraVisible}
-                            onChange={(e) => setInfraVisible(e.target.checked)}
-                        />
+                        <input id="map-show-cables" type="checkbox" checked={infraVisible} onChange={(e) => setInfraVisible(e.target.checked)} />
                         Cable Zones
                     </label>
                     <label htmlFor="map-show-eez">
-                        <input
-                            id="map-show-eez"
-                            type="checkbox"
-                            checked={eezVisible}
-                            onChange={(e) => setEezVisible(e.target.checked)}
-                        />
+                        <input id="map-show-eez" type="checkbox" checked={eezVisible} onChange={(e) => setEezVisible(e.target.checked)} />
                         EEZ Boundaries
                     </label>
                     <label htmlFor="map-show-env">
-                        <input
-                            id="map-show-env"
-                            type="checkbox"
-                            checked={envOverlay}
-                            onChange={(e) => setEnvOverlay(e.target.checked)}
-                        />
+                        <input id="map-show-env" type="checkbox" checked={envOverlay} onChange={(e) => setEnvOverlay(e.target.checked)} />
                         Env Context (right-click)
                     </label>
-                    {selectedVessel && (
-                        <label htmlFor="map-show-track">
-                            <input
-                                id="map-show-track"
-                                type="checkbox"
-                                checked={showTracks}
-                                onChange={(e) => setShowTracks(e.target.checked)}
-                            />
-                            Show Track
-                        </label>
-                    )}
+                    {/* Track toggle always visible so mobile users can access it */}
+                    <label htmlFor="map-show-track" style={{ opacity: selectedVessel ? 1 : 0.4 }}>
+                        <input
+                            id="map-show-track"
+                            type="checkbox"
+                            checked={showTracks}
+                            disabled={!selectedVessel}
+                            onChange={(e) => setShowTracks(e.target.checked)}
+                        />
+                        Show Track {!selectedVessel && '(select a vessel)'}
+                    </label>
                 </fieldset>
             </details>
             <MapContainer
-                center={defaultCenter}
-                zoom={bounds.length > 0 ? 8 : 2}
+                center={mapCenter}
+                zoom={bounds.length > 0 ? 8 : BALTIC_ZOOM}
                 style={{ height: '100%', width: '100%' }}
             >
                 <TileLayer
@@ -216,68 +207,47 @@ export default function MapView({ selectedVessel, onVesselClick, showInfrastruct
                 />
                 {bounds.length > 0 && <MapBounds bounds={bounds} />}
 
-                {/* Vessel markers */}
                 {vessels.map((vessel) => (
                     <Marker
                         key={vessel.mmsi}
                         position={[vessel.lat, vessel.lon]}
                         icon={createVesselDivIcon(watchMmsi.has(vessel.mmsi))}
-                        eventHandlers={{
-                            click: () => onVesselClick?.(vessel.mmsi),
-                        }}
+                        eventHandlers={{ click: () => onVesselClick?.(vessel.mmsi) }}
                     >
                         <Popup>
                             <div>
                                 <strong>MMSI:</strong> {vessel.mmsi}<br />
                                 <strong>Position:</strong> {vessel.lat.toFixed(4)}, {vessel.lon.toFixed(4)}<br />
-                                {vessel.sog !== null && (
-                                    <>
-                                        <strong>Speed:</strong> {vessel.sog.toFixed(1)} kn<br />
-                                    </>
-                                )}
+                                {vessel.sog !== null && <><strong>Speed:</strong> {vessel.sog.toFixed(1)} kn<br /></>}
                                 <strong>Alert Severity:</strong> {vessel.last_alert_severity}
                             </div>
                         </Popup>
                     </Marker>
                 ))}
 
-                {/* Alert markers */}
-                {showAlerts && alertPositions
-                    .filter(({ lat, lon }) => typeof lat === 'number' && typeof lon === 'number')
-                    .map(({ alert, lat, lon }) => (
-                        <Marker
-                            key={alert.id}
-                            position={[lat as number, lon as number]}
-                            icon={createAlertDivIcon(alert.severity)}
-                        >
-                            <Popup>
-                                <div>
-                                    <strong>Alert:</strong> {alert.type}<br />
-                                    <strong>Severity:</strong> {alert.severity}<br />
-                                    <strong>MMSI:</strong> {alert.mmsi}<br />
-                                    <strong>Summary:</strong> {alert.summary}
-                                </div>
-                            </Popup>
-                        </Marker>
-                    ))}
+                {showAlerts && alertPositions.map(({ alert, lat, lon }) => (
+                    <Marker
+                        key={alert.id}
+                        position={[lat, lon]}
+                        icon={createAlertDivIcon(alert.severity)}
+                    >
+                        <Popup>
+                            <div>
+                                <strong>Alert:</strong> {alert.type}<br />
+                                <strong>Severity:</strong> {alert.severity}<br />
+                                <strong>MMSI:</strong> {alert.mmsi}<br />
+                                <strong>Summary:</strong> {alert.summary}
+                            </div>
+                        </Popup>
+                    </Marker>
+                ))}
 
-                {/* Vessel track polyline */}
                 {showTracks && selectedVessel && trackPolyline.length > 1 && (
-                    <Polyline
-                        positions={trackPolyline}
-                        color="#3b82f6"
-                        weight={3}
-                        opacity={0.7}
-                    />
+                    <Polyline positions={trackPolyline} color="#3b82f6" weight={3} opacity={0.7} />
                 )}
 
-                {/* ITDAE cable corridor geofence zones */}
                 <InfrastructureLayer visible={infraVisible} />
-
-                {/* EEZ boundary zones */}
                 <EezLayer visible={eezVisible} />
-
-                {/* Environmental context on right-click */}
                 <EnvironmentalOverlay visible={envOverlay} />
             </MapContainer>
         </div>
