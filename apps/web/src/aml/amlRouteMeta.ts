@@ -78,16 +78,6 @@ export const AML_ROUTE_META: ProductRouteMeta[] = [
     matches: (pathname) => pathname.startsWith('/alerts/'),
   },
   {
-    path: AML_PATHS.globe,
-    title: 'Globe',
-    sectionId: 'intelligence',
-    navLabel: 'Globe',
-    minClearance: 'CONFIDENTIAL',
-    requiredReleasability: ['NATO'],
-    requiredLicenses: ['ports:read'],
-    matches: (pathname) => pathname === AML_PATHS.globe,
-  },
-  {
     path: AML_PATHS.itdae,
     title: 'ITDAE',
     sectionId: 'intelligence',
