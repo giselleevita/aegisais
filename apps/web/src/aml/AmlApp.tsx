@@ -19,16 +19,9 @@ import { AML_OPERATIONS_PATH, AML_PATHS } from '@/aml/amlRoutes'
 
 const MapPage = lazy(() => import('@/aml/pages/MapPage'))
 const ItdaePage = lazy(() => import('@/aml/pages/ItdaePage'))
-const GlobeWorkbenchPage = lazy(() => import('@/aml/pages/GlobeWorkbenchPage'))
 
 function RouteLoader() {
   return <div className="aml-page-pad aml-route-loading">Loading workspace…</div>
-}
-
-const GlobeWorkbenchPage = lazy(() => import('@/aml/pages/GlobeWorkbenchPage'))
-
-function RouteLoadingFallback() {
-  return <div className="app-loading-shell">Loading view...</div>
 }
 
 export default function AmlApp() {
@@ -94,14 +87,6 @@ export default function AmlApp() {
             </Suspense>
           }
         />
-        <Route
-          path={AML_PATHS.globe}
-          element={
-            <Suspense fallback={<RouteLoader />}>
-              <GlobeWorkbenchPage />
-            </Suspense>
-          }
-        />
         <Route path={AML_PATHS.watchlist} element={<WatchlistPage />} />
         <Route path={AML_PATHS.sanctions} element={<SanctionsPage />} />
         <Route path={AML_PATHS.incidents} element={<IncidentsPage />} />
@@ -110,6 +95,8 @@ export default function AmlApp() {
         <Route path={AML_PATHS.onboarding} element={<OnboardingTourPage />} />
         <Route path="/about" element={<Navigate to={AML_OPERATIONS_PATH} replace />} />
         <Route path={AML_PATHS.admin} element={<AdminPage />} />
+        {/* Catch-all: redirect unknown paths to triage */}
+        <Route path="*" element={<Navigate to={AML_OPERATIONS_PATH} replace />} />
       </Route>
     </Routes>
   )
