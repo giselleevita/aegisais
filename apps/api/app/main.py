@@ -22,30 +22,42 @@ from app.modules.itdae.api.routes_itdae import router as itdae_router
 from app.modules.sais.api.routes_sais import router as sais_router
 from app.api.v1.pilot import router as pilot_router
 from app.api.v1.import_ais import router as import_ais_router
-
-# ITDAE integration
 from app.modules.auth.api.routes_auth import router as auth_router
-
-# NATO interoperability (GAP-04)
-from app.modules.interop.router import router as interop_router
-# Sanctions screening (GAP-09)
-from app.modules.sanctions.router import router as sanctions_router
-# Intelligence products (GAP-11)
-from app.modules.intel.router import router as intel_router
-# Multi-national sharing (GAP-12)
-from app.modules.sharing.router import router as sharing_router
-# AI Analyst assistant (Featherless AI)
-from app.modules.analyst.router import router as analyst_router
-# Subsea asset and IoT expansion
-from app.modules.assets.router import router as assets_router
-from app.modules.iot.router import router as iot_router
-# Geodata: EEZ, weather, bathymetry
-from app.services.geodata.router import router as geodata_router
 from prometheus_fastapi_instrumentator import Instrumentator
 
 configure_logging()
-
 _startup_log = logging.getLogger("aegisais.startup")
+
+# --- Optional module imports (fail gracefully so core API stays up) ---
+_optional_routers: list = []
+
+def _try_import(label: str, import_fn):
+    try:
+        router = import_fn()
+        _optional_routers.append((label, router))
+        _startup_log.info("Module loaded: %s", label)
+    except Exception as exc:
+        _startup_log.warning("Module '%s' disabled at startup: %s", label, exc)
+
+_try_import("interop",  lambda: __import__("app.modules.interop.router", fromlist=["router"]).router)
+_try_import("sanctions", lambda: __import__("app.modules.sanctions.router", fromlist=["router"]).router)
+_try_import("intel",    lambda: __import__("app.modules.intel.router", fromlist=["router"]).router)
+_try_import("sharing",  lambda: __import__("app.modules.sharing.router", fromlist=["router"]).router)
+_try_import("analyst",  lambda: __import__("app.modules.analyst.router", fromlist=["router"]).router)
+_try_import("assets",   lambda: __import__("app.modules.assets.router", fromlist=["router"]).router)
+_try_import("iot",      lambda: __import__("app.modules.iot.router", fromlist=["router"]).router)
+_try_import("geodata",  lambda: __import__("app.services.geodata.router", fromlist=["router"]).router)
+
+_OPTIONAL_PREFIXES = {
+    "interop":   "/v1/interop",
+    "sanctions": "/v1/sanctions",
+    "intel":     "/v1/intel",
+    "sharing":   "/v1/sharing",
+    "analyst":   "/v1/analyst",
+    "assets":    "/v1",
+    "iot":       "/v1/iot",
+    "geodata":   "/v1/geodata",
+}
 
 
 def _init_sentry_stub() -> None:
@@ -54,7 +66,6 @@ def _init_sentry_stub() -> None:
         return
     try:
         import sentry_sdk
-
         sentry_sdk.init(dsn=settings.sentry_dsn, traces_sample_rate=0.05)
         _startup_log.info("Sentry initialized")
     except Exception as exc:
@@ -71,7 +82,6 @@ async def lifespan(app: FastAPI):
         try:
             from app.core.database import SessionLocal
             from app.modules.itdae.geofences.seed import seed_baltic_geofence_zones
-
             db = SessionLocal()
             try:
                 seed_baltic_geofence_zones(db)
@@ -88,42 +98,38 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="AegisAIS", lifespan=lifespan)
 
-# Instrument App
 Instrumentator().instrument(app).expose(app)
 
-# Middleware: CORS outermost (added last), security headers inner (IMPLEMENTATION_PLAN Sprint 1)
 app.add_middleware(SecurityHeadersMiddleware)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins_list(),
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type", "Accept", "X-Request-ID"],
 )
 
-app.include_router(auth_router, prefix="/v1/auth", tags=["auth"])
-app.include_router(vessels_router, prefix="/v1", tags=["vessels"])
-app.include_router(alerts_router, prefix="/v1", tags=["alerts"])
-app.include_router(tracks_router, prefix="/v1", tags=["replay"])
-app.include_router(ws_router, prefix="/v1", tags=["stream"])
-app.include_router(upload_router, prefix="/v1", tags=["upload"])
-app.include_router(health_router, prefix="/v1", tags=["health"])
-app.include_router(audit_router, prefix="/v1", tags=["audit"])
-app.include_router(watchlist_router, prefix="/v1", tags=["watchlist"])
-app.include_router(reports_router, prefix="/v1", tags=["reports"])
-app.include_router(incidents_router, prefix="/v1", tags=["incidents"])
-app.include_router(itdae_router, prefix="/api/v1/itdae", tags=["itdae"])
-app.include_router(sais_router, prefix="/v1/sais", tags=["sais"])
-app.include_router(pilot_router, prefix="/v1", tags=["pilot"])
-app.include_router(import_ais_router, prefix="/v1", tags=["import"])
-app.include_router(interop_router, prefix="/v1/interop", tags=["interop"])
-app.include_router(sanctions_router, prefix="/v1/sanctions", tags=["sanctions"])
-app.include_router(intel_router, prefix="/v1/intel", tags=["intel"])
-app.include_router(sharing_router, prefix="/v1/sharing", tags=["sharing"])
-app.include_router(analyst_router, prefix="/v1/analyst", tags=["analyst"])
-app.include_router(assets_router, prefix="/v1", tags=["assets"])
-app.include_router(iot_router, prefix="/v1/iot", tags=["iot"])
-app.include_router(geodata_router, prefix="/v1/geodata", tags=["geodata"])
+# Core routers — must always load
+app.include_router(auth_router,       prefix="/v1/auth",      tags=["auth"])
+app.include_router(vessels_router,    prefix="/v1",           tags=["vessels"])
+app.include_router(alerts_router,     prefix="/v1",           tags=["alerts"])
+app.include_router(tracks_router,     prefix="/v1",           tags=["replay"])
+app.include_router(ws_router,         prefix="/v1",           tags=["stream"])
+app.include_router(upload_router,     prefix="/v1",           tags=["upload"])
+app.include_router(health_router,     prefix="/v1",           tags=["health"])
+app.include_router(audit_router,      prefix="/v1",           tags=["audit"])
+app.include_router(watchlist_router,  prefix="/v1",           tags=["watchlist"])
+app.include_router(reports_router,    prefix="/v1",           tags=["reports"])
+app.include_router(incidents_router,  prefix="/v1",           tags=["incidents"])
+app.include_router(itdae_router,      prefix="/api/v1/itdae", tags=["itdae"])
+app.include_router(sais_router,       prefix="/v1/sais",      tags=["sais"])
+app.include_router(pilot_router,      prefix="/v1",           tags=["pilot"])
+app.include_router(import_ais_router, prefix="/v1",           tags=["import"])
+
+# Optional routers — loaded only if their module imported successfully
+for label, router in _optional_routers:
+    app.include_router(router, prefix=_OPTIONAL_PREFIXES[label], tags=[label])
+
 
 @app.get("/")
 async def root():
@@ -133,5 +139,6 @@ async def root():
         "version": "0.1.0",
         "description": "AIS Data Integrity and Anomaly Detection Tool",
         "docs": "/docs",
-        "health": "/v1/health"
+        "health": "/v1/health",
+        "modules": [label for label, _ in _optional_routers],
     }
