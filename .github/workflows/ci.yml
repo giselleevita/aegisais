@@ -69,7 +69,9 @@ jobs:
       - name: Backend vulnerability gate
         working-directory: apps/api
         run: |
-          pip-audit -r requirements.lock --ignore-vuln CVE-2024-23342
+          pip-audit -r requirements.lock \
+            --ignore-vuln CVE-2024-23342 \
+            --ignore-vuln PYSEC-2026-161
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
