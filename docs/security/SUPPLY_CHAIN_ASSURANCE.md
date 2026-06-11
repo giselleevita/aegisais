@@ -21,7 +21,7 @@ Both SBOMs are generated before downstream build jobs may run (`needs: supply-ch
 
 ### 1.2 Provenance Attestation
 
-SLSA build provenance attestation is generated for both SBOM artefacts using `actions/attest-build-provenance@v1`. This creates a verifiable link between the CI run identity and the produced artefacts. Downstream consumers can verify authenticity with:
+SLSA build provenance attestation is generated for both SBOM artefacts using `actions/attest-build-provenance@v4`. This creates a verifiable link between the CI run identity and the produced artefacts. Downstream consumers can verify authenticity with:
 
 ```bash
 gh attestation verify backend-sbom.cdx.json --repo <org>/aegisais
