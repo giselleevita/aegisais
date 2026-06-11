@@ -79,7 +79,6 @@ const ROUTE_ALIASES: Record<string, string[]> = {
   [AML_PATHS.watchlist]: ['go watchlist', 'open watchlist'],
   [AML_PATHS.audit]: ['go audit', 'open audit', 'audit log'],
   [AML_PATHS.admin]: ['go admin', 'open admin', 'control plane'],
-  [AML_PATHS.globe]: ['go globe', 'open globe', '3d globe'],
   [AML_PATHS.itdae]: ['go itdae', 'open itdae', 'infrastructure threat'],
 }
 
