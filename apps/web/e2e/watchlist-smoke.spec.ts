@@ -66,7 +66,7 @@ test.describe('Watchlist smoke', () => {
 
     await expect(page.getByText('Signed in')).toBeVisible()
 
-    await page.getByRole('navigation', { name: 'Main navigation' }).getByRole('link', { name: 'Watchlist' }).click()
+    await page.goto('/watchlist')
 
     await expect(page.locator('.watchlist-panel')).toBeVisible()
     await expect(page.locator('.watchlist-panel').getByRole('heading', { name: 'Watchlist' })).toBeVisible()

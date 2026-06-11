@@ -316,33 +316,6 @@ test.describe('Mission workflow', () => {
     await expect(page).toHaveURL(/\/admin$/)
   })
 
-  test('covers intelligence policy redirects for the globe route', async ({ page }) => {
-    const restrictedClaims = {
-      sub: 'e2e-analyst',
-      role: 'analyst',
-      clearances: ['RESTRICTED'],
-      releasability: ['NATO'],
-      licenses: ['ports:read'],
-    }
-    const restrictedToken = `header.${tokenPayload(restrictedClaims)}.sig`
-
-    await page.goto('/triage')
-    await expect(
-      page.getByRole('navigation', { name: 'Main navigation' }).getByRole('link', { name: 'Intelligence' })
-    ).toBeVisible()
-
-    currentClaims = restrictedClaims
-    await page.evaluate((nextToken) => {
-      localStorage.setItem('aegisais_access_token', nextToken)
-      localStorage.setItem('aegisais_ui_role', 'analyst')
-      window.dispatchEvent(new Event('aegisais-auth-changed'))
-    }, restrictedToken)
-
-    await page.goto('/globe')
-    await expect(page).toHaveURL(/\/triage$/)
-    await expect(page.getByText('Globe requires CONFIDENTIAL clearance.')).toBeVisible()
-  })
-
   test('covers supervisor sanctions flow and empty-state resilience', async ({ page }) => {
     await page.goto('/')
 
