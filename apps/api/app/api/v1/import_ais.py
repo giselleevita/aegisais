@@ -103,39 +103,30 @@ def batch_import_ais(
             if existing is None:
                 vessel = VesselLatest(
                     mmsi=rec.mmsi,
-                    latitude=rec.latitude,
-                    longitude=rec.longitude,
-                    speed=rec.speed,
-                    course=rec.course,
+                    lat=rec.latitude,
+                    lon=rec.longitude,
+                    sog=rec.speed,
+                    cog=rec.course,
                     heading=rec.heading,
-                    nav_status=rec.nav_status,
                     timestamp=ts,
-                    vessel_name=rec.vessel_name,
-                    imo=rec.imo,
-                    call_sign=rec.call_sign,
-                    ship_type=rec.ship_type,
                 )
                 db.add(vessel)
             else:
-                existing.latitude = rec.latitude
-                existing.longitude = rec.longitude
-                existing.speed = rec.speed
-                existing.course = rec.course
-                existing.heading = rec.heading
-                existing.nav_status = rec.nav_status
-                existing.timestamp = ts
-                if rec.vessel_name:
-                    existing.vessel_name = rec.vessel_name
+                setattr(existing, "lat", rec.latitude)
+                setattr(existing, "lon", rec.longitude)
+                setattr(existing, "sog", rec.speed)
+                setattr(existing, "cog", rec.course)
+                setattr(existing, "heading", rec.heading)
+                setattr(existing, "timestamp", ts)
 
         # Append VesselPosition track record
         position = VesselPosition(
             mmsi=rec.mmsi,
-            latitude=rec.latitude,
-            longitude=rec.longitude,
-            speed=rec.speed,
-            course=rec.course,
+            lat=rec.latitude,
+            lon=rec.longitude,
+            sog=rec.speed,
+            cog=rec.course,
             heading=rec.heading,
-            nav_status=rec.nav_status,
             timestamp=ts,
         )
         db.add(position)

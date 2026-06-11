@@ -123,7 +123,7 @@ def handle_alert(msg_id: str, data: Dict[str, Any]):
                             db,
                             action="incident.create.system",
                             change_summary="Incident auto-created from alert by worker",
-                            organisation_id=a.organisation_id,
+                            organisation_id=int(a.organisation_id),
                             user_id="system:alert_worker",
                             resource_id=str(a.id),
                             resource_type="incident",

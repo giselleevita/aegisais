@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, cast
 
 from sqlalchemy.orm import Session
 
@@ -40,15 +40,15 @@ def _nearest_vessel(db: Session, organisation_id: int, lat: float | None, lon: f
 
 
 def build_fusion_alert(db: Session, event: TelemetryEvent) -> dict[str, Any] | None:
-    normalized = event.normalized_json or {}
+    normalized = cast(dict[str, Any], event.normalized_json or {})
     asset = db.query(Asset).filter(Asset.id == event.asset_id).first() if event.asset_id else None
     lat, lon = _asset_centroid(asset)
     location = normalized.get("location") or {}
     lat = location.get("lat", lat)
     lon = location.get("lon", lon)
 
-    nearest_vessel, nearest_distance = _nearest_vessel(db, event.organisation_id, lat, lon)
-    maintenance_active = bool(event.asset_id) and asset_has_active_maintenance_window(db, event.asset_id)
+    nearest_vessel, nearest_distance = _nearest_vessel(db, int(event.organisation_id), lat, lon)
+    maintenance_active = bool(event.asset_id) and asset_has_active_maintenance_window(db, int(event.asset_id))
     reading_type = event.reading_type or normalized.get("reading_type") or "generic"
     value = normalized.get("value")
     threshold = normalized.get("threshold")

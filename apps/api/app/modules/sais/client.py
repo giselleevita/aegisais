@@ -64,7 +64,7 @@ class SpireMaritimeAISClient(SatelliteAISClient):
 
     def __init__(self, api_key: str | None = None, base_url: str | None = None) -> None:
         self._api_key = api_key or os.getenv("SPIRE_API_KEY", "")
-        self._base_url = (base_url or os.getenv("SPIRE_BASE_URL", self._DEFAULT_BASE)).rstrip("/")
+        self._base_url = (base_url or os.getenv("SPIRE_BASE_URL") or self._DEFAULT_BASE).rstrip("/")
         if not self._api_key:
             raise EnvironmentError("SPIRE_API_KEY is not set")
 
@@ -124,7 +124,7 @@ class MarineTrafficAISClient(SatelliteAISClient):
 
     def __init__(self, api_key: str | None = None, base_url: str | None = None) -> None:
         self._api_key = api_key or os.getenv("MARINETRAFFIC_API_KEY", "")
-        self._base_url = (base_url or os.getenv("MARINETRAFFIC_BASE_URL", self._DEFAULT_BASE)).rstrip("/")
+        self._base_url = (base_url or os.getenv("MARINETRAFFIC_BASE_URL") or self._DEFAULT_BASE).rstrip("/")
         if not self._api_key:
             raise EnvironmentError("MARINETRAFFIC_API_KEY is not set")
 
@@ -177,7 +177,7 @@ class MarineTrafficAISClient(SatelliteAISClient):
 
 def get_sais_client(provider: str | None = None) -> SatelliteAISClient:
     """Factory: return the right S-AIS client based on *provider* or SAIS_PROVIDER env var."""
-    chosen = (provider or os.getenv("SAIS_PROVIDER", "none")).lower()
+    chosen = (provider or os.getenv("SAIS_PROVIDER") or "none").lower()
     if chosen == "spire":
         return SpireMaritimeAISClient()
     if chosen in ("marinetraffic", "exactearth"):

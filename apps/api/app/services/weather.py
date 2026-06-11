@@ -9,7 +9,6 @@ API: https://open-meteo.com/en/docs/marine-weather-api
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timezone
 from typing import Any, Optional
 
 import httpx
@@ -41,7 +40,7 @@ async def get_marine_weather(
     Returns wave height, period, direction, swell data, and wind-wave data.
     Returns None on failure (graceful degradation).
     """
-    params = {
+    params: dict[str, str | float] = {
         "latitude": round(lat, 4),
         "longitude": round(lon, 4),
         "current": ",".join([

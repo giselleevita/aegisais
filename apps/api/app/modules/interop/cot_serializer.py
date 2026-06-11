@@ -8,7 +8,6 @@ CoT specification: MIL-STD-6040 / ATAK CoT Event Schema
 
 from __future__ import annotations
 
-import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Any, Optional
 from xml.etree.ElementTree import Element, SubElement, tostring

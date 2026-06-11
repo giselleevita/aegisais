@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, cast
 
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
@@ -40,7 +40,7 @@ def get_pilot_kpi_summary(
     # Detection lead-time: derive from evidence.ingested_at where available
     detection_records: list[dict[str, float]] = []
     for alert in alerts:
-        evidence = alert.evidence or {}
+        evidence = cast(dict[str, Any], alert.evidence or {})
         ingested_at = evidence.get("ingested_at")
         if ingested_at is not None:
             try:
@@ -58,7 +58,7 @@ def get_pilot_kpi_summary(
     review_records: list[dict[str, bool]] = [
         {
             "reviewed": True,
-            "is_false_alert": alert.status == "false_positive",
+            "is_false_alert": bool(alert.status == "false_positive"),
         }
         for alert in alerts
         if alert.status in reviewed_statuses

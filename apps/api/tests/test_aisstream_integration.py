@@ -4,7 +4,6 @@ No real aisstream.io API key required — all WebSocket I/O is mocked.
 """
 from __future__ import annotations
 
-import asyncio
 import json
 from unittest.mock import MagicMock, patch
 
@@ -60,14 +59,19 @@ class _MockWebSocket:
 async def test_aisstream_client_processes_position_report():
     """Client parses a PositionReport and calls process_point."""
     processed = []
+    client = None
 
     def fake_process(point):
         processed.append(point)
+        assert client is not None
+        client._running = False
         return {"alerts": []}
 
     mock_ws = _MockWebSocket([json.dumps(POSITION_REPORT)])
     websockets_mock = MagicMock()
     websockets_mock.connect = MagicMock(return_value=mock_ws)
+
+    from app.modules.itdae.ingestion import aisstream_client
 
     import sys
     with patch.dict(sys.modules, {"websockets": websockets_mock}):
@@ -75,10 +79,6 @@ async def test_aisstream_client_processes_position_report():
             with patch("app.modules.itdae.ingestion.aisstream_client.settings") as mock_settings:
                 mock_settings.AISSTREAM_API_KEY = "test-key"
                 mock_settings.AISSTREAM_BBOX = ""
-
-                from app.modules.itdae.ingestion import aisstream_client
-                import importlib
-                importlib.reload(aisstream_client)
 
                 client = aisstream_client.AISStreamClient(api_key="test-key")
                 client._running = True
@@ -101,17 +101,19 @@ async def test_aisstream_client_handles_connection_error():
     websockets_mock = MagicMock()
     websockets_mock.connect = MagicMock(return_value=_FailWS())
 
+    from app.modules.itdae.ingestion import aisstream_client
+
     import sys
     with patch.dict(sys.modules, {"websockets": websockets_mock}):
         with patch("app.modules.itdae.ingestion.aisstream_client.process_point", return_value={"alerts": []}):
             with patch("app.modules.itdae.ingestion.aisstream_client.settings") as mock_settings:
                 mock_settings.AISSTREAM_API_KEY = "test-key"
                 mock_settings.AISSTREAM_BBOX = ""
-                with patch("asyncio.sleep", return_value=None):
-                    from app.modules.itdae.ingestion import aisstream_client
-                    import importlib
-                    importlib.reload(aisstream_client)
+                client = aisstream_client.AISStreamClient(api_key="test-key")
+                client._running = True
 
-                    client = aisstream_client.AISStreamClient(api_key="test-key")
-                    client._running = False  # stop after one attempt
+                async def stop_after_retry(_):
+                    client._running = False
+
+                with patch("asyncio.sleep", side_effect=stop_after_retry):
                     await client._connect_loop()

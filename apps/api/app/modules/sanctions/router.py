@@ -132,7 +132,7 @@ async def reload_watchlist(
             action="sanctions.watchlist.reload",
             change_summary="Reloaded sanctions watchlist from configured path",
             organisation_id=int(admin.organisation_id),
-            user_id=admin.username,
+            user_id=str(admin.username),
             resource_type="sanctions_watchlist",
             details=get_watchlist_status(),
         )
@@ -163,7 +163,7 @@ async def sync_from_official_sources(
             action="sanctions.watchlist.sync",
             change_summary="Synchronized sanctions watchlist from official sources",
             organisation_id=int(admin.organisation_id),
-            user_id=admin.username,
+            user_id=str(admin.username),
             resource_type="sanctions_watchlist",
             details={
                 **counts,

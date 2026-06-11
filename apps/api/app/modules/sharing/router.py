@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Optional, cast
+from typing import Optional
 
 from fastapi import APIRouter, Depends, Query
 from pydantic import BaseModel
@@ -56,7 +56,7 @@ async def share_alert(
             "summary": req.summary,
             "timestamp": req.timestamp,
         },
-        source_org_id=actor.organisation_id,
+        source_org_id=int(actor.organisation_id),
         target_org_ids=req.target_org_ids,
         tlp=tlp,
         share_reason=req.share_reason,
@@ -72,7 +72,7 @@ async def share_watchlist_entry(
     tlp = TLPMarking(req.tlp) if req.tlp in [m.value for m in TLPMarking] else TLPMarking.GREEN
     return create_shared_watchlist_entry(
         mmsi=req.mmsi,
-        source_org_id=actor.organisation_id,
+        source_org_id=int(actor.organisation_id),
         target_org_ids=req.target_org_ids,
         reason=req.reason,
         priority=req.priority,

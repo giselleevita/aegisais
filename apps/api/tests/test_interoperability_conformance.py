@@ -9,14 +9,53 @@ Tests verify that:
 """
 
 import pytest
-from fastapi.testclient import TestClient
+from datetime import datetime, timezone
 from xml.etree import ElementTree as ET
 
+from app.modules.alerts.models import Alert
 from app.modules.interop.cot_serializer import vessel_position_to_cot, alert_to_cot
 from app.modules.interop.stanag5527_serializer import vessel_to_nffi, alert_to_nffi
+from app.modules.auth.models import User
+from app.modules.vessels.models import VesselLatest
+from tests.conftest import TestingSessionLocal, register_and_login_as_admin
 
 
 NFFI_NS = {"nffi": "urn:nato:stanag:5527:nffi:1:0"}
+
+
+def _seed_receiver_route_data() -> int:
+    db = TestingSessionLocal()
+    try:
+        user = db.query(User).filter(User.username.isnot(None)).order_by(User.id.desc()).first()
+        assert user is not None
+        vessel = VesselLatest(
+            mmsi="123456789",
+            organisation_id=user.organisation_id,
+            timestamp=datetime.now(timezone.utc),
+            lat=60.1234,
+            lon=20.5678,
+            sog=12.5,
+            cog=45.0,
+            heading=45.0,
+            last_alert_severity=80,
+        )
+        db.add(vessel)
+        db.flush()
+        alert = Alert(
+            organisation_id=user.organisation_id,
+            timestamp=datetime.now(timezone.utc),
+            mmsi=vessel.mmsi,
+            type="spoofing",
+            severity=3,
+            summary="Spoofing detected",
+            evidence={"p2_lat": 60.1234, "p2_lon": 20.5678},
+            status="new",
+        )
+        db.add(alert)
+        db.commit()
+        return int(alert.id)
+    finally:
+        db.close()
 
 
 class TestCoTVesselSerialization:
@@ -387,7 +426,10 @@ class TestInteropReceiverRoutes:
         ],
     )
     def test_interop_route_returns_receiver_ready_xml(self, client, url, params, expected_root):
-        response = client.get(url, params=params)
+        token = register_and_login_as_admin(client)
+        alert_id = _seed_receiver_route_data()
+        url = url.replace("/alert/1", f"/alert/{alert_id}")
+        response = client.get(url, headers={"Authorization": f"Bearer {token}"})
 
         assert response.status_code == 200
         assert response.headers["content-type"].startswith("application/xml")
@@ -396,13 +438,11 @@ class TestInteropReceiverRoutes:
         assert root.tag == expected_root
 
     def test_cot_receiver_payload_exposes_track_identity(self, client):
+        token = register_and_login_as_admin(client)
+        _seed_receiver_route_data()
         response = client.get(
             "/v1/interop/cot/vessel/123456789",
-            params={
-                "lat": 60.1234,
-                "lon": 20.5678,
-                "vessel_name": "TEST-VESSEL",
-            },
+            headers={"Authorization": f"Bearer {token}"},
         )
 
         root = ET.fromstring(response.text)
@@ -410,16 +450,14 @@ class TestInteropReceiverRoutes:
         contact = detail.find("contact") if detail is not None else None
         assert root.get("uid") == "aegisais.vessel.123456789"
         assert contact is not None
-        assert contact.get("callsign") == "TEST-VESSEL"
+        assert contact.get("callsign") == "MMSI-123456789"
 
     def test_nffi_receiver_payload_exposes_sender_and_track_number(self, client):
+        token = register_and_login_as_admin(client)
+        _seed_receiver_route_data()
         response = client.get(
             "/v1/interop/nffi/vessel/123456789",
-            params={
-                "lat": 60.1234,
-                "lon": 20.5678,
-                "vessel_name": "TEST-VESSEL",
-            },
+            headers={"Authorization": f"Bearer {token}"},
         )
 
         root = ET.fromstring(response.text)

@@ -111,8 +111,9 @@ class UsageLedgerService:
             )
         ).first()
 
-        total = Decimal(str(result.total or 0))
-        count = int(result.count or 0)
+        total_value, count_value = result if result is not None else (None, 0)
+        total = Decimal(str(total_value or 0))
+        count = int(count_value or 0)
         return UsageSummary(
             organisation_id=organisation_id,
             event_type=event_type,

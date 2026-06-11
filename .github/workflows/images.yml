@@ -65,7 +65,7 @@ jobs:
       - name: Scan API image with Trivy
         uses: aquasecurity/trivy-action@v0.36.0
         with:
-          image-ref: ghcr.io/${{ github.repository_owner }}/aegisais-api:${{ steps.vars.outputs.tag }}
+          image-ref: ghcr.io/${{ github.repository_owner }}/aegisais-api@${{ steps.build-api.outputs.digest }}
           severity: HIGH,CRITICAL
           ignore-unfixed: true
           exit-code: '1'
@@ -92,7 +92,7 @@ jobs:
       - name: Scan BFF image with Trivy
         uses: aquasecurity/trivy-action@v0.36.0
         with:
-          image-ref: ghcr.io/${{ github.repository_owner }}/aegisais-bff:${{ steps.vars.outputs.tag }}
+          image-ref: ghcr.io/${{ github.repository_owner }}/aegisais-bff@${{ steps.build-bff.outputs.digest }}
           severity: HIGH,CRITICAL
           ignore-unfixed: true
           exit-code: '1'
@@ -119,7 +119,7 @@ jobs:
       - name: Scan Web image with Trivy
         uses: aquasecurity/trivy-action@v0.36.0
         with:
-          image-ref: ghcr.io/${{ github.repository_owner }}/aegisais-web:${{ steps.vars.outputs.tag }}
+          image-ref: ghcr.io/${{ github.repository_owner }}/aegisais-web@${{ steps.build-web.outputs.digest }}
           severity: HIGH,CRITICAL
           ignore-unfixed: true
           exit-code: '1'

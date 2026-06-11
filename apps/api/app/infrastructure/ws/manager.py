@@ -175,7 +175,7 @@ async def stream(ws: WebSocket):
                 return
 
     _clients.add(ws)
-    _client_org_ids[ws] = viewer.organisation_id if viewer is not None else None
+    _client_org_ids[ws] = int(viewer.organisation_id) if viewer is not None else None
     log.info("WebSocket client connected. Total clients: %d", len(_clients))
     
     try:
