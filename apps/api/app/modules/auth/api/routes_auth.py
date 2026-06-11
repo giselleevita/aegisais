@@ -345,8 +345,8 @@ async def mfa_setup(
         )
 
     secret = generate_totp_secret()
-    current_user.totp_secret = secret
-    current_user.mfa_enabled = False
+    setattr(current_user, "totp_secret", secret)
+    setattr(current_user, "mfa_enabled", False)
     db.add(current_user)
     if settings.enable_audit_logging:
         AuditService.log_event(
@@ -364,7 +364,7 @@ async def mfa_setup(
         "available": True,
         "enabled": False,
         "pending_setup": True,
-        "provisioning_uri": get_provisioning_uri(secret, current_user.username, settings.MFA_ISSUER),
+        "provisioning_uri": get_provisioning_uri(secret, cast(str, current_user.username), settings.MFA_ISSUER),
         "secret": secret,
     }
 
@@ -390,7 +390,7 @@ async def mfa_enable(
     if not verify_totp(cast(str, current_user.totp_secret), body.code.strip()):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid MFA code")
 
-    current_user.mfa_enabled = True
+    setattr(current_user, "mfa_enabled", True)
     db.add(current_user)
     if settings.enable_audit_logging:
         AuditService.log_event(
@@ -423,8 +423,8 @@ async def mfa_disable(
         if not body.code or not verify_totp(cast(str, current_user.totp_secret), body.code.strip()):
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid MFA code")
 
-    current_user.totp_secret = None
-    current_user.mfa_enabled = False
+    setattr(current_user, "totp_secret", None)
+    setattr(current_user, "mfa_enabled", False)
     db.add(current_user)
     if settings.enable_audit_logging:
         AuditService.log_event(

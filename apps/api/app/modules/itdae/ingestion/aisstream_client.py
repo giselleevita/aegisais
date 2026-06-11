@@ -17,11 +17,14 @@ import asyncio
 import json
 import logging
 from datetime import datetime, timezone
-from typing import Any, Optional
+from typing import TYPE_CHECKING, Any, Optional
+
+if TYPE_CHECKING:
+    from websockets.asyncio.client import ClientConnection
 
 from app.core.config import settings
 from app.infrastructure.ingest.loaders import AisPoint
-from app.services.pipeline import enqueue_point, process_point
+from app.services.pipeline import process_point
 
 _log = logging.getLogger("aegisais.aisstream")
 
@@ -99,7 +102,7 @@ class AISStreamClient:
         raw_bbox = bbox or getattr(settings, "AISSTREAM_BBOX", "")
         self._bbox = _parse_bbox(raw_bbox) if raw_bbox else _DEFAULT_BBOX
         self._running = False
-        self._ws = None
+        self._ws: ClientConnection | None = None
         self._stats = {"messages_received": 0, "points_processed": 0, "errors": 0}
 
     @property
@@ -145,7 +148,7 @@ class AISStreamClient:
                 async with websockets.connect("wss://stream.aisstream.io/v0/stream") as ws:
                     self._ws = ws
                     backoff = 1
-                    subscribe_msg = _build_subscribe_message(self._api_key, self._bbox)
+                    subscribe_msg = _build_subscribe_message(str(self._api_key), self._bbox)
                     await ws.send(subscribe_msg)
                     _log.info("Connected to aisstream.io WebSocket")
 

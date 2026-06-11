@@ -182,7 +182,7 @@ def _persist_fusion_alert(db: Session, event: TelemetryEvent, *, actor_username:
                 resource_id=str(incident.id),
                 resource_type="incident",
                 details={"alert_id": alert.id, "asset_id": alert.asset_id, "mmsi": alert.mmsi, "alert_type": alert.type},
-                correlation_id=event.dedupe_key,
+                correlation_id=cast(str, event.dedupe_key),
             )
     return cast(int, alert.id)
 
@@ -229,11 +229,11 @@ def _persist_telemetry_event(db: Session, normalized: dict[str, Any], *, actor: 
         resource_id=str(event.id),
         resource_type="iot_telemetry",
         details={"device_id": device.id, "asset_id": device.asset_id, "dedupe_key": event.dedupe_key},
-        correlation_id=event.dedupe_key,
+        correlation_id=cast(str, event.dedupe_key),
     )
     alert_id = _persist_fusion_alert(db, event, actor_username=cast(str, actor.username))
     if alert_id is not None:
-        event.generated_alert_id = alert_id
+        setattr(event, "generated_alert_id", alert_id)
     db.commit()
     db.refresh(event)
     return event
@@ -480,20 +480,21 @@ def replay_edge_batch(db: Session, batch_id: int, *, actor: User) -> EdgeBatchRe
     batch = db.query(EdgeSyncBatch).filter(EdgeSyncBatch.id == batch_id).first()
     if batch is None:
         raise HTTPException(status_code=404, detail="Edge batch not found")
-    _resolve_device(db, batch.device_id, actor)
-    events = cast(list[dict[str, Any]], (batch.payload_json or {}).get("events", []))
+    _resolve_device(db, int(batch.device_id), actor)
+    payload = cast(dict[str, Any], batch.payload_json or {})
+    events = cast(list[dict[str, Any]], payload.get("events", []))
     generated_alert_ids: list[int] = []
     processed = 0
-    batch.status = "replaying"
+    setattr(batch, "status", "replaying")
     db.flush()
     for raw_event in events:
         envelope = TelemetryEnvelopeIn.model_validate(raw_event)
-        telemetry_event = ingest_telemetry_envelope(db, envelope, device_id=batch.device_id, actor=actor)
+        telemetry_event = ingest_telemetry_envelope(db, envelope, device_id=int(batch.device_id), actor=actor)
         processed += 1
         if telemetry_event.generated_alert_id is not None:
             generated_alert_ids.append(telemetry_event.generated_alert_id)
-    batch.status = "replayed"
-    batch.replayed_at = _now_utc()
+    setattr(batch, "status", "replayed")
+    setattr(batch, "replayed_at", _now_utc())
     AuditService.log_event(
         db,
         action="iot.edge.batch.replay",

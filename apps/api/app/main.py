@@ -65,7 +65,7 @@ def _init_sentry_stub() -> None:
         _startup_log.info("Sentry disabled (SENTRY_DSN not configured)")
         return
     try:
-        import sentry_sdk
+        import sentry_sdk  # type: ignore[import-not-found]
         sentry_sdk.init(dsn=settings.sentry_dsn, traces_sample_rate=0.05)
         _startup_log.info("Sentry initialized")
     except Exception as exc:

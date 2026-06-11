@@ -52,7 +52,8 @@ test.describe('Watchlist smoke', () => {
     await page.addInitScript(() => {
       localStorage.setItem('aegisais_onboarding_completed', 'true')
       localStorage.removeItem('aegisais_access_token')
-      localStorage.removeItem('aegisais_ui_mode')
+      localStorage.setItem('aegisais_ui_mode', 'aml')
+      localStorage.setItem('aegisais_ui_role', 'analyst')
     })
     await mockAuthAndWatchlistApi(page)
   })

@@ -33,12 +33,10 @@ class VesselService:
             self._db.query(VesselLatest)
             .filter(VesselLatest.last_alert_severity >= min_severity)
             .order_by(VesselLatest.timestamp.desc())
-            .offset(offset)
-            .limit(limit)
         )
         if not is_super_admin(scope_user):
             q = q.filter(VesselLatest.organisation_id == scope_user.organisation_id)
-        return [vessel_latest_to_out(v) for v in q.all()]
+        return [vessel_latest_to_out(v) for v in q.offset(offset).limit(limit).all()]
 
     def get_vessel(self, mmsi: str, *, scope_user: User) -> VesselLatestOut:
         validate_mmsi(mmsi)

@@ -11,11 +11,10 @@ All products include TLP marking and STANAG 4774 classification.
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 from typing import Any, Optional
 
 from app.modules.interop.classification import (
-    TLPMarking,
     classify_intelligence_product,
 )
 from app.services.llm import (
