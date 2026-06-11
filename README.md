@@ -2,8 +2,6 @@
 
 [![CI](https://github.com/giselleevita/aegisais/actions/workflows/ci.yml/badge.svg)](https://github.com/giselleevita/aegisais/actions/workflows/ci.yml)
 [![Images](https://github.com/giselleevita/aegisais/actions/workflows/images.yml/badge.svg)](https://github.com/giselleevita/aegisais/actions/workflows/images.yml)
-[![AgentGuard](https://github.com/giselleevita/aegisais/actions/workflows/agentguard-blocking.yml/badge.svg?label=agentguard)](https://github.com/giselleevita/aegisais/actions/workflows/agentguard-blocking.yml)
-[![AgentGuard PR](https://github.com/giselleevita/aegisais/actions/workflows/agentguard-pr-enforcement.yml/badge.svg)](https://github.com/giselleevita/aegisais/actions/workflows/agentguard-pr-enforcement.yml)
 [![codecov](https://codecov.io/gh/giselleevita/aegisais/branch/main/graph/badge.svg)](https://codecov.io/gh/giselleevita/aegisais)
 
 **AIS Data Integrity and Anomaly Detection — Maritime Intelligence Platform**
