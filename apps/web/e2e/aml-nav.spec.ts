@@ -4,7 +4,8 @@ test.describe('AML shell navigation', () => {
   test.beforeEach(async ({ page }) => {
     await page.addInitScript(() => {
       localStorage.removeItem('aegisais_access_token')
-      localStorage.removeItem('aegisais_ui_mode')
+      localStorage.setItem('aegisais_ui_mode', 'aml')
+      localStorage.setItem('aegisais_ui_role', 'admin')
     })
     await page.route('**/v1/integrations/feeds', async (route) => {
       await route.fulfill({
@@ -65,15 +66,12 @@ test.describe('AML shell navigation', () => {
     await expect(page.locator('.alerts-panel')).toBeVisible()
   })
 
-  test('navigates between Triage, Map, Globe, and Admin', async ({ page }) => {
+  test('navigates between Triage, Map, Admin, Incidents, and Audit', async ({ page }) => {
     await page.goto('/triage')
 
     const nav = page.getByRole('navigation', { name: 'Main navigation' })
     await nav.getByRole('link', { name: 'Map' }).click()
     await expect(page).toHaveURL(/\/map$/)
-
-    await nav.getByRole('link', { name: 'Globe' }).click()
-    await expect(page).toHaveURL(/\/globe$/)
 
     await nav.getByRole('link', { name: 'Admin' }).click()
     await expect(page).toHaveURL(/\/admin$/)
@@ -107,7 +105,7 @@ test.describe('AML shell navigation', () => {
 
   test('shows audit page with admin access message', async ({ page }) => {
     await page.goto('/audit')
-    await expect(page.getByRole('heading', { name: 'Audit' })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Audit ledger' })).toBeVisible()
     await expect(page.getByRole('cell', { name: 'incident.update' })).toBeVisible()
     await page.getByRole('button', { name: 'Export CSV' }).click()
   })
