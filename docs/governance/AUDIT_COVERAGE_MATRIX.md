@@ -45,3 +45,9 @@ Emitted by `apps/api/app/services/workers/alert_worker.py::handle_alert` wheneve
 - System-actor operations are subject to the same enforcement as human-actor operations.
 - This matrix is the reference artifact for BL-006 and downstream compliance evidence.
 - Worker audit tests must live in `apps/api/tests/test_alert_worker_audit.py` and assert on `AuditLog` rows in the test database.
+
+## Verification History
+
+| Date       | Scope                                      | Evidence                                                                 |
+| ---------- | ------------------------------------------ | ------------------------------------------------------------------------ |
+| 2026-06-11 | Incident, billing, and alert-worker paths  | Backend suite: 319 passed, 1 expected xfail; MyPy, Ruff, and CI gate pass |
