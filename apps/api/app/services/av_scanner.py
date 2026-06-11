@@ -40,7 +40,7 @@ class _ClamAVScanner:
 
     def scan(self, path: Path) -> AVScanResult:
         try:
-            import clamd  # type: ignore[import-untyped]
+            import clamd  # type: ignore[import-not-found]
         except ImportError:
             _log.error("clamd package not installed — pip install clamd")
             return AVScanResult(infected=False, error="clamd not installed")

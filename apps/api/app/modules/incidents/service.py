@@ -77,7 +77,7 @@ def create_incident_from_alert_with_flag(db: Session, alert: Alert) -> tuple[Inc
             incident = Incident(
                 organisation_id=alert.organisation_id,
                 alert_id=alert.id,
-                asset_id=alert.asset_id,
+                asset_id=getattr(alert, "asset_id", None),
                 created_at=datetime.now(timezone.utc),
                 status="open",
                 title=f"Incident for alert {alert.type} ({alert.mmsi})",

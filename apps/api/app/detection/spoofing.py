@@ -12,13 +12,10 @@ from __future__ import annotations
 
 import logging
 import re
-from dataclasses import asdict
-from datetime import datetime, timedelta, timezone
 from typing import Any, Optional
 
-from app.core.config import settings
 from app.infrastructure.ingest.loaders import AisPoint
-from app.tracking.features import haversine_m, implied_speed_knots, heading_delta_deg
+from app.tracking.features import haversine_m, implied_speed_knots
 
 _log = logging.getLogger("aegisais.detection.spoofing")
 
@@ -202,8 +199,8 @@ def detect_multi_source_vessel_identity_conflict(
             if not pos1.get('lat') or not pos1.get('lon') or not pos2.get('lat') or not pos2.get('lon'):
                 continue
 
-            ts1 = pos1.get('timestamp')
-            ts2 = pos2.get('timestamp')
+            ts1: Any = pos1.get('timestamp')
+            ts2: Any = pos2.get('timestamp')
             if not ts1 or not ts2:
                 continue
 
@@ -224,12 +221,12 @@ def detect_multi_source_vessel_identity_conflict(
                             source1: {
                                 "lat": pos1['lat'],
                                 "lon": pos1['lon'],
-                                "timestamp": pos1.get('timestamp').isoformat() if pos1.get('timestamp') else None,
+                                "timestamp": ts1.isoformat(),
                             },
                             source2: {
                                 "lat": pos2['lat'],
                                 "lon": pos2['lon'],
-                                "timestamp": pos2.get('timestamp').isoformat() if pos2.get('timestamp') else None,
+                                "timestamp": ts2.isoformat(),
                             }
                         },
                         "distance_m": dist,

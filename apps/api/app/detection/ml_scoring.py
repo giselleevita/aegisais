@@ -14,9 +14,8 @@ from __future__ import annotations
 
 import logging
 import math
-from collections import defaultdict
-from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from dataclasses import dataclass
+from datetime import datetime
 from typing import Any, Optional
 
 from app.infrastructure.ingest.loaders import AisPoint

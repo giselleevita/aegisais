@@ -70,12 +70,15 @@ test.describe('AML shell navigation', () => {
     await page.goto('/triage')
 
     const nav = page.getByRole('navigation', { name: 'Main navigation' })
+    const sections = page.getByRole('navigation', { name: 'Product sections' })
     await nav.getByRole('link', { name: 'Map' }).click()
     await expect(page).toHaveURL(/\/map$/)
 
+    await sections.getByRole('link', { name: 'Governance' }).click()
     await nav.getByRole('link', { name: 'Admin' }).click()
     await expect(page).toHaveURL(/\/admin$/)
 
+    await sections.getByRole('link', { name: 'Operations' }).click()
     await nav.getByRole('link', { name: 'Incidents' }).click()
     await expect(page).toHaveURL(/\/incidents$/)
     await expect(page.getByRole('heading', { name: 'Incidents' })).toBeVisible()
@@ -84,6 +87,7 @@ test.describe('AML shell navigation', () => {
     await nav.getByRole('link', { name: 'Triage' }).click()
     await expect(page).toHaveURL(/\/triage$/)
 
+    await sections.getByRole('link', { name: 'Governance' }).click()
     await nav.getByRole('link', { name: 'Audit' }).click()
     await expect(page).toHaveURL(/\/audit$/)
   })

@@ -8,7 +8,6 @@ from __future__ import annotations
 
 import logging
 from datetime import datetime
-from typing import Optional
 from urllib.parse import urlencode
 
 from app.core.config import settings
