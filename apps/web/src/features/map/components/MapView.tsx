@@ -17,11 +17,11 @@ import EnvironmentalOverlay from '@/features/geodata/EnvironmentalOverlay'
 const BALTIC_CENTER: LatLngExpression = [57.0, 18.0]
 const BALTIC_ZOOM = 5
 
-function computeCentroid(points: LatLngExpression[]): LatLngExpression {
+function computeCentroid(points: [number, number][]): LatLngExpression {
     if (points.length === 0) return BALTIC_CENTER
     const [sumLat, sumLon] = points.reduce(
         ([la, lo], p) => {
-            const [lat, lon] = p as [number, number]
+            const [lat, lon] = p
             return [la + lat, lo + lon]
         },
         [0, 0]
@@ -127,9 +127,9 @@ export default function MapView({ selectedVessel, onVesselClick, showInfrastruct
 
     if (loading) return <div className="map-loading">Loading map...</div>
 
-    const bounds: LatLngExpression[] = vessels
+    const bounds: [number, number][] = vessels
         .filter(v => v.lat && v.lon)
-        .map(v => [v.lat, v.lon] as LatLngExpression)
+        .map(v => [v.lat, v.lon])
 
     // Use geographic centroid, not first vessel
     const mapCenter = computeCentroid(bounds)

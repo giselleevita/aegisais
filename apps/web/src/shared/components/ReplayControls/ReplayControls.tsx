@@ -21,17 +21,6 @@ export default function ReplayControls({ lastMessage }: ReplayControlsProps) {
     const [error, setError] = useState<string | null>(null)
     const [statusError, setStatusError] = useState<string | null>(null)
 
-    const loadStatus = useCallback(async () => {
-        try {
-            const data = await apiClient.getReplayStatus()
-            setStatus(data)
-        } catch (error) {
-            if (import.meta.env.DEV) {
-                console.error('Failed to load replay status:', error)
-            }
-        }
-    }, [])
-
     // Listen for error messages from WebSocket
     useEffect(() => {
         if (lastMessage?.kind === 'error') {
@@ -268,4 +257,3 @@ export default function ReplayControls({ lastMessage }: ReplayControlsProps) {
         </div>
     )
 }
-
