@@ -47,6 +47,7 @@ jobs:
             frontend-sbom.cdx.json
 
       - name: Attest SBOM provenance
+        if: github.event.repository.visibility == 'public'
         uses: actions/attest-build-provenance@v1
         with:
           subject-path: |
