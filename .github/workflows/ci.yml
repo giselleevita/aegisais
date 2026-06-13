@@ -84,7 +84,7 @@ jobs:
         run: npm ci
 
       - name: Frontend vulnerability gate
-        run: npm audit --audit-level=high
+        run: python3 scripts/check_frontend_audit.py
 
   backend:
     runs-on: ubuntu-latest
