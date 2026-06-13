@@ -10,6 +10,8 @@ AegisAIS is an automated data integrity and anomaly detection platform for Autom
 
 > See [`docs/security/SECURITY.md`](./docs/security/SECURITY.md) for scope, limitations, and responsible use guidelines.
 
+**Private repository — reviewers:** see [docs/REVIEWER_GUIDE.md](docs/REVIEWER_GUIDE.md) for a 15-minute evaluation path (available on request).
+
 ---
 
 ## Quick Start (Docker)
