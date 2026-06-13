@@ -78,3 +78,4 @@ infra/docker/nginx/certs/*
 # Keep directory structure, ignore runtime captures
 docs/evidence/*
 !docs/evidence/.gitkeep
+apps/web/package-lock.json
