@@ -13,7 +13,7 @@
   },
   "dependencies": {
     "@types/leaflet": "^1.9.21",
-    "cesium": "^1.139.1",
+    "cesium": "^1.142.0",
     "leaflet": "^1.9.4",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
