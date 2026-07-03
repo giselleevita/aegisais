@@ -93,7 +93,7 @@ aegisais/
 | Tool | Version |
 | --- | --- |
 | Python | 3.11+ |
-| Node.js | 20.19+ |
+| Node.js | 26 (Docker/CI); 20.19+ / 22.12+ / 24+ locally |
 | npm | 10.8+ |
 | PostgreSQL | 14+ _(optional — SQLite works for development)_ |
 

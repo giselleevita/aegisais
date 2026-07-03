@@ -69,7 +69,7 @@ docker compose -f infra/docker/docker-compose.yml up bff
 
 ## Stack
 
-- **Runtime:** Node.js 20+
+- **Runtime:** Node.js 26+ (Docker); 20.19+ / 22.12+ / 24+ supported locally
 - **Framework:** Fastify
 - **Language:** TypeScript (strict)
 - **API contract:** OpenAPI 3.0 ([`openapi.yaml`](./openapi.yaml))
