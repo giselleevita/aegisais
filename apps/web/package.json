@@ -9,7 +9,7 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "test:e2e": "node e2e/run.mjs",
-    "postinstall": "node -v | grep -q 'v20\\.' || (echo 'Error: Node.js 20.19+ required. Run: nvm use' && exit 1)"
+    "postinstall": "node -v | grep -qE 'v20\\.(19|[2-9][0-9])|v22\\.(1[2-9]|[2-9][0-9])|v2[4-9]\\.' || (echo 'Error: Node.js 20.19+, 22.12+, or 24+ required. Run: nvm use' && exit 1)"
   },
   "dependencies": {
     "@types/leaflet": "^1.9.21",

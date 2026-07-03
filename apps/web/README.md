@@ -2,7 +2,7 @@
 
 ## Prerequisites
 
-- Node.js 20.19.0 or higher (22.12+ also works)
+- Node.js 20.19+, 22.12+, or 24+ (26 recommended; see `.nvmrc`)
 - npm 10.8.2 or higher
 
 ## Setup

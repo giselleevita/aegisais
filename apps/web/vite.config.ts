@@ -1,10 +1,13 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { viteStaticCopy } from 'vite-plugin-static-copy'
+import { createRequire } from 'node:module'
 import fs from 'node:fs'
 import path from 'node:path'
 
-const CESIUM_BUILD_DIR = path.resolve(__dirname, '../../node_modules/cesium/Build/Cesium')
+const require = createRequire(import.meta.url)
+const cesiumPackageRoot = path.dirname(require.resolve('cesium/package.json'))
+const CESIUM_BUILD_DIR = path.join(cesiumPackageRoot, 'Build/Cesium')
 
 const MIME: Record<string, string> = {
   '.js': 'application/javascript',
@@ -50,10 +53,10 @@ export default defineConfig({
     cesiumDevServer(),
     viteStaticCopy({
       targets: [
-        { src: path.resolve(__dirname, '../../node_modules/cesium/Build/Cesium/Workers'), dest: 'cesium' },
-        { src: path.resolve(__dirname, '../../node_modules/cesium/Build/Cesium/ThirdParty'), dest: 'cesium' },
-        { src: path.resolve(__dirname, '../../node_modules/cesium/Build/Cesium/Assets'), dest: 'cesium' },
-        { src: path.resolve(__dirname, '../../node_modules/cesium/Build/Cesium/Widgets'), dest: 'cesium' },
+        { src: path.join(CESIUM_BUILD_DIR, 'Workers'), dest: 'cesium' },
+        { src: path.join(CESIUM_BUILD_DIR, 'ThirdParty'), dest: 'cesium' },
+        { src: path.join(CESIUM_BUILD_DIR, 'Assets'), dest: 'cesium' },
+        { src: path.join(CESIUM_BUILD_DIR, 'Widgets'), dest: 'cesium' },
       ],
     }),
   ],
