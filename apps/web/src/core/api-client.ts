@@ -111,7 +111,7 @@ class ApiClient {
             if (error instanceof Error) {
                 throw error
             }
-            throw new Error('Unknown error occurred')
+            throw new Error('Unknown error occurred', { cause: error })
         }
     }
 
