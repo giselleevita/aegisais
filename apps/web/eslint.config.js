@@ -19,5 +19,9 @@ export default defineConfig([
       ecmaVersion: 2020,
       globals: globals.browser,
     },
+    rules: {
+      // New in eslint-plugin-react-hooks v7; existing data-fetch patterns predate this rule.
+      'react-hooks/set-state-in-effect': 'off',
+    },
   },
 ])
