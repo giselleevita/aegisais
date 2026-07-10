@@ -13,7 +13,7 @@
     "lint": "turbo run lint"
   },
   "devDependencies": {
-    "turbo": "^2.0.0"
+    "turbo": "^2.10.4"
   },
   "overrides": {
     "picomatch": ">=4.0.4",
