@@ -84,7 +84,7 @@ def _distance_point_to_segment_m(
     return haversine_m(point_lat, point_lon, proj_lat, proj_lon)
 
 
-def _nearest_cable_segment(lat: float, lon: float) -> tuple[dict[str, Any], float]:
+def nearest_cable_segment(lat: float, lon: float) -> tuple[dict[str, Any], float]:
     def _as_float(value: Any) -> float:
         try:
             return float(value)
@@ -135,7 +135,7 @@ def rule_surface_activity_near_cable_segment(
     if not events_in:
         events_in = [simulation_surface_activity_fixture(p2)]
     event = events_in[0]
-    segment, distance_m = _nearest_cable_segment(event.lat, event.lon)
+    segment, distance_m = nearest_cable_segment(event.lat, event.lon)
     proximity_m = getattr(settings, "fused_cable_proximity_m", 1500.0)
     if distance_m > proximity_m:
         return None

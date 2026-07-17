@@ -4,10 +4,10 @@ import type { LatLngExpression } from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import '@/shared/map/leafletSetup'
 import MapBounds from '@/shared/map/MapBounds'
-import { createAlertDivIcon, createVesselDivIcon } from '@/shared/map/alertMarkers'
+import { createAlertDivIcon, createSarDivIcon, createVesselDivIcon } from '@/shared/map/alertMarkers'
 import { apiClient } from '@/core/api-client'
 import { describeApiFailure } from '@/core/api-errors'
-import type { Vessel, Alert, VesselPosition } from '@/shared/types/common'
+import type { Vessel, Alert, VesselPosition, CanonicalObservation, FusionEvent, IntegrationFeed } from '@/shared/types/common'
 import './MapView.css'
 import InfrastructureLayer from '@/features/itdae/components/InfrastructureLayer'
 import EezLayer from '@/features/geodata/EezLayer'
@@ -36,11 +36,18 @@ interface MapViewProps {
 }
 
 export default function MapView({ selectedVessel, onVesselClick, showInfrastructure = false }: MapViewProps) {
+    const offlineDemo = import.meta.env.VITE_OFFLINE_DEMO === 'true'
     const [vessels, setVessels] = useState<Vessel[]>([])
     const [alerts, setAlerts] = useState<Alert[]>([])
     const [vesselTrack, setVesselTrack] = useState<VesselPosition[]>([])
+    const [sarObservations, setSarObservations] = useState<CanonicalObservation[]>([])
+    const [fusionEvents, setFusionEvents] = useState<FusionEvent[]>([])
+    const [feeds, setFeeds] = useState<IntegrationFeed[]>([])
     const [loading, setLoading] = useState(true)
     const [showAlerts, setShowAlerts] = useState(true)
+    const [showAis, setShowAis] = useState(true)
+    const [showSar, setShowSar] = useState(true)
+    const [showFusion, setShowFusion] = useState(true)
     const [showTracks, setShowTracks] = useState(false)
     const [infraVisible, setInfraVisible] = useState(showInfrastructure)
     const [eezVisible, setEezVisible] = useState(false)
@@ -55,18 +62,27 @@ export default function MapView({ selectedVessel, onVesselClick, showInfrastruct
         if (pausedRef.current) return
         try {
             setLoadError(null)
-            const [vesselsData, alertsData, watchlistData] = await Promise.all([
+            const [vesselsData, alertsData, watchlistData, sarData, fusionData, feedData] = await Promise.all([
                 apiClient.getVessels(0, 1000),
                 apiClient.getAlerts({ limit: 500, status: 'new' }),
                 apiClient.getWatchlist().catch(() => [] as { mmsi: string }[]),
+                apiClient.getObservations('maritime.sar.gfw', 500).catch(() => [] as CanonicalObservation[]),
+                apiClient.getFusionEvents(500).catch(() => [] as FusionEvent[]),
+                apiClient.getIntegrationFeeds().catch(() => ({ timestamp: '', feeds: [] as IntegrationFeed[] })),
             ])
             setVessels(vesselsData)
             setAlerts(alertsData)
             setWatchMmsi(new Set(watchlistData.map((w) => w.mmsi)))
+            setSarObservations(sarData)
+            setFusionEvents(fusionData)
+            setFeeds(feedData.feeds)
         } catch (error) {
             setVessels([])
             setAlerts([])
             setWatchMmsi(new Set())
+            setSarObservations([])
+            setFusionEvents([])
+            setFeeds([])
             setLoadError(
                 describeApiFailure(error, {
                     fallback: 'Unable to load map telemetry.',
@@ -146,7 +162,8 @@ export default function MapView({ selectedVessel, onVesselClick, showInfrastruct
         .filter(p => p.lat && p.lon)
         .map(p => [p.lat, p.lon] as LatLngExpression)
 
-    const statusSummary = `${vessels.length} vessels, ${alertPositions.length} alerts, ${selectedVessel ? 'selected vessel active' : 'no vessel selected'}`
+    const degradedFeeds = feeds.filter(feed => feed.status !== 'ready')
+    const statusSummary = `${vessels.length} vessels, ${sarObservations.length} SAR detections, ${fusionEvents.length} fused events, ${alertPositions.length} alerts, ${selectedVessel ? 'selected vessel active' : 'no vessel selected'}`
 
     return (
         <div className="map-view">
@@ -163,6 +180,18 @@ export default function MapView({ selectedVessel, onVesselClick, showInfrastruct
                     <span>{trackError}</span>
                 </div>
             )}
+            {degradedFeeds.length > 0 && (
+                <div className="map-banner" role="status">
+                    <strong>Sensor state</strong>
+                    <span>{degradedFeeds.map(feed => `${feed.label}: ${feed.status}`).join(' · ')}</span>
+                </div>
+            )}
+            {offlineDemo && (
+                <div className="map-banner" role="status">
+                    <strong>Offline basemap mode</strong>
+                    <span>Sensor, cable, track, and alert layers are local; remote map tiles are disabled.</span>
+                </div>
+            )}
             <details className="map-controls" open={controlsOpen} onToggle={(e) => setControlsOpen(e.currentTarget.open)}>
                 <summary className="map-controls__summary">Map Layers</summary>
                 <fieldset className="map-controls__fieldset" aria-label="Map display controls">
@@ -170,6 +199,18 @@ export default function MapView({ selectedVessel, onVesselClick, showInfrastruct
                     <label htmlFor="map-show-alerts">
                         <input id="map-show-alerts" type="checkbox" checked={showAlerts} onChange={(e) => setShowAlerts(e.target.checked)} />
                         Show Alerts
+                    </label>
+                    <label htmlFor="map-show-ais">
+                        <input id="map-show-ais" type="checkbox" checked={showAis} onChange={(e) => setShowAis(e.target.checked)} />
+                        AIS tracks
+                    </label>
+                    <label htmlFor="map-show-sar">
+                        <input id="map-show-sar" type="checkbox" checked={showSar} onChange={(e) => setShowSar(e.target.checked)} />
+                        SAR detections
+                    </label>
+                    <label htmlFor="map-show-fusion">
+                        <input id="map-show-fusion" type="checkbox" checked={showFusion} onChange={(e) => setShowFusion(e.target.checked)} />
+                        Fused cable risk
                     </label>
                     <label htmlFor="map-show-cables">
                         <input id="map-show-cables" type="checkbox" checked={infraVisible} onChange={(e) => setInfraVisible(e.target.checked)} />
@@ -199,15 +240,16 @@ export default function MapView({ selectedVessel, onVesselClick, showInfrastruct
             <MapContainer
                 center={mapCenter}
                 zoom={bounds.length > 0 ? 8 : BALTIC_ZOOM}
+                className={offlineDemo ? 'offline-basemap' : undefined}
                 style={{ height: '100%', width: '100%' }}
             >
-                <TileLayer
+                {!offlineDemo && <TileLayer
                     attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                     url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                />
+                />}
                 {bounds.length > 0 && <MapBounds bounds={bounds} />}
 
-                {vessels.map((vessel) => (
+                {showAis && vessels.map((vessel) => (
                     <Marker
                         key={vessel.mmsi}
                         position={[vessel.lat, vessel.lon]}
@@ -224,6 +266,41 @@ export default function MapView({ selectedVessel, onVesselClick, showInfrastruct
                         </Popup>
                     </Marker>
                 ))}
+
+                {showSar && sarObservations.map((observation) => {
+                    const [lon, lat] = observation.geometry.coordinates
+                    const unmatched = observation.properties?.matched !== true
+                    return (
+                        <Marker key={observation.id} position={[lat, lon]} icon={createSarDivIcon(unmatched)}>
+                            <Popup>
+                                <div>
+                                    <strong>SAR detection</strong><br />
+                                    <strong>AIS match:</strong> {unmatched ? 'None' : 'Matched'}<br />
+                                    <strong>Confidence:</strong> {Math.round(observation.confidence.score * 100)}%<br />
+                                    <strong>Source:</strong> {observation.provenance.source}<br />
+                                    <strong>Observed:</strong> {new Date(observation.observedAt).toLocaleString()}
+                                </div>
+                            </Popup>
+                        </Marker>
+                    )
+                })}
+
+                {showFusion && fusionEvents.map((event) => {
+                    const [lon, lat] = event.geometry.coordinates
+                    const severity = event.severity === 'critical' ? 95 : event.severity === 'high' ? 80 : event.severity === 'medium' ? 55 : 25
+                    return (
+                        <Marker key={event.id} position={[lat, lon]} icon={createAlertDivIcon(severity)}>
+                            <Popup>
+                                <div>
+                                    <strong>{event.eventType}</strong><br />
+                                    <strong>Confidence:</strong> {Math.round(event.confidence.score * 100)}%<br />
+                                    <strong>Why:</strong> {String(event.attributes.reason || 'Fused sensor event')}<br />
+                                    <strong>Sensors:</strong> {Array.isArray(event.attributes.sensorSupport) ? event.attributes.sensorSupport.join(' + ') : 'See evidence'}
+                                </div>
+                            </Popup>
+                        </Marker>
+                    )
+                })}
 
                 {showAlerts && alertPositions.map(({ alert, lat, lon }) => (
                     <Marker

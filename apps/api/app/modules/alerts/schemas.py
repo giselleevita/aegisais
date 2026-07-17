@@ -13,6 +13,9 @@ class AlertOut(BaseModel):
     summary: str
     evidence: Any
     evidence_hash: Optional[str] = None  # BL-009: SHA-256 fingerprint of slim evidence
+    confidence: Optional[dict[str, Any]] = None
+    provenance: Optional[dict[str, Any]] = None
+    fusion_event_id: Optional[str] = None
     status: str = "new"
     notes: Optional[str] = None
 

@@ -18,6 +18,7 @@ from app.modules.vessels.models import VesselLatest, VesselPosition, WatchlistEn
 from app.modules.itdae.models import ItdaePosition, ItdaeGeofenceZone
 from app.modules.audit.models import AuditLog
 from app.modules.fusion.models import FusedVessel  # noqa: F401 — register metadata for autogenerate
+from app.modules.observations.models import Observation, FusionEvent  # noqa: F401
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

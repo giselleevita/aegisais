@@ -21,6 +21,7 @@ from typing import Any, Optional
 from app.infrastructure.ingest.loaders import AisPoint
 from app.tracking.features import haversine_m, implied_speed_knots, heading_delta_deg
 from app.services.llm import generate_anomaly_explanation, is_llm_enabled
+from app.detection.isolation_forest import default_scorer
 
 _log = logging.getLogger("aegisais.detection.ml_scoring")
 
@@ -125,6 +126,20 @@ def compute_anomaly_score(
         features: dict of feature contributions (SHAP-style)
         prediction: predicted position vs actual
     """
+    model_result = default_scorer.score(track)
+    if model_result.get("state") == "ready":
+        percentile = float(model_result.get("anomaly_percentile") or 0.0)
+        return {
+            "anomaly_score": int(round(percentile)),
+            "anomaly_percentile": percentile,
+            "features": model_result.get("features", {}),
+            "feature_contributions": model_result.get("explanation", []),
+            "model_version": model_result.get("model_version"),
+            "threshold_percentile": model_result.get("threshold_percentile"),
+            "score_semantics": "empirical percentile, not probability",
+            "model_state": "ready",
+        }
+
     profile = get_or_create_profile(point.mmsi)
     features: dict[str, float] = {}
     total_anomaly = 0.0
@@ -188,6 +203,9 @@ def compute_anomaly_score(
         "features": features,
         "prediction": prediction,
         "profile_sample_count": profile.sample_count,
+        "model_state": "degraded",
+        "model_reason": model_result.get("reason"),
+        "score_semantics": "rule-compatible statistical fallback",
     }
 
 

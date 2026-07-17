@@ -7,6 +7,7 @@ import { requireClassification, requireReleasability } from "./middleware/policy
 import { registerAuthRoutes } from "./routes/auth.js";
 import { registerLayerRoutes } from "./routes/layers.js";
 import { registerStreamRoutes } from "./routes/stream.js";
+import { registerCanonicalRoutes } from "./routes/canonical.js";
 import { ProviderObjectStorage } from "./services/objectStorage.js";
 
 const app = Fastify({ logger: true });
@@ -34,6 +35,7 @@ app.get(
 await registerAuthRoutes(app);
 await registerLayerRoutes(app);
 await registerStreamRoutes(app);
+await registerCanonicalRoutes(app);
 
 const start = async () => {
   try {

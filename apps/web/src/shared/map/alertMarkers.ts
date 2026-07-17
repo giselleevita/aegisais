@@ -26,3 +26,13 @@ export function createVesselDivIcon(isWatchlisted: boolean): L.DivIcon {
         iconAnchor: [7, 7],
     })
 }
+
+export function createSarDivIcon(unmatched: boolean): L.DivIcon {
+    const color = unmatched ? '#f97316' : '#22d3ee'
+    return L.divIcon({
+        className: 'sar-marker',
+        html: `<div title="SAR detection" style="background:${color};width:14px;height:14px;transform:rotate(45deg);border:2px solid white;box-shadow:0 0 10px ${color};"></div>`,
+        iconSize: [16, 16],
+        iconAnchor: [8, 8],
+    })
+}

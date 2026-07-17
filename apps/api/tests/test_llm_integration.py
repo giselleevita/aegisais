@@ -12,6 +12,13 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
+from tests.conftest import register_and_login_as_admin
+
+
+def _admin_headers(client) -> dict[str, str]:
+    token = register_and_login_as_admin(client)
+    return {"Authorization": f"Bearer {token}"}
+
 
 # ──────────────────────────────────────────────────────────────────────
 # LLM Client
@@ -230,43 +237,34 @@ class TestMLScoringEnrichment:
 
 class TestAnalystChat:
     @pytest.mark.asyncio
-    async def test_chat_returns_503_when_disabled(self):
-        from fastapi.testclient import TestClient
-        from app.main import app
-
-        client = TestClient(app)
+    async def test_chat_returns_503_when_disabled(self, client):
         resp = client.post("/v1/analyst/chat", json={
             "messages": [{"role": "user", "content": "What is AIS spoofing?"}],
-        })
+        }, headers=_admin_headers(client))
         assert resp.status_code == 503
 
     @pytest.mark.asyncio
-    async def test_chat_returns_response_when_enabled(self):
-        from fastapi.testclient import TestClient
-        from app.main import app
+    async def test_chat_returns_response_when_enabled(self, client):
 
         async def mock_complete(system, user, **kwargs):
             return "AIS spoofing is the deliberate manipulation of AIS signals."
 
-        client = TestClient(app)
+        headers = _admin_headers(client)
         with (
             patch("app.modules.analyst.router.is_llm_enabled", return_value=True),
             patch("app.modules.analyst.router.complete", side_effect=mock_complete),
         ):
             resp = client.post("/v1/analyst/chat", json={
                 "messages": [{"role": "user", "content": "What is AIS spoofing?"}],
-            })
+            }, headers=headers)
             assert resp.status_code == 200
             data = resp.json()
             assert "AIS spoofing" in data["content"]
             assert data["role"] == "assistant"
 
     @pytest.mark.asyncio
-    async def test_analyst_status_endpoint(self):
-        from fastapi.testclient import TestClient
-        from app.main import app
-
-        client = TestClient(app)
+    async def test_analyst_status_endpoint(self, client):
+        headers = _admin_headers(client)
         with patch(
             "app.modules.analyst.router.get_llm_provider_status",
             return_value={
@@ -278,7 +276,7 @@ class TestAnalystChat:
                 "error": None,
             },
         ):
-            resp = client.get("/v1/analyst/status")
+            resp = client.get("/v1/analyst/status", headers=headers)
             assert resp.status_code == 200
             data = resp.json()
             assert "enabled" in data
@@ -287,11 +285,8 @@ class TestAnalystChat:
             assert data["provider_status"]["status"] == "ok"
 
     @pytest.mark.asyncio
-    async def test_analyst_status_reports_auth_failure(self):
-        from fastapi.testclient import TestClient
-        from app.main import app
-
-        client = TestClient(app)
+    async def test_analyst_status_reports_auth_failure(self, client):
+        headers = _admin_headers(client)
         with (
             patch("app.modules.analyst.router.is_llm_enabled", return_value=True),
             patch(
@@ -306,20 +301,17 @@ class TestAnalystChat:
                 },
             ),
         ):
-            resp = client.get("/v1/analyst/status")
+            resp = client.get("/v1/analyst/status", headers=headers)
             assert resp.status_code == 200
             data = resp.json()
             assert data["provider_status"]["authenticated"] is False
             assert data["provider_status"]["status"] == "auth_failed"
 
     @pytest.mark.asyncio
-    async def test_chat_rejects_empty_messages(self):
-        from fastapi.testclient import TestClient
-        from app.main import app
-
-        client = TestClient(app)
+    async def test_chat_rejects_empty_messages(self, client):
+        headers = _admin_headers(client)
         with patch("app.modules.analyst.router.is_llm_enabled", return_value=True):
             resp = client.post("/v1/analyst/chat", json={
                 "messages": [{"role": "assistant", "content": "hi"}],
-            })
+            }, headers=headers)
             assert resp.status_code == 400

@@ -91,6 +91,33 @@ class MFADisableRequest(BaseModel):
     code: Optional[str] = None
 
 
+@router.get("/context")
+def auth_context(current_user: User = Depends(get_current_user)):
+    """Compatibility policy context for clients connected directly to the API.
+
+    The BFF remains the authoritative policy surface in deployments that route
+    through it. Offline/demo deployments historically point the web client at
+    the API, so expose the same additive contract without weakening auth.
+    """
+    role = "admin" if current_user.role in {"admin", "super_admin"} else "analyst"
+    viewer = {
+        "userId": current_user.username,
+        "organizationId": str(current_user.organisation_id),
+        "role": role,
+        "clearances": [],
+        "releasability": [],
+        "licenses": ["aviation:read", "ports:read"] if settings.app_env != "production" else [],
+    }
+    return {
+        "viewer": viewer,
+        "claims": {
+            "role": role,
+            "clearances": viewer["clearances"],
+            "releasability": viewer["releasability"],
+            "licenses": viewer["licenses"],
+        },
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+    }
 class MFAStatusResponse(BaseModel):
     available: bool
     enabled: bool

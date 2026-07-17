@@ -1,0 +1,105 @@
+{
+  "applicability": {
+    "limitation": "insufficient public labeled data for per-class or cross-region validation",
+    "region": "Baltic demonstration corridor",
+    "scope": "global_fallback",
+    "vessel_class": "all"
+  },
+  "artifact_sha256": "e0dbd0ab11d3c6c4f94db4cda0661e61661cb5a284a2ef50a28f8cc0f3206abb",
+  "calibration_scores": [
+    0.4858351873744782,
+    0.4967964743327427,
+    0.49881530833928844,
+    0.4989477112879931,
+    0.5003033360281605,
+    0.5038247096184278,
+    0.5082145990958629,
+    0.5093907981754102,
+    0.5152653102164727,
+    0.5156665463464125,
+    0.5192863344580126,
+    0.5386676860806524,
+    0.539959443657996,
+    0.5426025546643962,
+    0.5445913866523114,
+    0.5461811138790215,
+    0.5567584706694451,
+    0.5713792864799396,
+    0.5723594309893442,
+    0.5959536449467064,
+    0.6052169732040711
+  ],
+  "dataset_sha256": "7afa356b1f27276b011edf8e910f8ac7e9a301db987365bd4e69ca4cecffd3cf",
+  "feature_schema": [
+    "speed_knots",
+    "speed_std",
+    "acceleration_knots_per_sec",
+    "turn_rate_deg_per_sec",
+    "course_entropy",
+    "displacement_m",
+    "loiter_ratio",
+    "update_gap_sec",
+    "prediction_residual_m",
+    "distance_to_cable_m"
+  ],
+  "feature_stats": {
+    "acceleration_knots_per_sec": {
+      "mean": 3.70370370370369e-05,
+      "std": 1.3094570021973056e-05
+    },
+    "course_entropy": {
+      "mean": 0.0,
+      "std": 0.0
+    },
+    "displacement_m": {
+      "mean": 80846.39563687841,
+      "std": 33043.56013723949
+    },
+    "distance_to_cable_m": {
+      "mean": 143563.04652601545,
+      "std": 3831.3290009213574
+    },
+    "loiter_ratio": {
+      "mean": 1.7406450959156494e-05,
+      "std": 1.5662051998816206e-05
+    },
+    "prediction_residual_m": {
+      "mean": 12067.095516924319,
+      "std": 8532.867434972028
+    },
+    "speed_knots": {
+      "mean": 12.825142857142858,
+      "std": 1.8182126829785943
+    },
+    "speed_std": {
+      "mean": 0.08818842595055222,
+      "std": 0.008368019513967104
+    },
+    "turn_rate_deg_per_sec": {
+      "mean": 0.0,
+      "std": 0.0
+    },
+    "update_gap_sec": {
+      "mean": 3476.571428571429,
+      "std": 527.2870882824536
+    }
+  },
+  "metrics": {
+    "false_alerts_per_100_vessel_hours": 0.0,
+    "normal_vessel_hours": 3.0,
+    "real_world_precision": "not_established",
+    "split_policy": "exact normal windows held out; deterministic speed/time augmentations used for training",
+    "synthetic_recall": 1.0,
+    "training_windows": 21,
+    "validation": "synthetic_demo_baseline_only",
+    "validation_anomaly_windows": 9,
+    "validation_normal_windows": 3
+  },
+  "model_type": "sklearn.ensemble.IsolationForest",
+  "model_version": "isolation-forest-20260717",
+  "random_state": 42,
+  "score_semantics": "empirical percentile, not probability",
+  "sklearn_version": "1.8.0",
+  "threshold_percentile": 80.0,
+  "trained_at": "2026-07-17T18:23:11.709967+00:00"
+}
