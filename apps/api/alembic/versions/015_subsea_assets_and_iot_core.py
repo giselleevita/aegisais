@@ -18,6 +18,7 @@ depends_on = None
 
 
 def upgrade() -> None:
+    is_sqlite = op.get_bind().dialect.name == "sqlite"
     op.create_table(
         "assets",
         sa.Column("id", sa.Integer(), autoincrement=True, nullable=False),
@@ -144,33 +145,58 @@ def upgrade() -> None:
     op.create_index("ix_iot_device_heartbeats_status", "iot_device_heartbeats", ["status"])
     op.create_index("idx_iot_heartbeats_org_device_time", "iot_device_heartbeats", ["organisation_id", "device_id", "recorded_at"])
 
-    op.add_column("alerts", sa.Column("asset_id", sa.Integer(), nullable=True))
-    op.add_column("alerts", sa.Column("source_device_id", sa.Integer(), nullable=True))
-    op.create_foreign_key("fk_alerts_asset_id", "alerts", "assets", ["asset_id"], ["id"], ondelete="SET NULL")
-    op.create_foreign_key("fk_alerts_source_device_id", "alerts", "iot_devices", ["source_device_id"], ["id"], ondelete="SET NULL")
+    if is_sqlite:
+        with op.batch_alter_table("alerts") as batch_op:
+            batch_op.add_column(sa.Column("asset_id", sa.Integer(), nullable=True))
+            batch_op.add_column(sa.Column("source_device_id", sa.Integer(), nullable=True))
+            batch_op.create_foreign_key("fk_alerts_asset_id", "assets", ["asset_id"], ["id"], ondelete="SET NULL")
+            batch_op.create_foreign_key("fk_alerts_source_device_id", "iot_devices", ["source_device_id"], ["id"], ondelete="SET NULL")
+    else:
+        op.add_column("alerts", sa.Column("asset_id", sa.Integer(), nullable=True))
+        op.add_column("alerts", sa.Column("source_device_id", sa.Integer(), nullable=True))
+        op.create_foreign_key("fk_alerts_asset_id", "alerts", "assets", ["asset_id"], ["id"], ondelete="SET NULL")
+        op.create_foreign_key("fk_alerts_source_device_id", "alerts", "iot_devices", ["source_device_id"], ["id"], ondelete="SET NULL")
     op.create_index("ix_alerts_asset_id", "alerts", ["asset_id"])
     op.create_index("ix_alerts_source_device_id", "alerts", ["source_device_id"])
     op.create_index("idx_alerts_org_asset_time", "alerts", ["organisation_id", "asset_id", "timestamp"])
 
-    op.add_column("incidents", sa.Column("asset_id", sa.Integer(), nullable=True))
-    op.create_foreign_key("fk_incidents_asset_id", "incidents", "assets", ["asset_id"], ["id"], ondelete="SET NULL")
+    if is_sqlite:
+        with op.batch_alter_table("incidents") as batch_op:
+            batch_op.add_column(sa.Column("asset_id", sa.Integer(), nullable=True))
+            batch_op.create_foreign_key("fk_incidents_asset_id", "assets", ["asset_id"], ["id"], ondelete="SET NULL")
+    else:
+        op.add_column("incidents", sa.Column("asset_id", sa.Integer(), nullable=True))
+        op.create_foreign_key("fk_incidents_asset_id", "incidents", "assets", ["asset_id"], ["id"], ondelete="SET NULL")
     op.create_index("ix_incidents_asset_id", "incidents", ["asset_id"])
     op.create_index("idx_incidents_org_asset", "incidents", ["organisation_id", "asset_id"])
 
 
 def downgrade() -> None:
+    is_sqlite = op.get_bind().dialect.name == "sqlite"
     op.drop_index("idx_incidents_org_asset", table_name="incidents")
     op.drop_index("ix_incidents_asset_id", table_name="incidents")
-    op.drop_constraint("fk_incidents_asset_id", "incidents", type_="foreignkey")
-    op.drop_column("incidents", "asset_id")
+    if is_sqlite:
+        with op.batch_alter_table("incidents") as batch_op:
+            batch_op.drop_constraint("fk_incidents_asset_id", type_="foreignkey")
+            batch_op.drop_column("asset_id")
+    else:
+        op.drop_constraint("fk_incidents_asset_id", "incidents", type_="foreignkey")
+        op.drop_column("incidents", "asset_id")
 
     op.drop_index("idx_alerts_org_asset_time", table_name="alerts")
     op.drop_index("ix_alerts_source_device_id", table_name="alerts")
     op.drop_index("ix_alerts_asset_id", table_name="alerts")
-    op.drop_constraint("fk_alerts_source_device_id", "alerts", type_="foreignkey")
-    op.drop_constraint("fk_alerts_asset_id", "alerts", type_="foreignkey")
-    op.drop_column("alerts", "source_device_id")
-    op.drop_column("alerts", "asset_id")
+    if is_sqlite:
+        with op.batch_alter_table("alerts") as batch_op:
+            batch_op.drop_constraint("fk_alerts_source_device_id", type_="foreignkey")
+            batch_op.drop_constraint("fk_alerts_asset_id", type_="foreignkey")
+            batch_op.drop_column("source_device_id")
+            batch_op.drop_column("asset_id")
+    else:
+        op.drop_constraint("fk_alerts_source_device_id", "alerts", type_="foreignkey")
+        op.drop_constraint("fk_alerts_asset_id", "alerts", type_="foreignkey")
+        op.drop_column("alerts", "source_device_id")
+        op.drop_column("alerts", "asset_id")
 
     op.drop_index("idx_iot_heartbeats_org_device_time", table_name="iot_device_heartbeats")
     op.drop_index("ix_iot_device_heartbeats_status", table_name="iot_device_heartbeats")

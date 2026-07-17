@@ -14,6 +14,7 @@ from app.infrastructure.messaging.publisher import publisher
 from app.infrastructure.ingest.loaders import AisPoint
 from app.modules.vessels.watchlist_enrich import priority_map_for_mmsis
 from app.services.pipeline import process_point
+from app.modules.observations.contracts import ais_observation
 from app.services.workers.heartbeat import WorkerHeartbeat
 
 log = structlog.get_logger("aegisais.worker.processing")
@@ -54,6 +55,28 @@ def handle_ais_point(msg_id: str, data: Dict[str, Any]):
         # Pure logic processing (no DB)
         start_time = time.time()
         result = process_point(p)
+        result["point"].update({
+            "organisation_id": int(data.get("organisation_id") or settings.default_organisation_id),
+            "source": data.get("source") or "ais",
+            "layer_id": data.get("layer_id") or "maritime.ais.terrestrial",
+            "confidence": float(data.get("confidence", 0.8)),
+            "provenance": data.get("provenance") or {},
+        })
+        observation = ais_observation(
+            mmsi=p.mmsi,
+            observed_at=p.timestamp,
+            lat=p.lat,
+            lon=p.lon,
+            source=str(data.get("source") or "ais"),
+            layer_id=str(data.get("layer_id") or "maritime.ais.terrestrial"),
+            organisation_id=int(data.get("organisation_id") or settings.default_organisation_id),
+            sog=p.sog,
+            cog=p.cog,
+            heading=p.heading,
+            confidence=float(data.get("confidence", 0.8)),
+            source_record_id=(data.get("provenance") or {}).get("sourceRecordId"),
+            licence_tag=str(data.get("licence_tag") or "tenant"),
+        )
         alerts_out = result["alerts"]
         if alerts_out:
             mmsis = {a["mmsi"] for a in alerts_out}
@@ -70,6 +93,7 @@ def handle_ais_point(msg_id: str, data: Dict[str, Any]):
 
         # 1. Publish to processed stream for persistence
         publisher.publish(settings.stream_ais_processed, result["point"])
+        publisher.publish(settings.stream_observations, observation.model_dump(mode="json", exclude_none=True))
 
         # 2. Publish alerts to alerts stream for dispatch
         for alert in alerts_out:

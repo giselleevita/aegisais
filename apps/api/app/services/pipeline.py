@@ -1,4 +1,5 @@
 import logging
+from datetime import datetime, timezone
 from app.infrastructure.ingest.loaders import AisPoint
 from app.infrastructure.cache.track_store import RedisTrackStore
 from app.infrastructure.cache.cooldown_store import RedisCooldownStore
@@ -26,19 +27,36 @@ log = logging.getLogger("aegisais.pipeline")
 _track_store = RedisTrackStore(window_size_min=60)
 _cooldown_store = RedisCooldownStore()
 
-def enqueue_point(p: AisPoint):
+def enqueue_point(
+    p: AisPoint,
+    *,
+    organisation_id: int | None = None,
+    source: str = "ais",
+    layer_id: str = "maritime.ais.terrestrial",
+    confidence: float = 0.8,
+    provenance: dict | None = None,
+):
     """
     Asynchronously push an AIS point to the processing stream.
     This is the fast-path for API ingestion.
     """
     publisher.publish(settings.stream_ais_raw, {
         "mmsi": p.mmsi,
+        "organisation_id": organisation_id or settings.default_organisation_id,
         "timestamp": p.timestamp.isoformat(),
         "lat": p.lat,
         "lon": p.lon,
         "sog": p.sog,
         "cog": p.cog,
-        "heading": p.heading
+        "heading": p.heading,
+        "source": source,
+        "layer_id": layer_id,
+        "confidence": max(0.0, min(1.0, confidence)),
+        "provenance": provenance or {
+            "source": source,
+            "processor": "aegisais.ingest",
+            "ingestedAt": datetime.now(timezone.utc).isoformat(),
+        },
     })
 
 
@@ -91,16 +109,13 @@ def process_point(p: AisPoint) -> dict:
                         if not _cooldown_store.check_and_set(p2.mmsi, res["type"]):
                             continue
                         
-                        # Reduce evidence bloat
+                        # Preserve rule-specific evidence and add a stable point
+                        # snapshot. The former whitelist discarded cable,
+                        # sanctions, spoofing and provenance fields analysts need.
                         evidence = res.get("evidence", {})
                         if isinstance(evidence, dict):
                             slim_evidence = {
-                                "dt_sec": evidence.get("dt_sec"),
-                                "distance_m": evidence.get("distance_m"),
-                                "implied_speed_kn": evidence.get("implied_speed_kn"),
-                                "turn_rate_deg_per_sec": evidence.get("turn_rate_deg_per_sec"),
-                                "accel_knots_per_sec": evidence.get("accel_knots_per_sec"),
-                                "tier": evidence.get("tier"),
+                                **evidence,
                                 "p1_lat": p1.lat,
                                 "p1_lon": p1.lon,
                                 "p1_timestamp": p1.timestamp.isoformat(),
@@ -111,9 +126,6 @@ def process_point(p: AisPoint) -> dict:
                                 "p2_cog": p2.cog,
                                 "p2_heading": p2.heading,
                             }
-                            for key in ["reason", "sog_diff", "implied_speed", "heading_delta", "cog_delta"]:
-                                if key in evidence:
-                                    slim_evidence[key] = evidence[key]
                         else:
                             slim_evidence = evidence
                         

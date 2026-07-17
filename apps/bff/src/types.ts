@@ -1,4 +1,4 @@
-export type LayerDomain = "aviation" | "ports" | "subsea";
+export type LayerDomain = "aviation" | "ports" | "subsea" | "maritime";
 
 export type ClassificationLevel =
   | "UNCLASSIFIED"
@@ -15,6 +15,9 @@ export interface LayerManifestItem {
   updatedAt: string;
   source: string;
   objectKeyPrefix: string;
+  mode?: "live" | "historical_replay" | "derived";
+  licenceClass?: string;
+  confidenceMethod?: string;
 }
 
 export interface ViewerContext {

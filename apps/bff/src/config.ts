@@ -6,6 +6,7 @@ export const config = {
   manifestCacheTtlMs: Number(process.env.BFF_MANIFEST_CACHE_TTL_MS ?? 30000),
   rateLimitPerMinute: Number(process.env.BFF_RATE_LIMIT_PER_MINUTE ?? 120),
   redisUrl: process.env.REDIS_URL ?? "redis://localhost:6379/0",  // BL-008
+  upstreamApiUrl: process.env.UPSTREAM_API_URL ?? "http://api:8000",
   rateLimiterPrefix: process.env.BFF_RL_PREFIX ?? "bff:rl",       // BL-008
   auth: {
     issuer: process.env.BFF_AUTH_ISSUER ?? "",

@@ -20,6 +20,7 @@ function tokenPayload(claims: Record<string, unknown>): string {
 
 async function mockMissionApi(page: Page, getClaims: () => MockClaims) {
   let currentAlertStatus = 'new'
+  let festivalState = 'ready'
 
   await page.route('**/v1/auth/context', async (route) => {
     const claims = getClaims()
@@ -76,6 +77,67 @@ async function mockMissionApi(page: Page, getClaims: () => MockClaims) {
       status: 200,
       contentType: 'application/json',
       body: JSON.stringify({ running: false, processed: 0 }),
+    })
+  })
+
+  await page.route('**/v1/integrations/feeds', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        feeds: [
+          {
+            id: 'satellite_ais',
+            label: 'Satellite AIS',
+            status: 'ready',
+            detail: 'Packaged replay fixture',
+            mode: 'replay',
+            recordCount: 12,
+          },
+          {
+            id: 'sar_eo',
+            label: 'SAR / EO',
+            status: 'ready',
+            detail: 'Historical GFW fixture',
+            mode: 'fixture',
+            recordCount: 1,
+          },
+        ],
+      }),
+    })
+  })
+
+  await page.route('**/v1/models/anomaly/status', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ state: 'ready', model_version: 'isolation-forest-e2e' }),
+    })
+  })
+
+  await page.route('**/v1/demo/scenarios/baltic-cable/status', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ state: festivalState, emitted: festivalState === 'running' ? 1 : 0, total: 13, fusionAlerts: 0 }),
+    })
+  })
+
+  await page.route('**/v1/demo/scenarios/baltic-cable/start?**', async (route) => {
+    festivalState = 'running'
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ state: festivalState, emitted: 1, total: 13, fusionAlerts: 0 }),
+    })
+  })
+
+  await page.route('**/v1/demo/scenarios/baltic-cable/reset', async (route) => {
+    festivalState = 'ready'
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ state: festivalState, emitted: 0, total: 13, fusionAlerts: 0 }),
     })
   })
 
@@ -387,6 +449,12 @@ test.describe('Mission workflow', () => {
     await page.goto('/admin')
     await expect(page.getByRole('heading', { name: 'Admin & control plane' })).toBeVisible()
     await expect(page.getByRole('heading', { name: 'External feeds' })).toBeVisible()
-    await expect(page.getByText('Satellite AIS')).toBeVisible()
+    await expect(page.getByRole('list', { name: 'Optional feed integrations' }).getByText('Satellite AIS')).toBeVisible()
+    await expect(page.getByText(/Anomaly baseline:\s*ready/)).toBeVisible()
+    await expect(page.getByText(/State: ready/)).toBeVisible()
+    await page.getByRole('button', { name: 'Start 3-minute demo' }).click()
+    await expect(page.getByText(/State: running/)).toBeVisible()
+    await page.getByRole('button', { name: 'Reset' }).click()
+    await expect(page.getByText(/State: ready/)).toBeVisible()
   })
 })

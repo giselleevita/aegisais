@@ -32,7 +32,7 @@ class ITDAEStreamManager:
             if settings.AISSTREAM_API_KEY:
                 from app.modules.itdae.ingestion.aisstream_client import aisstream_client
                 self._aisstream_client = aisstream_client
-                asyncio.create_task(aisstream_client.connect())
+                await aisstream_client.start()
                 logger.info("ITDAE stream started with live aisstream.io feed.")
             else:
                 logger.info("ITDAE stream started (no AISSTREAM_API_KEY — stub mode, MQTT normalizer ready).")
@@ -44,7 +44,7 @@ class ITDAEStreamManager:
             logger.info("ITDAE stream is not running.")
             return
         if self._aisstream_client:
-            await self._aisstream_client.disconnect()
+            await self._aisstream_client.stop()
             self._aisstream_client = None
         self.is_running = False
         logger.info("ITDAE stream stopped.")

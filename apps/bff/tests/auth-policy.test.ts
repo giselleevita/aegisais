@@ -4,6 +4,7 @@ import Fastify, { type FastifyInstance } from "fastify";
 import { config } from "../src/config.js";
 import { registerAuthRoutes } from "../src/routes/auth.js";
 import { registerLayerRoutes } from "../src/routes/layers.js";
+import { registerCanonicalRoutes } from "../src/routes/canonical.js";
 
 function makeJwt(claims: Record<string, unknown>): string {
   const header = Buffer.from(JSON.stringify({ alg: "none", typ: "JWT" })).toString("base64url");
@@ -28,6 +29,7 @@ beforeEach(async () => {
   app = Fastify();
   await registerAuthRoutes(app);
   await registerLayerRoutes(app);
+  await registerCanonicalRoutes(app);
 });
 
 afterEach(async () => {
@@ -166,4 +168,27 @@ test("returns normalized claims in auth context", async () => {
   assert.deepEqual(body.claims.releasability, ["NATO", "USA"]);
   assert.deepEqual(body.claims.licenses, ["ports:read", "incidents:read"]);
   assert.match(body.timestamp, /^\d{4}-\d{2}-\d{2}T/);
+});
+
+test("returns licensed canonical maritime layers with provenance metadata", async () => {
+  const token = makeJwt({
+    sub: "maritime-analyst",
+    org_id: "org-1",
+    role: "analyst",
+    licenses: ["subsea:read"],
+    clearances: ["SECRET"],
+    releasability: ["NATO"],
+  });
+  const res = await app.inject({
+    method: "GET",
+    url: "/v1/layers",
+    headers: authHeader(token),
+  });
+  assert.equal(res.statusCode, 200);
+  const body = res.json() as { layers: Array<{ id: string; confidence: unknown; provenance: unknown }> };
+  const ids = body.layers.map((layer) => layer.id);
+  assert.ok(ids.includes("maritime.ais.terrestrial"));
+  assert.ok(ids.includes("maritime.sar.gfw"));
+  assert.ok(ids.includes("maritime.fusion.cable-risk"));
+  assert.ok(body.layers.every((layer) => layer.confidence && layer.provenance));
 });

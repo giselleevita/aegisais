@@ -23,6 +23,14 @@ export function formatAlertType(type: string): string {
             return 'Acceleration / SOG mismatch'
         case 'HEADING_COG_CONSISTENCY':
             return 'Heading / COG consistency'
+        case 'VESSEL_ACTIVITY_NEAR_CABLE':
+            return 'Vessel activity near cable'
+        case 'AIS_SAR_POSITION_CONFLICT':
+            return 'AIS / SAR position conflict'
+        case 'UNMATCHED_SAR_NEAR_CABLE':
+            return 'Dark vessel near cable'
+        case 'AIS_SILENCE_NEAR_CABLE':
+            return 'AIS silence near cable'
         default:
             return type
     }
@@ -75,6 +83,15 @@ export function getAlertClassification(type: string): {
                 tier: 'suspicious',
                 tierLabel: 'Suspicious / data‑quality',
                 purpose: 'Compares reported SOG vs track‑implied speed to find inconsistent / noisy data.',
+            }
+        case 'VESSEL_ACTIVITY_NEAR_CABLE':
+        case 'AIS_SAR_POSITION_CONFLICT':
+        case 'UNMATCHED_SAR_NEAR_CABLE':
+        case 'AIS_SILENCE_NEAR_CABLE':
+            return {
+                tier: 'integrity',
+                tierLabel: 'Multi-sensor infrastructure risk',
+                purpose: 'Correlates vessel behavior, AIS continuity, independent SAR detections, and cable proximity.',
             }
         default:
             return {
@@ -283,6 +300,31 @@ export function renderEvidence(alert: Alert) {
                         </li>
                     )}
                 </ul>
+            )
+        }
+        case 'VESSEL_ACTIVITY_NEAR_CABLE':
+        case 'AIS_SAR_POSITION_CONFLICT':
+        case 'UNMATCHED_SAR_NEAR_CABLE':
+        case 'AIS_SILENCE_NEAR_CABLE': {
+            const confidence = e.confidence as { score?: number; method?: string; notes?: string } | undefined
+            const sensors = Array.isArray(e.sensorSupport) ? e.sensorSupport : []
+            const observations = Array.isArray(e.observationIds) ? e.observationIds : []
+            const distance = typeof e.distanceToCableM === 'number' ? e.distanceToCableM : undefined
+            const association = typeof e.associationDistanceM === 'number' ? e.associationDistanceM : undefined
+            const silence = typeof e.aisSilenceSec === 'number' ? e.aisSilenceSec : undefined
+            return (
+                <div className="fusion-evidence">
+                    <p><strong>Why this fired:</strong> {String(e.reason || alert.summary)}</p>
+                    <ul className="evidence-list">
+                        {distance !== undefined && <li><span className="label">Cable distance:</span> {distance.toFixed(0)} m</li>}
+                        {association !== undefined && <li><span className="label">AIS–SAR separation:</span> {association.toFixed(0)} m</li>}
+                        {silence !== undefined && <li><span className="label">AIS silence:</span> {formatSeconds(silence)}</li>}
+                        {confidence?.score !== undefined && <li><span className="label">Confidence:</span> {(confidence.score * 100).toFixed(0)}% — {confidence.method}</li>}
+                        {sensors.length > 0 && <li><span className="label">Sensor support:</span> {sensors.join(' + ')}</li>}
+                        <li><span className="label">Source observations:</span> {observations.length}</li>
+                    </ul>
+                    {confidence?.notes ? <p className="evidence-note">{confidence.notes}</p> : null}
+                </div>
             )
         }
         default:

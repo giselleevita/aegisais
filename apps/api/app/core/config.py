@@ -56,6 +56,7 @@ class Settings(BaseSettings):
     stream_ais_raw: str = "ais_raw"
     stream_ais_processed: str = "ais_processed"
     stream_ais_alerts: str = "ais_alerts"
+    stream_observations: str = "sensor_observations"
     
     # Persistence settings
     persistence_batch_size: int = 50
@@ -91,6 +92,12 @@ class Settings(BaseSettings):
     AISSTREAM_API_KEY: str = ""
     AISSTREAM_BBOX: str = ""  # lat_min,lon_min,lat_max,lon_max (e.g. "54.0,10.0,66.0,30.0")
 
+    # Historical/open SAR adapter. GFW is deliberately replay-oriented because
+    # its public SAR product is not a real-time tactical feed.
+    GFW_API_TOKEN: str = ""
+    GFW_API_BASE_URL: str = "https://gateway.api.globalfishingwatch.org/v3"
+    GFW_SAR_DATASET: str = "public-global-sar-presence:latest"
+
     # Sanctions screening (GAP-09)
     SANCTIONS_WATCHLIST_PATH: str = ""  # Override default JSON file path
     SANCTIONS_ENABLE_STS: bool = True  # Enable ship-to-ship transfer detection
@@ -112,6 +119,8 @@ class Settings(BaseSettings):
     ML_SCORING_ENABLED: bool = True
     ML_WEIGHT_RULES: float = 0.6
     ML_WEIGHT_STATISTICAL: float = 0.4
+    ML_MODEL_PATH: str = "data/models/isolation_forest.joblib"
+    ML_MODEL_MANIFEST_PATH: str = "data/models/isolation_forest.manifest.json"
 
     # LLM Integration (Featherless AI — OpenAI-compatible)
     LLM_ENABLED: bool = False
@@ -154,6 +163,11 @@ class Settings(BaseSettings):
     alert_cooldown_sec: int = 300  # 5 minutes cooldown per (MMSI, rule_type)
     fused_cable_proximity_m: float = 1500.0
     fused_cable_time_window_sec: int = 1200
+    fused_sar_time_window_sec: int = 1800
+    fused_sar_max_distance_m: float = 5000.0
+    ais_silence_threshold_sec: int = 900
+    demo_default_speed: float = 20.0
+    demo_scenario_path: str = "data/demo/festival_cable_multisensor.json"
 
     @field_validator("database_url")
     @classmethod

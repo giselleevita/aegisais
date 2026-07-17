@@ -26,6 +26,11 @@ const schemaEntries = await Promise.all(
     const absolutePath = path.join(schemasDir, fileName);
     const source = await readFile(absolutePath, "utf8");
     const schema = JSON.parse(source);
+    // json-schema-to-ts resolves external references by matching `$ref` to the
+    // referenced schema's `$id`. The source documents retain their canonical
+    // public URLs; generated type constants use the repository-relative IDs
+    // that the schemas reference (for example `./Confidence.schema.json`).
+    schema.$id = fileName.startsWith("_") ? fileName : `./${fileName}`;
     const baseName = toPascalCase(fileName) || "SchemaDocument";
     const constName = `${baseName}Schema`;
     const typeName = baseName;
