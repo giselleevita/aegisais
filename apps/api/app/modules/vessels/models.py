@@ -8,6 +8,7 @@ from sqlalchemy import (
     Boolean,
     ForeignKey,
     UniqueConstraint,
+    JSON,
 )
 from sqlalchemy.sql import func
 
@@ -34,6 +35,10 @@ class VesselLatest(Base):
     heading = Column(Float, nullable=True) # degrees
 
     last_alert_severity = Column(Integer, nullable=False, default=0)
+    source = Column(String, nullable=False, default="ais", server_default="ais")
+    confidence = Column(Float, nullable=False, default=0.8, server_default="0.8")
+    provenance = Column(JSON, nullable=False, default=dict)
+    updated_at = Column(DateTime(timezone=True), nullable=True)
 
 class VesselPosition(Base):
     """Historical vessel positions for track visualization."""
@@ -56,6 +61,9 @@ class VesselPosition(Base):
     sog = Column(Float, nullable=True)
     cog = Column(Float, nullable=True)
     heading = Column(Float, nullable=True)
+    source = Column(String, nullable=False, default="ais", server_default="ais")
+    confidence = Column(Float, nullable=False, default=0.8, server_default="0.8")
+    provenance = Column(JSON, nullable=False, default=dict)
 
 Index("idx_vessel_positions_mmsi_time", VesselPosition.mmsi, VesselPosition.timestamp)
 Index("idx_vessel_positions_org_mmsi_time", VesselPosition.organisation_id, VesselPosition.mmsi, VesselPosition.timestamp)

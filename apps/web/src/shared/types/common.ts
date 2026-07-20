@@ -2,6 +2,12 @@
  * Type definitions for AegisAIS frontend
  */
 
+import type {
+    Confidence as ContractConfidence,
+    Observation as ContractObservation,
+    Provenance as ContractProvenance,
+} from '@aegisais/contracts'
+
 export type ClassificationLevel =
     | 'UNCLASSIFIED'
     | 'RESTRICTED'
@@ -69,6 +75,26 @@ export interface Alert {
     evidence: AlertEvidence
     status?: string
     notes?: string | null
+    confidence?: Confidence | null
+    provenance?: Provenance | null
+    fusion_event_id?: string | null
+}
+
+export type Confidence = ContractConfidence
+export type Provenance = ContractProvenance
+export type CanonicalObservation = ContractObservation
+
+export interface FusionEvent {
+    id: string
+    eventType: string
+    entityIds: string[]
+    observationIds: string[]
+    occurredAt: string
+    severity: 'low' | 'medium' | 'high' | 'critical'
+    geometry: { type: 'Point'; coordinates: [number, number] }
+    attributes: Record<string, unknown>
+    confidence: Confidence
+    provenance: Provenance
 }
 
 export interface Vessel {
@@ -177,13 +203,21 @@ export interface WatchlistEntry {
 }
 
 /** GET /v1/integrations/feeds — optional external sensor feeds (AML admin UI). */
-export type IntegrationFeedStatus = 'ready' | 'partial' | 'disconnected' | 'error'
+export type IntegrationFeedStatus = 'ready' | 'partial' | 'disconnected' | 'unavailable' | 'error'
 
 export interface IntegrationFeed {
     id: string
     label: string
     status: IntegrationFeedStatus
     detail: string | null
+    mode?: string
+    datasetVersion?: string | null
+    licenceClass?: string
+    lastObservedAt?: string | null
+    lastIngestedAt?: string | null
+    lagSeconds?: number | null
+    recordCount?: number
+    errorCode?: string | null
 }
 
 export interface IntegrationFeedsResponse {
@@ -225,11 +259,38 @@ export interface LayerDefinition {
 export interface LayerManifestItem {
     id: string
     name: string
-    domain: 'aviation' | 'ports' | 'subsea'
+    domain: 'aviation' | 'ports' | 'subsea' | 'maritime'
     licensedFeature: string
     updatedAt: string
     source: string
     objectKeyPrefix: string
+    mode?: 'live' | 'historical_replay' | 'derived'
+    licenceClass?: string
+    confidenceMethod?: string
+}
+
+export interface AnomalyModelStatus {
+    state: 'ready' | 'degraded'
+    model_version: string | null
+    reason: string | null
+    feature_schema: string[]
+    trained_at?: string | null
+    dataset_hash?: string | null
+    metrics?: Record<string, unknown> | null
+}
+
+export interface FestivalScenarioStatus {
+    state: 'idle' | 'starting' | 'running' | 'completed' | 'failed'
+    scenario: string
+    emitted: number
+    total: number
+    error: string | null
+    startedAt: string | null
+    completedAt: string | null
+    speed?: number
+    persistedObservations?: number
+    fusionEvents?: number
+    fusionAlerts?: number
 }
 
 export interface LayerManifestResponse {

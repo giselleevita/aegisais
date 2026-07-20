@@ -12,10 +12,12 @@ import logging
 from datetime import datetime, timezone
 from typing import Any, Optional
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
+from app.modules.auth.dependencies import require_viewer_or_above
+from app.modules.auth.models import User
 from app.services.llm import (
     SYSTEM_PROMPT_ANALYST,
     complete,
@@ -47,7 +49,10 @@ class ChatResponse(BaseModel):
 
 
 @router.post("/chat")
-async def analyst_chat(req: ChatRequest):
+async def analyst_chat(
+    req: ChatRequest,
+    _user: User = Depends(require_viewer_or_above),
+):
     """Conversational maritime analyst assistant.
 
     Send a message (or conversation history) and receive an LLM-powered
@@ -105,7 +110,7 @@ async def analyst_chat(req: ChatRequest):
 
 
 @router.get("/status")
-async def analyst_status():
+async def analyst_status(_user: User = Depends(require_viewer_or_above)):
     """Check if the analyst AI assistant is available."""
     from app.core.config import settings
     provider_status = await get_llm_provider_status()

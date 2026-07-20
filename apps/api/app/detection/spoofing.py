@@ -77,11 +77,15 @@ def rule_gps_manipulation(p1: AisPoint, p2: AisPoint) -> Optional[dict[str, Any]
             lon_grid = abs(lon_diff * 100 - round(lon_diff * 100)) < 0.001
 
             if lat_grid and lon_grid and (lat_diff > 0 or lon_diff > 0):
-                severity = 75
+                # Rounding/grid alignment is a weak indicator: legitimate
+                # receivers and replay exports commonly quantize coordinates.
+                # It may contribute to fusion, but cannot independently create
+                # a high-severity spoofing conclusion.
+                severity = 35
                 return {
                     "type": "GPS_MANIPULATION",
                     "severity": severity,
-                    "summary": f"Grid-aligned coordinates: ({p2.lat:.4f}, {p2.lon:.4f}) — possible GPS spoofing",
+                    "summary": f"Grid-aligned coordinates: ({p2.lat:.4f}, {p2.lon:.4f}) — weak spoofing indicator",
                     "evidence": {
                         "p2_lat": p2.lat,
                         "p2_lon": p2.lon,
@@ -89,6 +93,8 @@ def rule_gps_manipulation(p1: AisPoint, p2: AisPoint) -> Optional[dict[str, Any]
                         "lon_decimals": lon_decimals,
                         "grid_aligned": True,
                         "mmsi": p2.mmsi,
+                        "indicator_strength": "weak",
+                        "requires_corroboration": True,
                     },
                 }
 
@@ -196,7 +202,7 @@ def detect_multi_source_vessel_identity_conflict(
     sources_list = list(sources.items())
     for i, (source1, pos1) in enumerate(sources_list):
         for source2, pos2 in sources_list[i+1:]:
-            if not pos1.get('lat') or not pos1.get('lon') or not pos2.get('lat') or not pos2.get('lon'):
+            if any(pos.get(key) is None for pos in (pos1, pos2) for key in ("lat", "lon")):
                 continue
 
             ts1: Any = pos1.get('timestamp')

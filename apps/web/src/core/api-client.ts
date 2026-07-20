@@ -17,6 +17,10 @@ import type {
     LayerManifestResponse,
     Incident,
     AuditLogEntry,
+    CanonicalObservation,
+    FusionEvent,
+    AnomalyModelStatus,
+    FestivalScenarioStatus,
 } from '@/shared/types/common'
 import type { ItdaeGeofenceZone } from '@/features/itdae/types'
 
@@ -80,18 +84,22 @@ class ApiClient {
     }
 
     private async request<T>(endpoint: string, options?: RequestInit): Promise<T> {
+        const requestToken = getAccessToken()
         try {
             const response = await fetch(`${this.baseUrl}${endpoint}`, {
                 ...options,
                 headers: {
                     'Content-Type': 'application/json',
-                    ...this.authHeaders(),
+                    ...(requestToken ? { Authorization: `Bearer ${requestToken}` } : {}),
                     ...(options?.headers as Record<string, string> | undefined),
                 },
             })
 
             if (!response.ok) {
-                if (response.status === 401 && getAccessToken()) {
+                // Do not let a pre-login request that completes late erase a
+                // newer authenticated session. Only the token actually sent
+                // by this request may be invalidated by its 401 response.
+                if (response.status === 401 && requestToken && getAccessToken() === requestToken) {
                     setAccessToken(null)
                     throw new Error('Session expired or access denied. Sign in again.')
                 }
@@ -182,6 +190,32 @@ class ApiClient {
     /** Optional feed integrations (S-AIS, SAR, RF); requires authenticated viewer+. */
     async getIntegrationFeeds(): Promise<IntegrationFeedsResponse> {
         return this.request<IntegrationFeedsResponse>(`/v1/integrations/feeds`)
+    }
+
+    async getObservations(layerId?: string, limit = 1000): Promise<CanonicalObservation[]> {
+        const params = new URLSearchParams({ limit: limit.toString() })
+        if (layerId) params.set('layerId', layerId)
+        return this.request<CanonicalObservation[]>(`/v1/observations?${params.toString()}`)
+    }
+
+    async getFusionEvents(limit = 500): Promise<FusionEvent[]> {
+        return this.request<FusionEvent[]>(`/v1/fusion/events?limit=${limit}`)
+    }
+
+    async getAnomalyModelStatus(): Promise<AnomalyModelStatus> {
+        return this.request<AnomalyModelStatus>('/v1/models/anomaly/status')
+    }
+
+    async startFestivalScenario(speed = 20): Promise<FestivalScenarioStatus> {
+        return this.request<FestivalScenarioStatus>(`/v1/demo/scenarios/baltic-cable/start?speed=${speed}`, { method: 'POST' })
+    }
+
+    async resetFestivalScenario(): Promise<FestivalScenarioStatus> {
+        return this.request<FestivalScenarioStatus>('/v1/demo/scenarios/baltic-cable/reset', { method: 'POST' })
+    }
+
+    async getFestivalScenarioStatus(): Promise<FestivalScenarioStatus> {
+        return this.request<FestivalScenarioStatus>('/v1/demo/scenarios/baltic-cable/status')
     }
 
     /** Authoritative frontend auth context from the BFF policy surface. */
@@ -519,4 +553,3 @@ class ApiClient {
 }
 
 export const apiClient = new ApiClient(API_BASE_URL)
-

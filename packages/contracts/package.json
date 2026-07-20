@@ -3,6 +3,10 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
+  "types": "./src/generated/contracts.ts",
+  "exports": {
+    ".": "./src/generated/contracts.ts"
+  },
   "scripts": {
     "generate:types": "node scripts/generate-types.mjs"
   },

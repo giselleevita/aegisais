@@ -48,11 +48,11 @@ services:
       REDIS_URL: redis://:${REDIS_PASSWORD:-changeme}@redis:6379/0
       SECRET_KEY: ${SECRET_KEY:-local-docker-secret-key-change-before-production-2026}
       APP_ENV: docker
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:5174,http://localhost:5173,http://localhost:3000}
       AISSTREAM_API_KEY: ${AISSTREAM_API_KEY:-}
       AISSTREAM_BBOX: ${AISSTREAM_BBOX:-50.5,10.0,65.0,30.0}
-    # API is reached via nginx on 80/443. Uncomment for debugging without TLS:
-    # ports:
-    #   - "8000:8000"
+    ports:
+      - "${API_HOST_PORT:-8000}:8000"
     volumes:
       - ../../data:/app/data
     depends_on:
@@ -81,6 +81,7 @@ services:
       APP_ENV: docker
       BFF_HOST: 0.0.0.0
       BFF_PORT: 8081
+      UPSTREAM_API_URL: http://api:8000
       DATABASE_URL: postgres://aegisais:aegisais@db:5432/aegisais
       TELEGEOGRAPHY_TOKEN: ${TELEGEOGRAPHY_TOKEN:-}
       EO_PROVIDER_TOKEN: ${EO_PROVIDER_TOKEN:-}
@@ -88,6 +89,8 @@ services:
       - "${BFF_HOST_PORT:-8081}:8081"
     depends_on:
       db:
+        condition: service_healthy
+      api:
         condition: service_healthy
     healthcheck:
       test:
@@ -104,11 +107,13 @@ services:
     restart: unless-stopped
 
   web:
-    image: node:20-alpine
+    image: node:26-alpine
     working_dir: /workspace
     command: sh -c "cd apps/web && npm install && npm run dev -- --host 0.0.0.0 --port 5174"
     environment:
-      VITE_BFF_URL: http://bff:8081
+      VITE_API_BASE_URL: http://localhost:${API_HOST_PORT:-8000}
+      VITE_BFF_URL: http://localhost:${BFF_HOST_PORT:-8081}
+      VITE_OFFLINE_DEMO: ${VITE_OFFLINE_DEMO:-true}
     ports:
       - "${WEB_HOST_PORT:-5174}:5174"
     volumes:
@@ -187,8 +192,8 @@ services:
     environment:
       DATABASE_URL: postgresql+psycopg://aegisais:aegisais@db:5432/aegisais
       REDIS_URL: redis://:${REDIS_PASSWORD:-changeme}@redis:6379/0
-      ITDAE_AIS_API_KEY: ${ITDAE_AIS_API_KEY:-}
-      ITDAE_BALTIC_BBOX: ${ITDAE_BALTIC_BBOX:-}
+      AISSTREAM_API_KEY: ${AISSTREAM_API_KEY:-}
+      AISSTREAM_BBOX: ${AISSTREAM_BBOX:-50.5,10.0,65.0,30.0}
     depends_on:
       db:
         condition: service_healthy
@@ -219,11 +224,42 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+    volumes:
+      - ../../data:/app/data:ro
     healthcheck:
       test:
         [
           "CMD-SHELL",
           "test $(( $(date +%s) - $(stat -c %Y /tmp/worker_processing_heartbeat) )) -lt 120",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    restart: unless-stopped
+
+  observation-worker:
+    build:
+      context: ../../apps/api
+    command: python -m app.services.workers.observation_worker
+    environment:
+      DATABASE_URL: postgresql+psycopg://aegisais:aegisais@db:5432/aegisais
+      REDIS_URL: redis://:${REDIS_PASSWORD:-changeme}@redis:6379/0
+      SECRET_KEY: ${SECRET_KEY:-local-docker-secret-key-change-before-production-2026}
+      ML_MODEL_PATH: /app/data/models/isolation_forest.joblib
+      ML_MODEL_MANIFEST_PATH: /app/data/models/isolation_forest.manifest.json
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ../../data:/app/data:ro
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "test $(( $(date +%s) - $(stat -c %Y /tmp/worker_observation_heartbeat) )) -lt 120",
         ]
       interval: 30s
       timeout: 10s

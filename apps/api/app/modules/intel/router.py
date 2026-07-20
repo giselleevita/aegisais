@@ -5,8 +5,9 @@ from __future__ import annotations
 import logging
 from datetime import datetime, timedelta, timezone
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Depends, Query
 
+from app.modules.auth.dependencies import require_viewer_or_above
 from app.modules.intel.service import (
     generate_area_sitrep,
     generate_intsum,
@@ -15,7 +16,7 @@ from app.modules.intel.service import (
 
 _log = logging.getLogger("aegisais.intel.api")
 
-router = APIRouter()
+router = APIRouter(dependencies=[Depends(require_viewer_or_above)])
 
 
 @router.get("/intsum")

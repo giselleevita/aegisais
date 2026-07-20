@@ -24,7 +24,7 @@ if TYPE_CHECKING:
 
 from app.core.config import settings
 from app.infrastructure.ingest.loaders import AisPoint
-from app.services.pipeline import process_point
+from app.services.pipeline import enqueue_point
 
 _log = logging.getLogger("aegisais.aisstream")
 
@@ -103,14 +103,21 @@ class AISStreamClient:
         self._bbox = _parse_bbox(raw_bbox) if raw_bbox else _DEFAULT_BBOX
         self._running = False
         self._ws: ClientConnection | None = None
-        self._stats = {"messages_received": 0, "points_processed": 0, "errors": 0}
+        self._task: asyncio.Task[None] | None = None
+        self._stats: dict[str, Any] = {
+            "messages_received": 0,
+            "points_processed": 0,
+            "errors": 0,
+            "last_observed_at": None,
+            "last_error": None,
+        }
 
     @property
     def is_running(self) -> bool:
         return self._running
 
     @property
-    def stats(self) -> dict[str, int]:
+    def stats(self) -> dict[str, Any]:
         return dict(self._stats)
 
     async def start(self) -> None:
@@ -122,7 +129,7 @@ class AISStreamClient:
             return
         self._running = True
         _log.info("Starting aisstream.io live feed (bbox=%s)", self._bbox)
-        asyncio.get_event_loop().create_task(self._connect_loop())
+        self._task = asyncio.create_task(self._connect_loop(), name="aisstream-client")
 
     async def stop(self) -> None:
         self._running = False
@@ -131,6 +138,12 @@ class AISStreamClient:
                 await self._ws.close()
             except Exception:
                 pass
+        if self._task and self._task is not asyncio.current_task():
+            try:
+                await asyncio.wait_for(self._task, timeout=5)
+            except (TimeoutError, asyncio.CancelledError):
+                self._task.cancel()
+        self._task = None
         _log.info("AIS stream stopped. Stats: %s", self._stats)
 
     async def _connect_loop(self) -> None:
@@ -160,23 +173,28 @@ class AISStreamClient:
                             self._stats["messages_received"] += 1
                             point = _ais_message_to_point(msg)
                             if point:
-                                result = process_point(point)
+                                # Always enter through the canonical worker path.  Calling
+                                # process_point() here bypassed persistence and alert workers.
+                                enqueue_point(
+                                    point,
+                                    source="aisstream",
+                                    layer_id="maritime.ais.terrestrial",
+                                    confidence=0.9,
+                                )
                                 self._stats["points_processed"] += 1
-                                if result.get("alerts"):
-                                    for alert in result["alerts"]:
-                                        _log.info(
-                                            "Live alert: %s MMSI=%s severity=%d",
-                                            alert["type"], alert["mmsi"], alert["severity"],
-                                        )
+                                self._stats["last_observed_at"] = point.timestamp.isoformat()
                         except json.JSONDecodeError:
                             self._stats["errors"] += 1
                         except Exception as exc:
                             self._stats["errors"] += 1
+                            self._stats["last_error"] = type(exc).__name__
                             _log.warning("Error processing live AIS message: %s", exc)
 
             except Exception as exc:
                 if not self._running:
                     break
+                self._stats["errors"] += 1
+                self._stats["last_error"] = type(exc).__name__
                 _log.warning("AIS stream connection error: %s (reconnecting in %ds)", exc, backoff)
                 await asyncio.sleep(backoff)
                 backoff = min(backoff * 2, 60)

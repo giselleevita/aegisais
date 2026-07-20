@@ -12,6 +12,7 @@
     "postinstall": "node -v | grep -qE 'v20\\.(19|[2-9][0-9])|v22\\.(1[2-9]|[2-9][0-9])|v2[4-9]\\.' || (echo 'Error: Node.js 20.19+, 22.12+, or 24+ required. Run: nvm use' && exit 1)"
   },
   "dependencies": {
+    "@aegisais/contracts": "*",
     "@types/leaflet": "^1.9.21",
     "cesium": "^1.143.0",
     "leaflet": "^1.9.4",
