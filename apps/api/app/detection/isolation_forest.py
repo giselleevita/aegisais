@@ -181,6 +181,7 @@ def train_isolation_forest(
     dataset_bytes: bytes,
     metrics: dict[str, Any] | None = None,
     random_state: int = 42,
+    trained_at: str | None = None,
 ) -> dict[str, Any]:
     if len(feature_rows) < 20:
         raise ValueError("At least 20 normal trajectory windows are required")
@@ -211,12 +212,12 @@ def train_isolation_forest(
         "model_version": f"isolation-forest-{datetime.now(timezone.utc).strftime('%Y%m%d')}",
         "model_type": "sklearn.ensemble.IsolationForest",
         "sklearn_version": sklearn.__version__,
-        "trained_at": datetime.now(timezone.utc).isoformat(),
+        "trained_at": trained_at or datetime.now(timezone.utc).isoformat(),
         "random_state": random_state,
         "feature_schema": FEATURE_NAMES,
         "dataset_sha256": hashlib.sha256(dataset_bytes).hexdigest(),
         "artifact_sha256": artifact_hash,
-        "threshold_percentile": 80.0,
+        "threshold_percentile": 95.0,
         "calibration_scores": calibration_scores,
         "feature_stats": feature_stats,
         "metrics": metrics or {},
