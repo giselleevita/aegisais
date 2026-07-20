@@ -6,6 +6,9 @@ cd "$REPO_ROOT"
 
 python3 -m json.tool data/demo/festival_cable_multisensor.json >/dev/null
 python3 -m json.tool packages/contracts/schemas/Observation.schema.json >/dev/null
+python3 -m json.tool apps/web/public/maps/baltic-land.geojson >/dev/null
+test -f apps/web/public/maps/ATTRIBUTION.md
+test "$(wc -c < apps/web/public/maps/baltic-land.geojson)" -lt 5242880
 
 docker compose -f infra/docker/docker-compose.yml config --quiet
 
