@@ -201,4 +201,12 @@ def baltic_cable_scenario_status(
                 "AIS_SILENCE_NEAR_CABLE",
             ]),
         ).count(),
+        "festivalPositions": db.query(VesselPosition).filter(
+            VesselPosition.organisation_id == org_id,
+            VesselPosition.source == "festival-replay",
+        ).count(),
+        "festivalVessels": db.query(VesselLatest).filter(
+            VesselLatest.organisation_id == org_id,
+            VesselLatest.source == "festival-replay",
+        ).count(),
     }

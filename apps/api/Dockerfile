@@ -18,6 +18,7 @@ RUN pip install --upgrade pip setuptools wheel && \
 COPY alembic.ini /app/alembic.ini
 COPY app /app/app
 COPY alembic /app/alembic
+COPY scripts /app/scripts
 COPY start_with_migrations.sh /app/start.sh
 
 RUN chmod +x /app/start.sh

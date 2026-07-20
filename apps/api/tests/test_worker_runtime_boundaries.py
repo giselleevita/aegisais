@@ -122,3 +122,19 @@ def test_persistence_worker_accepts_aware_replay_time_against_naive_legacy_row(
         assert latest.lat == 54.2
         assert len(positions) == 2
     assert worker.batch == []
+
+
+def test_persistence_worker_flushes_partial_batch_on_tick(monkeypatch: pytest.MonkeyPatch) -> None:
+    from app.services.workers import persistence_worker as module
+
+    worker = module.PersistenceWorker.__new__(module.PersistenceWorker)
+    worker.batch = [{"mmsi": "273000002"}]
+    worker.last_flush = 0.0
+    worker.consumer = type("Consumer", (), {"get_lag": lambda self: 0})()
+    flushed: list[bool] = []
+    worker.flush = lambda: flushed.append(True)  # type: ignore[method-assign]
+    monkeypatch.setattr(module.time, "time", lambda: module.settings.persistence_flush_interval_sec + 1)
+
+    worker.on_tick()
+
+    assert flushed == [True]

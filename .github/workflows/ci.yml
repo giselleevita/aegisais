@@ -227,3 +227,89 @@ jobs:
         run: npm run test:e2e -w @aegisais/web
         env:
           CI: "true"
+
+  festival-real-stack:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: [backend, frontend]
+    env:
+      COMPOSE_PROJECT_NAME: aegisfestivalci
+      POSTGRES_HOST_PORT: "5433"
+      REDIS_HOST_PORT: "6380"
+      API_HOST_PORT: "58000"
+      BFF_HOST_PORT: "58081"
+      WEB_HOST_PORT: "55174"
+      CORS_ALLOWED_ORIGINS: http://127.0.0.1:55174,http://localhost:55174
+      VITE_OFFLINE_DEMO: "true"
+      FESTIVAL_TEST_USERNAME: festival-ci-admin
+      FESTIVAL_TEST_PASSWORD: festival-ci-password-2026
+      API_URL: http://127.0.0.1:58000
+      BASE_URL: http://127.0.0.1:55174
+      REAL_STACK: "1"
+      FESTIVAL_LATENCY_OUTPUT: artifacts/festival-latency.json
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "26"
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v6
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('package-lock.json') }}
+
+      - name: Install Playwright Chromium
+        working-directory: apps/web
+        run: npx playwright install --with-deps chromium
+
+      - name: Start isolated festival stack
+        run: |
+          mkdir -p artifacts
+          docker compose -f infra/docker/docker-compose.yml up -d --build --wait --wait-timeout 240 \
+            db redis api processing-worker persistence-worker observation-worker alert-worker bff web
+
+      - name: Seed non-production festival admin
+        run: |
+          docker compose -f infra/docker/docker-compose.yml exec -T \
+            -e FESTIVAL_TEST_USERNAME -e FESTIVAL_TEST_PASSWORD \
+            api python scripts/seed_demo_admin.py
+
+      - name: Run festival preflight
+        run: ./scripts/festival_preflight.sh
+
+      - name: Enforce five-run replay latency and state thresholds
+        run: python3 scripts/benchmark_festival_replay.py
+
+      - name: Run two-cycle offline browser acceptance
+        working-directory: apps/web
+        run: npx playwright test e2e/festival-real-stack.spec.ts --project=chromium
+        env:
+          CI: "true"
+
+      - name: Capture compose logs on failure
+        if: failure()
+        run: docker compose -f infra/docker/docker-compose.yml logs --no-color > artifacts/compose.log
+
+      - name: Upload festival acceptance evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: festival-real-stack-evidence
+          path: |
+            artifacts/
+            apps/web/test-results/
+          if-no-files-found: ignore
+
+      - name: Stop isolated festival stack
+        if: always()
+        run: docker compose -f infra/docker/docker-compose.yml down --volumes --remove-orphans
