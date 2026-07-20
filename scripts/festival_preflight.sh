@@ -12,8 +12,9 @@ test "$(wc -c < apps/web/public/maps/baltic-land.geojson)" -lt 5242880
 
 docker compose -f infra/docker/docker-compose.yml config --quiet
 
+compose_services="$(docker compose -f infra/docker/docker-compose.yml config --services)"
 for service in api processing-worker persistence-worker observation-worker alert-worker db redis web; do
-  docker compose -f infra/docker/docker-compose.yml config --services | rg -qx "$service"
+  grep -qx "$service" <<<"$compose_services"
 done
 
 if [[ -f data/models/isolation_forest.joblib && -f data/models/isolation_forest.manifest.json ]]; then
