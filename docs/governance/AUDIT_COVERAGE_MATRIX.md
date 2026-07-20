@@ -10,7 +10,7 @@ This document operationalizes BL-006 and provides a machine-checkable source of 
 | Incidents     | update                         | human      | Yes            | actor, actor_type=human, organisation_id, incident_id, changed_fields, correlation_id                     | API tests + CI gate                 | Security Engineering |
 | Incidents     | delete                         | human      | Yes            | actor, actor_type=human, organisation_id, incident_id, correlation_id, provenance                         | API tests + CI gate                 | Security Engineering |
 | Incidents     | create (system — alert worker) | system     | Yes            | actor=system:alert_worker, actor_type=system, organisation_id, alert_id, mmsi, alert_type, correlation_id | Worker integration tests + CI gate  | Detection Pipeline   |
-| Alerts        | create (system)                | system     | Yes            | actor_type=system, organisation_id, alert_id, rule_type, evidence_hash, correlation_id                    | Worker integration tests + CI gate  | Detection Pipeline   |
+| Alerts        | create (system)                | system     | Yes            | actor=system:alert_worker, organisation_id, alert_id, rule_type, evidence_hash, fusion_event_id, confidence, provenance, correlation_id | Worker integration tests + CI gate  | Detection Pipeline   |
 | Auth          | token revoke                   | human      | Yes            | actor, organisation_id, subject_id, correlation_id                                                        | Auth tests + CI gate                | Security Engineering |
 | Vessel access | cross-tenant denied access     | human      | Yes            | actor, organisation_id, target_org_id, route, correlation_id                                              | Security regression tests + CI gate | Backend API          |
 
@@ -21,6 +21,13 @@ System-generated audit events (actor_type=system) are distinguished from human-d
 - `user_id` field set to a stable service-identity string (e.g. `system:alert_worker`).
 - `correlation_id` set to the Redis Stream message ID, providing end-to-end traceability from ingestion to incident.
 - Events are emitted **within the same database transaction** as the resource mutation, so an audit row is either committed with the resource or rolled back together.
+
+### `alert.create.system` — Alert Worker
+
+Emitted once when the worker persists a new alert. The audit record contains the
+alert ID, MMSI, alert type, evidence hash, optional fusion-event ID, confidence,
+provenance, and Redis Stream correlation ID. Constraint-backed alert
+idempotency suppresses both duplicate alerts and duplicate audit rows.
 
 ### `incident.create.system` — Alert Worker
 
@@ -37,6 +44,8 @@ Emitted by `apps/api/app/services/workers/alert_worker.py::handle_alert` wheneve
 | `details.alert_id`   | alert.id                 |                                                   |
 | `details.mmsi`       | alert.mmsi               |                                                   |
 | `details.alert_type` | alert.type               |                                                   |
+| `details.evidence_hash` | alert.evidence_hash    | Immutable evidence fingerprint                    |
+| `details.fusion_event_id` | alert.fusion_event_id | Canonical fusion-event link when present          |
 
 ## CI Enforcement Contract
 
@@ -51,3 +60,4 @@ Emitted by `apps/api/app/services/workers/alert_worker.py::handle_alert` wheneve
 | Date       | Scope                                      | Evidence                                                                 |
 | ---------- | ------------------------------------------ | ------------------------------------------------------------------------ |
 | 2026-06-11 | Incident, billing, and alert-worker paths  | Backend suite: 319 passed, 1 expected xfail; MyPy, Ruff, and CI gate pass |
+| 2026-07-20 | Fused alert and incident traceability     | Transactional alert/incident audit assertions, deduplication tests, and CI audit gate |
