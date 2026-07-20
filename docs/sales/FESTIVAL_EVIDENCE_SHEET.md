@@ -17,7 +17,7 @@
 | AIS vessel tracks | Synthetic | Festival replay; not live |
 | SAR vessel detection | Synthetic GFW-compatible record | Demonstrates adapter/fusion contract; not a satellite tasking result |
 | Cable corridors | Approximate repository fixtures | Demonstration geometry; not authoritative navigation data |
-| Isolation Forest training windows | Deterministically augmented synthetic normal transit | Baseline only; real-world precision not established |
+| Isolation Forest training windows | Synthetic, MMSI-separated and time-separated cargo, tanker, ferry, and research tracks | 120 held-out normal vessel-hours; baseline only; real-world precision not established |
 
 ## Validated by automated tests
 
