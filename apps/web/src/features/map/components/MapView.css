@@ -35,6 +35,15 @@
   border-radius: var(--radius-lg);
 }
 
+.offline-basemap {
+  background-color: #07111f;
+  background-image:
+    linear-gradient(rgba(56, 189, 248, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(56, 189, 248, 0.08) 1px, transparent 1px),
+    radial-gradient(circle at 50% 50%, rgba(14, 165, 233, 0.12), transparent 60%);
+  background-size: 48px 48px, 48px 48px, 100% 100%;
+}
+
 .map-banner {
   display: flex;
   flex-direction: column;

@@ -6,7 +6,7 @@ import type { FromSchema } from "json-schema-to-ts";
 
 export const AlertSchema = {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://aegisais.dev/contracts/Alert.schema.json",
+  "$id": "./Alert.schema.json",
   "title": "Alert",
   "type": "object",
   "additionalProperties": false,
@@ -82,7 +82,7 @@ export const AlertSchema = {
 
 export const AssetSchema = {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://aegisais.dev/contracts/Asset.schema.json",
+  "$id": "./Asset.schema.json",
   "title": "Asset",
   "type": "object",
   "additionalProperties": false,
@@ -146,14 +146,14 @@ export const AssetSchema = {
 
 export const ConfidenceSchema = {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://aegisais.dev/contracts/Confidence.schema.json",
+  "$id": "./Confidence.schema.json",
   "title": "Confidence",
   "$ref": "_common.json#/$defs/Confidence"
 } as const;
 
 export const DeviceSchema = {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://aegisais.dev/contracts/Device.schema.json",
+  "$id": "./Device.schema.json",
   "title": "Device",
   "type": "object",
   "additionalProperties": false,
@@ -214,7 +214,7 @@ export const DeviceSchema = {
 
 export const DeviceHeartbeatSchema = {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://aegisais.dev/contracts/DeviceHeartbeat.schema.json",
+  "$id": "./DeviceHeartbeat.schema.json",
   "title": "DeviceHeartbeat",
   "type": "object",
   "additionalProperties": false,
@@ -252,7 +252,7 @@ export const DeviceHeartbeatSchema = {
 
 export const EntitySchema = {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://aegisais.dev/contracts/Entity.schema.json",
+  "$id": "./Entity.schema.json",
   "title": "Entity",
   "type": "object",
   "additionalProperties": false,
@@ -312,7 +312,7 @@ export const EntitySchema = {
 
 export const EventSchema = {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://aegisais.dev/contracts/Event.schema.json",
+  "$id": "./Event.schema.json",
   "title": "Event",
   "type": "object",
   "additionalProperties": false,
@@ -379,7 +379,7 @@ export const EventSchema = {
 
 export const ImportBundleSchema = {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://aegisais.dev/contracts/ImportBundle.schema.json",
+  "$id": "./ImportBundle.schema.json",
   "title": "ImportBundle",
   "description": "Batch import payload for historical AIS track data (BL-011 competitor migration, BL-015 interoperability profile)",
   "type": "object",
@@ -482,7 +482,7 @@ export const ImportBundleSchema = {
 
 export const IncidentSchema = {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://aegisais.dev/contracts/Incident.schema.json",
+  "$id": "./Incident.schema.json",
   "title": "Incident",
   "type": "object",
   "additionalProperties": false,
@@ -562,7 +562,7 @@ export const IncidentSchema = {
 
 export const LayerDefinitionSchema = {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://aegisais.dev/contracts/LayerDefinition.schema.json",
+  "$id": "./LayerDefinition.schema.json",
   "title": "LayerDefinition",
   "type": "object",
   "additionalProperties": false,
@@ -612,7 +612,7 @@ export const LayerDefinitionSchema = {
 
 export const ObservationSchema = {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://aegisais.dev/contracts/Observation.schema.json",
+  "$id": "./Observation.schema.json",
   "title": "Observation",
   "type": "object",
   "additionalProperties": false,
@@ -665,14 +665,14 @@ export const ObservationSchema = {
 
 export const ProvenanceSchema = {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://aegisais.dev/contracts/Provenance.schema.json",
+  "$id": "./Provenance.schema.json",
   "title": "Provenance",
   "$ref": "_common.json#/$defs/Provenance"
 } as const;
 
 export const SensorNodeSchema = {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://aegisais.dev/contracts/SensorNode.schema.json",
+  "$id": "./SensorNode.schema.json",
   "title": "SensorNode",
   "type": "object",
   "additionalProperties": false,
@@ -718,7 +718,7 @@ export const SensorNodeSchema = {
 
 export const SensorReadingSchema = {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://aegisais.dev/contracts/SensorReading.schema.json",
+  "$id": "./SensorReading.schema.json",
   "title": "SensorReading",
   "type": "object",
   "additionalProperties": false,
@@ -758,7 +758,7 @@ export const SensorReadingSchema = {
 
 export const TelemetryEnvelopeSchema = {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://aegisais.dev/contracts/TelemetryEnvelope.schema.json",
+  "$id": "./TelemetryEnvelope.schema.json",
   "title": "TelemetryEnvelope",
   "type": "object",
   "additionalProperties": false,
@@ -805,7 +805,7 @@ export const TelemetryEnvelopeSchema = {
 
 export const TrackSchema = {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://aegisais.dev/contracts/Track.schema.json",
+  "$id": "./Track.schema.json",
   "title": "Track",
   "type": "object",
   "additionalProperties": false,
@@ -859,7 +859,7 @@ export const TrackSchema = {
 
 export const CommonSchema = {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://aegisais.dev/contracts/common.schema.json",
+  "$id": "_common.json",
   "title": "Common Contract Types",
   "$defs": {
     "AccessMetadata": {

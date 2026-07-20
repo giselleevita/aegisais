@@ -45,9 +45,31 @@ def test_integration_feeds_ok_for_viewer(client: TestClient):
     body = r.json()
     assert "timestamp" in body
     assert "feeds" in body
-    assert len(body["feeds"]) == 3
+    assert len(body["feeds"]) == 4
     ids = {f["id"] for f in body["feeds"]}
-    assert ids == {"satellite_ais", "sar_eo", "rf_sigint"}
+    assert ids == {"terrestrial_ais", "satellite_ais", "sar_eo", "rf_sigint"}
     for f in body["feeds"]:
-        assert f["status"] in ("ready", "partial", "disconnected", "error")
+        assert f["status"] in ("ready", "partial", "disconnected", "unavailable", "error")
         assert "label" in f
+        assert "mode" in f
+        assert "licenceClass" in f
+
+
+def test_integration_feed_errors_never_expose_provider_tokens(client: TestClient, monkeypatch):
+    from app.modules.itdae.ingestion.aisstream_client import aisstream_client
+
+    token = _token_for_role(client, "viewer")
+    monkeypatch.setattr(
+        aisstream_client,
+        "_stats",
+        {"last_error": "websocket rejected api_key=super-secret-provider-token"},
+    )
+    response = client.get(
+        "/v1/integrations/feeds",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert response.status_code == 200
+    serialized = response.text
+    assert "super-secret-provider-token" not in serialized
+    terrestrial = next(row for row in response.json()["feeds"] if row["id"] == "terrestrial_ais")
+    assert terrestrial["errorCode"] == "feed_runtime_error"

@@ -112,6 +112,25 @@
   border: 1px solid var(--border-subtle);
 }
 
+.aml-inv__provenance {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0.75rem;
+  margin: 0;
+}
+
+.aml-inv__provenance dt {
+  color: var(--text-muted);
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.aml-inv__provenance dd {
+  margin: 0.2rem 0 0;
+  overflow-wrap: anywhere;
+}
+
 .aml-inv__notes p {
   margin: 0;
   color: var(--text-secondary);

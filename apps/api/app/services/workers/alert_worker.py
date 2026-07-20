@@ -11,6 +11,10 @@ from app.core.database import SessionLocal
 from app.core.logging import configure_logging
 from app.infrastructure.messaging.consumer import RedisConsumer
 from app.modules.alerts.models import Alert, derive_alert_idempotency_key, derive_evidence_hash
+from app.modules.assets.models import Asset  # noqa: F401 - registers FK target in worker metadata
+from app.modules.auth.models import Organisation  # noqa: F401 - registers FK target in worker metadata
+from app.modules.iot.models import Device  # noqa: F401 - registers FK target in worker metadata
+from app.modules.observations.models import FusionEvent  # noqa: F401 - registers FK target in worker metadata
 from app.modules.audit.services import AuditService
 from app.modules.incidents.service import create_incident_from_alert_with_flag
 from app.services.workers.heartbeat import WorkerHeartbeat
@@ -61,7 +65,7 @@ def handle_alert(msg_id: str, data: Dict[str, Any]):
         try:
             with SessionLocal() as db:
                 ts = datetime.fromisoformat(data["timestamp"])
-                org_id = settings.default_organisation_id
+                org_id = int(data.get("organisation_id") or settings.default_organisation_id)
 
                 idem_key = derive_alert_idempotency_key(
                     organisation_id=org_id,
@@ -97,9 +101,32 @@ def handle_alert(msg_id: str, data: Dict[str, Any]):
                             evidence=data["evidence"],
                             evidence_hash=data.get("evidence_hash") or derive_evidence_hash(data["evidence"]),  # BL-009
                             idempotency_key=idem_key,
+                            confidence=data.get("confidence"),
+                            provenance=data.get("provenance"),
+                            fusion_event_id=data.get("fusion_event_id"),
                         )
                         db.add(a)
                         db.flush()
+
+                        AuditService.log_event(
+                            db,
+                            action="alert.create.system",
+                            change_summary="Alert persisted by alert worker",
+                            organisation_id=int(a.organisation_id),
+                            user_id="system:alert_worker",
+                            resource_id=str(a.id),
+                            resource_type="alert",
+                            details={
+                                "alert_id": a.id,
+                                "mmsi": a.mmsi,
+                                "alert_type": a.type,
+                                "evidence_hash": a.evidence_hash,
+                                "fusion_event_id": a.fusion_event_id,
+                                "confidence": a.confidence,
+                                "provenance": a.provenance,
+                            },
+                            correlation_id=msg_id,
+                        )
                 except IntegrityError:
                     existing = _get_existing_by_idempotency_key(db, idem_key)
                     if existing is None:
@@ -131,6 +158,8 @@ def handle_alert(msg_id: str, data: Dict[str, Any]):
                                 "alert_id": a.id,
                                 "mmsi": a.mmsi,
                                 "alert_type": a.type,
+                                "evidence_hash": a.evidence_hash,
+                                "fusion_event_id": a.fusion_event_id,
                             },
                             correlation_id=msg_id,
                         )

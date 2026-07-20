@@ -57,15 +57,16 @@ class _MockWebSocket:
 
 @pytest.mark.asyncio
 async def test_aisstream_client_processes_position_report():
-    """Client parses a PositionReport and calls process_point."""
+    """Client parses a PositionReport and enqueues it for worker processing."""
     processed = []
     client = None
 
-    def fake_process(point):
+    def fake_enqueue(point, **metadata):
         processed.append(point)
+        assert metadata["source"] == "aisstream"
+        assert metadata["layer_id"] == "maritime.ais.terrestrial"
         assert client is not None
         client._running = False
-        return {"alerts": []}
 
     mock_ws = _MockWebSocket([json.dumps(POSITION_REPORT)])
     websockets_mock = MagicMock()
@@ -75,7 +76,7 @@ async def test_aisstream_client_processes_position_report():
 
     import sys
     with patch.dict(sys.modules, {"websockets": websockets_mock}):
-        with patch("app.modules.itdae.ingestion.aisstream_client.process_point", side_effect=fake_process):
+        with patch("app.modules.itdae.ingestion.aisstream_client.enqueue_point", side_effect=fake_enqueue):
             with patch("app.modules.itdae.ingestion.aisstream_client.settings") as mock_settings:
                 mock_settings.AISSTREAM_API_KEY = "test-key"
                 mock_settings.AISSTREAM_BBOX = ""
@@ -105,7 +106,7 @@ async def test_aisstream_client_handles_connection_error():
 
     import sys
     with patch.dict(sys.modules, {"websockets": websockets_mock}):
-        with patch("app.modules.itdae.ingestion.aisstream_client.process_point", return_value={"alerts": []}):
+        with patch("app.modules.itdae.ingestion.aisstream_client.enqueue_point"):
             with patch("app.modules.itdae.ingestion.aisstream_client.settings") as mock_settings:
                 mock_settings.AISSTREAM_API_KEY = "test-key"
                 mock_settings.AISSTREAM_BBOX = ""

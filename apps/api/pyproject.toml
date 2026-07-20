@@ -35,6 +35,8 @@ dependencies = [
   "idna>=3.18",
   "urllib3>=2.7.0",
   "requests>=2.31,<3",
+  "scikit-learn==1.8.0",
+  "joblib==1.5.3",
 ]
 
 [project.optional-dependencies]

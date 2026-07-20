@@ -882,6 +882,37 @@
   color: var(--text-muted);
 }
 
+.aml-demo-control {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.aml-demo-control p {
+  margin: 0.35rem 0;
+}
+
+.aml-demo-control__actions {
+  display: flex;
+  gap: 0.6rem;
+}
+
+.aml-demo-control__actions button {
+  border: 1px solid var(--accent-border);
+  border-radius: 10px;
+  background: var(--accent-dim);
+  color: var(--accent);
+  cursor: pointer;
+  padding: 0.55rem 0.8rem;
+}
+
+.aml-demo-control__actions button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
 .aml-feed-details {
   margin: 0.75rem 0 0;
   max-width: 36rem;

@@ -22,6 +22,8 @@ from app.modules.itdae.api.routes_itdae import router as itdae_router
 from app.modules.sais.api.routes_sais import router as sais_router
 from app.api.v1.pilot import router as pilot_router
 from app.api.v1.import_ais import router as import_ais_router
+from app.api.v1.observations import router as observations_router
+from app.api.v1.demo import router as demo_router
 from app.modules.auth.api.routes_auth import router as auth_router
 from prometheus_fastapi_instrumentator import Instrumentator
 
@@ -125,6 +127,8 @@ app.include_router(itdae_router,      prefix="/api/v1/itdae", tags=["itdae"])
 app.include_router(sais_router,       prefix="/v1/sais",      tags=["sais"])
 app.include_router(pilot_router,      prefix="/v1",           tags=["pilot"])
 app.include_router(import_ais_router, prefix="/v1",           tags=["import"])
+app.include_router(observations_router, prefix="/v1",         tags=["observations", "fusion"])
+app.include_router(demo_router,       prefix="/v1",           tags=["demo"])
 
 # Optional routers — loaded only if their module imported successfully
 for label, router in _optional_routers:

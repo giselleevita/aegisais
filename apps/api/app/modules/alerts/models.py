@@ -80,6 +80,9 @@ class Alert(Base):
     # to correlate equivalent detections across time windows.
     # NULL on legacy rows that pre-date this column.
     evidence_hash = Column(String(64), nullable=True, index=True)
+    confidence = Column(JSON, nullable=True)
+    provenance = Column(JSON, nullable=True)
+    fusion_event_id = Column(String(36), ForeignKey("fusion_events.id", ondelete="SET NULL"), nullable=True, index=True)
 
     # Alert management fields
     status = Column(String, default="new", nullable=False, index=True)  # new, reviewed, resolved, false_positive

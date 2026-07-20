@@ -140,12 +140,32 @@ export default function AlertInvestigationPage() {
             <span className="label">Class</span>
             <span>{getAlertClassification(alertRecord.type).tierLabel}</span>
           </div>
+          <div>
+            <span className="label">Confidence</span>
+            <span>{alertRecord.confidence ? `${Math.round(alertRecord.confidence.score * 100)}% · ${alertRecord.confidence.method}` : 'Not supplied'}</span>
+          </div>
+          <div>
+            <span className="label">Source</span>
+            <span>{alertRecord.provenance?.source || 'Legacy rule pipeline'}</span>
+          </div>
         </section>
 
         {alertRecord.evidence ? (
           <section className="aml-inv__evidence">
             <h2 className="aml-inv__h2">Evidence</h2>
             {renderEvidence(alertRecord)}
+          </section>
+        ) : null}
+
+        {alertRecord.provenance ? (
+          <section className="aml-inv__evidence">
+            <h2 className="aml-inv__h2">Provenance &amp; lineage</h2>
+            <dl className="aml-inv__provenance">
+              <div><dt>Processor</dt><dd>{alertRecord.provenance.processor}</dd></div>
+              <div><dt>Ingested</dt><dd>{new Date(alertRecord.provenance.ingestedAt).toLocaleString()}</dd></div>
+              <div><dt>Event</dt><dd>{alertRecord.fusion_event_id || 'Not linked'}</dd></div>
+              <div><dt>Lineage</dt><dd>{alertRecord.provenance.lineage?.length || 0} source observations</dd></div>
+            </dl>
           </section>
         ) : null}
 
