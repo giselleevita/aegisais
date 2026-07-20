@@ -42,7 +42,8 @@ Do not demonstrate if the preflight reports a fixture, migration, contract, or a
 - Scenario data, cable geometry, SAR detections, and model artifacts are local.
 - Live AIS, satellite AIS, GFW, and RF providers may be disconnected without blocking replay.
 - The analyst console marks unavailable or stale feeds instead of showing an empty feed as healthy.
-- Docker defaults to `VITE_OFFLINE_DEMO=true`, which disables remote tiles and renders a local grid beneath cable, track, sensor, and alert overlays. Set it to `false` only when an approved connected basemap is available.
+- Docker defaults to `VITE_OFFLINE_DEMO=true`, which disables remote tiles and renders a bundled Natural Earth Baltic land/coastline vector beneath cable, track, sensor, and alert overlays. Set it to `false` only when an approved connected basemap is available.
+- The clipped 1:50m vector is public-domain Natural Earth data; attribution and source details ship in `apps/web/public/maps/ATTRIBUTION.md`.
 
 ## Reset behavior
 

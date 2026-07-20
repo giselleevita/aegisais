@@ -8,6 +8,7 @@
 - Immutable fusion events and explainable alerts with confidence, thresholds, source IDs, and processor versions.
 - Isolation Forest trajectory baseline with a hashed artifact, feature manifest, empirical percentile, and rule fallback.
 - Analyst layers for AIS, SAR, fused risk, cable zones, feed health, and evidence investigation.
+- A bundled, attributed Natural Earth Baltic vector basemap that requires no venue network access.
 
 ## Inputs used in the Berlin scenario
 

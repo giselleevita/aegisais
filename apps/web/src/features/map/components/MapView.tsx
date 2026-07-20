@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { MapContainer, TileLayer, Marker, Popup, Polyline } from 'react-leaflet'
+import { GeoJSON, MapContainer, TileLayer, Marker, Popup, Polyline } from 'react-leaflet'
 import type { LatLngExpression } from 'leaflet'
+import type { GeoJsonObject } from 'geojson'
 import 'leaflet/dist/leaflet.css'
 import '@/shared/map/leafletSetup'
 import MapBounds from '@/shared/map/MapBounds'
@@ -56,7 +57,28 @@ export default function MapView({ selectedVessel, onVesselClick, showInfrastruct
     const [controlsOpen, setControlsOpen] = useState(true)
     const [loadError, setLoadError] = useState<string | null>(null)
     const [trackError, setTrackError] = useState<string | null>(null)
+    const [offlineLand, setOfflineLand] = useState<GeoJsonObject | null>(null)
+    const [offlineMapError, setOfflineMapError] = useState<string | null>(null)
     const pausedRef = useRef(false)
+
+    useEffect(() => {
+        if (!offlineDemo) return
+        const controller = new AbortController()
+        fetch('/maps/baltic-land.geojson', { signal: controller.signal })
+            .then((response) => {
+                if (!response.ok) throw new Error(`offline basemap returned ${response.status}`)
+                return response.json() as Promise<GeoJsonObject>
+            })
+            .then((land) => {
+                setOfflineLand(land)
+                setOfflineMapError(null)
+            })
+            .catch((error: unknown) => {
+                if (error instanceof DOMException && error.name === 'AbortError') return
+                setOfflineMapError(error instanceof Error ? error.message : 'offline basemap unavailable')
+            })
+        return () => controller.abort()
+    }, [offlineDemo])
 
     const loadData = useCallback(async () => {
         if (pausedRef.current) return
@@ -189,7 +211,13 @@ export default function MapView({ selectedVessel, onVesselClick, showInfrastruct
             {offlineDemo && (
                 <div className="map-banner" role="status">
                     <strong>Offline basemap mode</strong>
-                    <span>Sensor, cable, track, and alert layers are local; remote map tiles are disabled.</span>
+                    <span>
+                        {offlineMapError
+                            ? `Local Baltic vector basemap degraded: ${offlineMapError}`
+                            : offlineLand
+                                ? 'Natural Earth Baltic vector basemap loaded locally; remote map tiles are disabled.'
+                                : 'Loading the local Natural Earth Baltic vector basemap…'}
+                    </span>
                 </div>
             )}
             <details className="map-controls" open={controlsOpen} onToggle={(e) => setControlsOpen(e.currentTarget.open)}>
@@ -246,6 +274,16 @@ export default function MapView({ selectedVessel, onVesselClick, showInfrastruct
                 {!offlineDemo && <TileLayer
                     attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                     url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                />}
+                {offlineDemo && offlineLand && <GeoJSON
+                    data={offlineLand}
+                    attribution='Made with Natural Earth. Free vector and raster map data @ naturalearthdata.com.'
+                    style={{
+                        color: '#486581',
+                        weight: 1,
+                        fillColor: '#15283b',
+                        fillOpacity: 0.92,
+                    }}
                 />}
                 {bounds.length > 0 && <MapBounds bounds={bounds} />}
 
