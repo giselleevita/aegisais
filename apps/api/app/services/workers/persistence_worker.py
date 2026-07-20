@@ -158,16 +158,20 @@ class PersistenceWorker:
                 self.batch = []
                 self.last_flush = time.time()
 
+    def on_tick(self):
+        STREAM_LAG.labels(stream=settings.stream_ais_processed).set(
+            self.consumer.get_lag()
+        )
+        HEARTBEAT.on_loop_tick()
+        # A final partial batch may arrive immediately after a flush. Flush it
+        # on the heartbeat instead of waiting for a message that may never arrive.
+        if self.batch and time.time() - self.last_flush >= settings.persistence_flush_interval_sec:
+            self.flush()
+
     def run(self):
         log.info("starting_persistence_worker")
         try:
-            def on_tick():
-                STREAM_LAG.labels(stream=settings.stream_ais_processed).set(
-                    self.consumer.get_lag()
-                )
-                HEARTBEAT.on_loop_tick()
-
-            self.consumer.listen(callback=self.handle_message, on_tick=on_tick)
+            self.consumer.listen(callback=self.handle_message, on_tick=self.on_tick)
         except KeyboardInterrupt:
             self.stop()
 
