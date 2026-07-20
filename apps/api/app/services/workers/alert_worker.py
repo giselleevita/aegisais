@@ -107,6 +107,26 @@ def handle_alert(msg_id: str, data: Dict[str, Any]):
                         )
                         db.add(a)
                         db.flush()
+
+                        AuditService.log_event(
+                            db,
+                            action="alert.create.system",
+                            change_summary="Alert persisted by alert worker",
+                            organisation_id=int(a.organisation_id),
+                            user_id="system:alert_worker",
+                            resource_id=str(a.id),
+                            resource_type="alert",
+                            details={
+                                "alert_id": a.id,
+                                "mmsi": a.mmsi,
+                                "alert_type": a.type,
+                                "evidence_hash": a.evidence_hash,
+                                "fusion_event_id": a.fusion_event_id,
+                                "confidence": a.confidence,
+                                "provenance": a.provenance,
+                            },
+                            correlation_id=msg_id,
+                        )
                 except IntegrityError:
                     existing = _get_existing_by_idempotency_key(db, idem_key)
                     if existing is None:
@@ -138,6 +158,8 @@ def handle_alert(msg_id: str, data: Dict[str, Any]):
                                 "alert_id": a.id,
                                 "mmsi": a.mmsi,
                                 "alert_type": a.type,
+                                "evidence_hash": a.evidence_hash,
+                                "fusion_event_id": a.fusion_event_id,
                             },
                             correlation_id=msg_id,
                         )
