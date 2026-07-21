@@ -12,10 +12,6 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### Added
 
 - `scripts/start_full_stack.sh` to start the core Docker processing stack with automatic host-port selection when common ports are already occupied
-- `docs/RUNTIME_AND_TRAINING_IMPLEMENTATION_PLAN.md` documenting the runtime remediation and the remaining work needed for a real training pipeline
-- `docs/NATO_FUNDABILITY_8_WEEK_EXECUTION_BOARD.md` with route-gated delivery milestones for DIANA/NIF/NCIA readiness
-- `docs/NATO_SPOOFING_MODEL_DESIGN.md` freezing the D-03 spoofing and dark-vessel MVP design
-- `docs/NATO_PARTNER_OUTREACH_TARGET_LIST.md` capturing the D-06 pilot, integrator, and compliance outreach list
 - `docs/D-01_LIVE_INGEST_EVIDENCE_CAPTURE.md` — runbook for executing 72-hour monitored live AIS stream ingest with quantified evidence targets
 - `scripts/capture_d01_evidence.sh` — background metric-collection script that logs ingest rate, processing latency, queue depth, and error events every 5 minutes
 - `scripts/finalize_d01_evidence.sh` — end-of-run script that generates `D-01_INGEST_EVIDENCE_PACKAGE_FINAL.md` with submission-ready metrics, uptime calculation, and artifact manifest

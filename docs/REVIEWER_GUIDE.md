@@ -1,6 +1,6 @@
 # AegisAIS — Reviewer Guide
 
-**Private repository — available on request.** This guide helps recruiters and senior engineers evaluate the platform in about 15 minutes without production credentials.
+This guide helps engineers evaluate the platform in about 15 minutes without production credentials.
 
 ## What problem it demonstrates
 
@@ -41,7 +41,3 @@ For code-only review (no Docker): skim `apps/api/app/` detection modules and `ap
 
 - **Is:** Maritime AIS integrity platform with map UI, BFF, and documented supply-chain controls
 - **Is not:** Certified for regulated maritime operations without further validation and deployment hardening
-
-## Request access
-
-Contact via GitHub profile or portfolio site. Reviewers typically receive read access plus this guide and the main README.
