@@ -23,7 +23,7 @@ dependencies = [
   "passlib[bcrypt]==1.7.4",
   "python-jose[cryptography]==3.5.0",
   "pyotp==2.10.0",
-  "cryptography>=46.0.6",
+  "cryptography>=49.0.0",
   "ecdsa>=0.19.2",
   "structlog==25.5.0",
   "prometheus-fastapi-instrumentator==8.0.0",
