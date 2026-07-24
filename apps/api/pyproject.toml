@@ -15,7 +15,7 @@ dependencies = [
   "sqlalchemy==2.0.51",
   "greenlet==3.3.2",
   "alembic==1.18.4",
-  "psycopg[binary]==3.3.3",
+  "psycopg[binary]==3.3.4",
   "python-multipart==0.0.32",
   "pandas==3.0.3",
   "zstandard==0.25.0",
