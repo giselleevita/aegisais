@@ -37,8 +37,8 @@ cd "$ROOT_DIR"
 "$PYTHON_BIN" -m venv "$VENV_DIR"
 "$VENV_DIR/bin/pip" install --quiet \
   "pip==25.3" \
-  "setuptools==82.0.1" \
-  "wheel==0.46.3" \
+  "setuptools==84.0.0" \
+  "wheel==0.48.0" \
   "pip-tools==7.5.3"
 
 runtime_raw="$(mktemp "$OUTPUT_DIR/.requirements.lock.raw.XXXXXX")"
