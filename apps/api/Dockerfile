@@ -9,11 +9,14 @@ WORKDIR /app
 COPY requirements.lock ./requirements.lock
 
 # Install the locked runtime dependency set before copying application code so
-# source edits do not invalidate the dependency layer.
+# source edits do not invalidate the dependency layer. Remove pip, setuptools,
+# and wheel afterward because build tooling is unnecessary at runtime and its
+# vendored libraries inflate the image's vulnerability surface.
 RUN pip install --upgrade pip "setuptools>=78.1.1" wheel && \
     pip install --require-hashes -r requirements.lock && \
     pip check && \
-    rm -f requirements.lock
+    rm -f requirements.lock && \
+    pip uninstall -y pip setuptools wheel
 
 COPY alembic.ini /app/alembic.ini
 COPY app /app/app
