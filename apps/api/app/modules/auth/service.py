@@ -6,8 +6,8 @@ from email.message import EmailMessage
 from typing import Optional, cast
 
 import bcrypt
+import jwt
 import structlog
-from jose import jwt  # type: ignore[import-untyped]
 from prometheus_client import Counter
 from sqlalchemy.orm import Session
 
@@ -65,7 +65,7 @@ def _decode_jwt_signed(token: str, *, verify_exp: bool = True) -> Optional[dict]
             algorithms=[settings.algorithm],
             options={"verify_exp": verify_exp},
         )
-    except jwt.JWTError:
+    except jwt.PyJWTError:
         return None
 
 

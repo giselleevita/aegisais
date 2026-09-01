@@ -10,7 +10,7 @@ COPY requirements.lock ./requirements.lock
 
 # Install the locked runtime dependency set before copying application code so
 # source edits do not invalidate the dependency layer.
-RUN pip install --upgrade pip setuptools wheel && \
+RUN pip install --upgrade pip "setuptools>=78.1.1" wheel && \
     pip install --require-hashes -r requirements.lock && \
     pip check && \
     rm -f requirements.lock
