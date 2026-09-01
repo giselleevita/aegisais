@@ -159,3 +159,16 @@ Container image signing will be added in the next programme increment using `sig
 | Org-scope isolation tests                | `apps/api/tests/test_org_scope.py`                             |
 | Security control matrix                  | `docs/security/SECURITY_AND_COMPLIANCE.md`                     |
 | Security evidence index                  | `docs/security/SECURITY_EVIDENCE_PACK.md`                      |
+
+## 7 September 2026 dependency remediation
+
+- Replaced `python-jose` and its vulnerable ECDSA dependency with PyJWT's
+  cryptography-backed implementation. Existing signed-token behaviour remains
+  covered by the authentication test suite.
+- Raised the locked minimum versions of `aiohttp`, `cryptography`, and
+  `msgpack` to their advisory-fixed releases.
+- Regenerated both hashed Python lockfiles and required a clean `pip-audit`
+  result before the change was committed.
+- Kept `pip-tools` on pip 25 until its use of a pip internal API is compatible
+  with pip 26; this is a build-tool compatibility constraint, not a runtime
+  dependency exception.
