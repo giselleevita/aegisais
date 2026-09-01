@@ -62,7 +62,10 @@ jobs:
       - name: Install backend audit tooling
         working-directory: apps/api
         run: |
-          python -m pip install --upgrade pip
+          # pip-tools 7.5 still imports an internal API removed in pip 26.
+          # Keep the resolver on the supported pip major until pip-tools ships
+          # compatibility, otherwise pip-sync fails before the audit runs.
+          python -m pip install --upgrade "pip<26"
           python -m pip install pip-audit==2.10.0 pip-tools==7.5.3
           pip-sync requirements-dev.lock
 
@@ -109,7 +112,7 @@ jobs:
 
       - name: Install dependency tooling
         run: |
-          python -m pip install --upgrade pip
+          python -m pip install --upgrade "pip<26"
           python -m pip install pip-tools==7.5.3
 
       - name: Validate lockfiles
