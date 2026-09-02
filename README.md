@@ -12,6 +12,11 @@ AegisAIS is an automated data integrity and anomaly detection platform for Autom
 
 **Reviewer path:** see [docs/REVIEWER_GUIDE.md](docs/REVIEWER_GUIDE.md) for a 15-minute evaluation.
 
+**Try the detection logic without Docker:** the
+[synthetic walkthrough](docs/REVIEWER_GUIDE.md#run-a-small-detection-example-without-services)
+compares normal movement, an impossible jump, an invalid latitude, and an
+out-of-order timestamp using the actual Python rules and explicit expected output.
+
 ---
 
 ## Quick Start (Docker)
@@ -117,10 +122,9 @@ alembic upgrade head
 # 4. Start the API server
 uvicorn app.main:app --reload    # http://localhost:8000
 
-# 5. Frontend — open a new terminal
-cd ../../apps/web
-npm install
-npm run dev                      # http://localhost:5173
+# 5. Frontend — open a new terminal at the repository root
+npm ci
+npm run dev -w @aegisais/web      # http://localhost:5173
 ```
 
 Or start both apps in parallel from the repo root using Turborepo:
@@ -129,6 +133,10 @@ Or start both apps in parallel from the repo root using Turborepo:
 npm install   # install root devDependencies (turbo)
 npm run dev   # starts api + web concurrently
 ```
+
+The API and web development servers alone do not run the complete replay
+pipeline. Use the Docker path for Redis and the processing, persistence, and
+alert workers required by the end-to-end upload/replay flow.
 
 ### Docker
 
