@@ -14,7 +14,7 @@
     "@fastify/websocket": "^11.2.0",
     "fastify": "5.8.5",
     "ioredis": "^5.6.1",
-    "jose": "^6.2.3",
+    "jose": "^6.2.10",
     "ws": "^8.18.3"
   },
   "devDependencies": {
