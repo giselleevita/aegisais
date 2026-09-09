@@ -17,7 +17,7 @@
     "cesium": "^1.143.0",
     "leaflet": "^1.9.4",
     "react": "^19.2.0",
-    "react-dom": "^19.2.0",
+    "react-dom": "^19.2.8",
     "react-leaflet": "^5.0.0",
     "react-router-dom": "^7.18.3",
     "vite-plugin-static-copy": "4.1.1"
@@ -27,7 +27,7 @@
     "@playwright/test": "^1.51.0",
     "@types/node": "^26.1.1",
     "@types/react": "^19.2.5",
-    "@types/react-dom": "^19.2.3",
+    "@types/react-dom": "^19.2.5",
     "@vitejs/plugin-react": "^6.0.2",
     "eslint": "^10.6.0",
     "eslint-plugin-react-hooks": "^7.0.1",
