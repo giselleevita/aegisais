@@ -14,7 +14,7 @@ dependencies = [
   "pydantic-settings==2.14.2",
   "sqlalchemy==2.0.51",
   "greenlet==3.3.2",
-  "alembic==1.18.4",
+  "alembic==1.19.1",
   "psycopg[binary]==3.3.3",
   "python-multipart==0.0.32",
   "pandas==3.0.3",
