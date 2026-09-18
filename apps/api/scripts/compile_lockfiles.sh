@@ -84,6 +84,7 @@ PY
 python3 - <<'PY' "$ROOT_DIR/pyproject.toml" "$dev_input" "$OUTPUT_DIR/requirements.lock"
 import sys
 import tomllib
+from pathlib import Path
 
 pyproject_path, output_path, runtime_lock_path = sys.argv[1:4]
 with open(pyproject_path, "rb") as fh:
@@ -92,7 +93,8 @@ with open(pyproject_path, "rb") as fh:
 dev_dependencies = data["project"].get("optional-dependencies", {}).get("dev", [])
 
 with open(output_path, "w", encoding="utf-8") as fh:
-    fh.write(f"-c {runtime_lock_path}\n")
+    # A file URI keeps constraint paths valid when the checkout contains spaces.
+    fh.write(f"-c {Path(runtime_lock_path).resolve().as_uri()}\n")
     for dependency in dev_dependencies:
         fh.write(f"{dependency}\n")
 PY

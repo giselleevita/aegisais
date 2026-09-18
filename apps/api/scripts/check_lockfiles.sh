@@ -23,6 +23,13 @@ out: list[str] = []
 i = 0
 while i < len(lines):
     line = lines[i]
+    # Package indexes can expose a different subset of wheel/sdist hashes to
+    # different Python/platform combinations. The checked-in hashes are still
+    # enforced by pip-sync below in every CI matrix job; this drift check is
+    # concerned with the resolved dependency graph, not redundant file hashes.
+    if line.lstrip().startswith("--hash="):
+        i += 1
+        continue
     if line.startswith("greenlet=="):
         i += 1
         while i < len(lines) and lines[i].startswith("    --hash="):
