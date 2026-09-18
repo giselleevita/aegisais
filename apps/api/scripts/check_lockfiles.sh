@@ -7,7 +7,12 @@ TMP_DIR="$(mktemp -d "$ROOT_DIR/.lockcheck.XXXXXX")"
 NORM_DIR="$(mktemp -d "$ROOT_DIR/.lockcheck.norm.XXXXXX")"
 trap 'rm -rf "$TMP_DIR" "$NORM_DIR"' EXIT
 
-"$ROOT_DIR/scripts/compile_lockfiles.sh" --output-dir "$TMP_DIR"
+# Validate the declared inputs against the checked-in resolution. Constraining
+# regeneration to that resolution avoids turning every newly published
+# transitive release into unrelated default-branch drift.
+"$ROOT_DIR/scripts/compile_lockfiles.sh" \
+  --output-dir "$TMP_DIR" \
+  --constraint-file "$ROOT_DIR/requirements.lock"
 
 normalize_lockfile() {
   local src="$1"
