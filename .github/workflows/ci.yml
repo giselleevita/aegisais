@@ -216,7 +216,6 @@ jobs:
   e2e-playwright:
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    timeout-minutes: 15
     needs: frontend
 
     steps:
@@ -251,7 +250,6 @@ jobs:
   festival-real-stack:
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    timeout-minutes: 20
     needs: [backend, frontend]
     env:
       COMPOSE_PROJECT_NAME: aegisfestivalci
