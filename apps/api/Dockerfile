@@ -8,6 +8,13 @@ WORKDIR /app
 
 COPY requirements.lock ./requirements.lock
 
+# The rolling slim tag may briefly contain Debian packages with published fixes
+# that are not yet installed in the base layer. Apply those fixes in the runtime
+# image and remove package metadata before adding application dependencies.
+RUN apt-get update && \
+    apt-get upgrade -y --no-install-recommends && \
+    rm -rf /var/lib/apt/lists/*
+
 # Install the locked runtime dependency set before copying application code so
 # source edits do not invalidate the dependency layer. Remove pip, setuptools,
 # and wheel afterward because build tooling is unnecessary at runtime and its
