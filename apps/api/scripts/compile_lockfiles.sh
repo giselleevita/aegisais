@@ -7,6 +7,7 @@ PYTHON_BIN="${LOCK_PYTHON_BIN:-$(command -v python3.11)}"
 VENV_DIR="${LOCK_VENV_DIR:-$ROOT_DIR/.lock-venv}"
 OUTPUT_DIR="$ROOT_DIR"
 UPGRADE_FLAG=""
+CONSTRAINT_ARGS=()
 
 if [[ -z "${PYTHON_BIN:-}" ]]; then
   echo "python3.11 is required to compile lockfiles consistently with CI." >&2
@@ -23,6 +24,10 @@ while [[ $# -gt 0 ]]; do
     --upgrade)
       UPGRADE_FLAG="--upgrade"
       shift
+      ;;
+    --constraint-file)
+      CONSTRAINT_ARGS=(--constraint "$2")
+      shift 2
       ;;
     *)
       echo "Unknown argument: $1" >&2
@@ -54,6 +59,7 @@ trap 'rm -f "$runtime_raw" "$dev_input" "$dev_only_raw"' EXIT
   --strip-extras \
   --resolver=backtracking \
   $UPGRADE_FLAG \
+  "${CONSTRAINT_ARGS[@]}" \
   --output-file "$runtime_raw" \
   pyproject.toml
 
