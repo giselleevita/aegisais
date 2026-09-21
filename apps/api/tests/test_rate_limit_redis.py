@@ -12,6 +12,10 @@ from app.middleware.rate_limit import reset_rate_limit_store
 def redis_rl_client(client: TestClient, monkeypatch):
     fake = fakeredis.FakeRedis(decode_responses=True)
     monkeypatch.setattr(settings, "rate_limit_use_redis", True)
+    # Keep all requests in the same fixed-window bucket. Without a fixed clock,
+    # a run that starts just before a minute boundary can reset the counter
+    # between attempts 30 and 31 and intermittently return 401 instead of 429.
+    monkeypatch.setattr("app.middleware.rate_limit.time.time", lambda: 1_700_000_000.0)
     monkeypatch.setattr(
         "app.infrastructure.cache.redis_client.get_redis_client",
         lambda: fake,
