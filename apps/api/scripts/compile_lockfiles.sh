@@ -7,7 +7,7 @@ PYTHON_BIN="${LOCK_PYTHON_BIN:-$(command -v python3.11)}"
 VENV_DIR="${LOCK_VENV_DIR:-$ROOT_DIR/.lock-venv}"
 OUTPUT_DIR="$ROOT_DIR"
 UPGRADE_FLAG=""
-CONSTRAINT_ARGS=()
+CONSTRAINT_FILE=""
 
 if [[ -z "${PYTHON_BIN:-}" ]]; then
   echo "python3.11 is required to compile lockfiles consistently with CI." >&2
@@ -26,7 +26,7 @@ while [[ $# -gt 0 ]]; do
       shift
       ;;
     --constraint-file)
-      CONSTRAINT_ARGS=(--constraint "$2")
+      CONSTRAINT_FILE="$2"
       shift 2
       ;;
     *)
@@ -51,17 +51,34 @@ dev_input="$(mktemp "$OUTPUT_DIR/.requirements-dev.in.XXXXXX")"
 dev_only_raw="$(mktemp "$OUTPUT_DIR/.requirements-dev-only.lock.raw.XXXXXX")"
 trap 'rm -f "$runtime_raw" "$dev_input" "$dev_only_raw"' EXIT
 
-"$VENV_DIR/bin/pip-compile" \
-  --quiet \
-  --no-annotate \
-  --generate-hashes \
-  --allow-unsafe \
-  --strip-extras \
-  --resolver=backtracking \
-  $UPGRADE_FLAG \
-  "${CONSTRAINT_ARGS[@]}" \
-  --output-file "$runtime_raw" \
-  pyproject.toml
+compile_runtime_lock() {
+  if [[ -n "$CONSTRAINT_FILE" ]]; then
+    "$VENV_DIR/bin/pip-compile" \
+      --quiet \
+      --no-annotate \
+      --generate-hashes \
+      --allow-unsafe \
+      --strip-extras \
+      --resolver=backtracking \
+      $UPGRADE_FLAG \
+      --constraint "$CONSTRAINT_FILE" \
+      --output-file "$runtime_raw" \
+      pyproject.toml
+  else
+    "$VENV_DIR/bin/pip-compile" \
+      --quiet \
+      --no-annotate \
+      --generate-hashes \
+      --allow-unsafe \
+      --strip-extras \
+      --resolver=backtracking \
+      $UPGRADE_FLAG \
+      --output-file "$runtime_raw" \
+      pyproject.toml
+  fi
+}
+
+compile_runtime_lock
 
 python3 - <<'PY' "$runtime_raw" "$OUTPUT_DIR/requirements.lock"
 import sys
